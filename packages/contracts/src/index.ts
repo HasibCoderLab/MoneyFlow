@@ -178,3 +178,43 @@ export interface TransactionListResponse {
   /** Total rows matching the filters (for honest empty states). */
   total: number;
 }
+
+// ── IT-5: categories ──────────────────────────────────────────────────────
+// Default categories are cloned per user at first sign-in from the
+// owner-approved seed list (requirements.md §5.5, domain-model.md); users
+// can create, rename, recolour, archive, and — only while unreferenced —
+// delete their own categories.
+
+/** Category kinds; a category applies to exactly one side of the ledger. */
+export type CategoryType = 'INCOME' | 'EXPENSE';
+
+/** Category lifecycle; archiving keeps historical reports readable (§5.5). */
+export type CategoryStatus = 'ACTIVE' | 'ARCHIVED';
+
+/** `POST /api/v1/categories` body. */
+export interface CreateCategoryRequest {
+  /** Trimmed display name, 1–60 characters, unique per user within the type. */
+  name: string;
+  type: CategoryType;
+  /** Optional `#RRGGBB` UI hint; never the sole carrier of meaning (§5.5). */
+  color?: string;
+}
+
+/** `PATCH /api/v1/categories/:id` body; `type` is immutable. */
+export interface UpdateCategoryRequest {
+  name?: string;
+  /** `null` clears the colour; `#RRGGBB` sets it; omitted leaves it unchanged. */
+  color?: string | null;
+}
+
+/** A category owned by the authenticated user. */
+export interface CategoryResponse {
+  id: string;
+  name: string;
+  type: CategoryType;
+  /** `#RRGGBB`, or null when the user never picked one. */
+  color: string | null;
+  status: CategoryStatus;
+  createdAt: string;
+  updatedAt: string;
+}

@@ -68,3 +68,13 @@ export function isUniqueViolationFor(error: unknown, indexName: string): boolean
   // ("Unique constraint failed on the constraint: `...`").
   return error.message.includes(`\`${indexName}\``);
 }
+
+/**
+ * True when `error` is a Prisma foreign-key constraint failure (P2003):
+ * the referenced row appeared between a service-level check and the write,
+ * or a delete was blocked because dependent rows still exist. Callers map
+ * it to the same 409 their own check would have produced — never a 500.
+ */
+export function isForeignKeyViolation(error: unknown): boolean {
+  return error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2003';
+}

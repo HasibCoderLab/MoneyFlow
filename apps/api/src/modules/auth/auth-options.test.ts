@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import {
   MAX_PASSWORD_LENGTH,
@@ -76,6 +76,35 @@ describe('createAuthOptions', () => {
 
   it('renames the credential table so it cannot collide with the financial Account model', () => {
     expect(optionsFor().account?.modelName).toBe('authAccount');
+  });
+
+  it('clones the default categories after user creation without failing sign-up on seeding errors', async () => {
+    const prisma = {
+      category: {
+        findFirst: vi.fn().mockResolvedValue(null),
+        createMany: vi.fn().mockResolvedValue({ count: 8 }),
+      },
+    };
+    const options = createAuthOptions({
+      prisma: prisma as never,
+      env: { BETTER_AUTH_SECRET: VALID_SECRET },
+    });
+    const after = options.databaseHooks?.user?.create?.after;
+    if (!after) {
+      throw new Error('Expected a databaseHooks.user.create.after hook.');
+    }
+
+    await after({ id: 'user-1' } as never, null);
+    expect(prisma.category.findFirst).toHaveBeenCalledWith({
+      where: { userId: 'user-1' },
+      select: { id: true },
+    });
+    expect(prisma.category.createMany).toHaveBeenCalledTimes(1);
+
+    // A seeding failure must never fail sign-up; the lazy ensure on the
+    // first categories read backfills instead.
+    prisma.category.createMany.mockRejectedValue(new Error('database down'));
+    await expect(after({ id: 'user-2' } as never, null)).resolves.toBeUndefined();
   });
 
   it('enables email/password with the reviewed length policy and Argon2id hooks', async () => {

@@ -5,6 +5,7 @@ import { ApiExceptionFilter } from './common/filters/api-exception.filter';
 import { AuthModule } from './modules/auth/auth.module';
 import { HealthModule } from './modules/health/health.module';
 import { AccountsModule } from './modules/accounts/accounts.module';
+import { CategoriesModule } from './modules/categories/categories.module';
 import { TransactionsModule } from './modules/transactions/transactions.module';
 
 /**
@@ -20,7 +21,7 @@ import { TransactionsModule } from './modules/transactions/transactions.module';
  * Nest-handled error to the API error contract.
  */
 @Module({
-  imports: [AuthModule, HealthModule, AccountsModule, TransactionsModule],
+  imports: [AuthModule, HealthModule, AccountsModule, CategoriesModule, TransactionsModule],
   providers: [
     {
       provide: APP_FILTER,

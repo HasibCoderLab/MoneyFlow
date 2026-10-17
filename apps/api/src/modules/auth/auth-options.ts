@@ -4,6 +4,7 @@ import { prismaAdapter } from 'better-auth/adapters/prisma';
 
 import { parseCorsOrigins } from '../../config/cors';
 import type { PrismaClient } from '../../generated/prisma/client';
+import { ensureDefaultCategories } from '../categories/category-defaults';
 import { hashPassword, verifyPassword } from './password';
 
 /**
@@ -21,6 +22,9 @@ import { hashPassword, verifyPassword } from './password';
  *   https (production requires https in `validateEnv`).
  * - Google Sign-In is configured only when owner-provided credentials exist;
  *   `validateEnv` rejects half-configured pairs.
+ * - New users are cloned the default categories right after creation
+ *   (IT-5); the same idempotent helper also runs lazily on the first
+ *   categories read, which backfills users created before IT-5.
  */
 export interface CreateAuthOptionsInput {
   prisma: PrismaClient;
@@ -52,6 +56,23 @@ export function createAuthOptions({ prisma, env }: CreateAuthOptionsInput): Bett
     // The credential table is named `authAccount` so it cannot collide with
     // the financial `Account` model (ADR-0006 decision 10).
     account: { modelName: 'authAccount' },
+    // IT-5: clone the owner-approved default categories right after a user
+    // row is created. Failures are swallowed by design — sign-up must never
+    // fail because seeding failed; the lazy ensure on `GET /categories`
+    // backfills on the first read (docs/architecture/domain-model.md).
+    databaseHooks: {
+      user: {
+        create: {
+          after: async (user) => {
+            try {
+              await ensureDefaultCategories(prisma, user.id);
+            } catch {
+              // Deliberate: see above.
+            }
+          },
+        },
+      },
+    },
     emailAndPassword: {
       enabled: true,
       minPasswordLength: MIN_PASSWORD_LENGTH,
