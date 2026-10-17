@@ -218,3 +218,125 @@ export interface CategoryResponse {
   createdAt: string;
   updatedAt: string;
 }
+
+// ── IT-8: summaries, dashboard, reports ───────────────────────────────────
+// All aggregates are computed from the caller's own completed records with
+// the same accounting rules as balances (accounting-rules.md §9): transfers
+// and adjustments are excluded from income/expense totals, opening balances
+// never count as income, and period boundaries are half-open in the resolved
+// IANA timezone (§6). Every money figure is a minor-unit integer string
+// (§11.1), including values beyond `Number.MAX_SAFE_INTEGER`.
+
+/** Aggregation granularity for report series (implementation-plan.md IT-8). */
+export type ReportGranularity = 'daily' | 'weekly' | 'monthly';
+
+/** Supported week starts; Saturday is the `bn-BD` default (DR-11). */
+export type WeekStartsOn = 'SATURDAY';
+
+/** The reporting period every summary figure is computed for. */
+export interface SummaryPeriod {
+  /** Local calendar date `YYYY-MM-DD`, inclusive. */
+  dateFrom: string;
+  /** Local calendar date `YYYY-MM-DD`, inclusive. */
+  dateTo: string;
+  /**
+   * Resolved IANA timezone used for the boundaries (default `Asia/Dhaka`
+   * until IT-11 preferences exist).
+   */
+  timezone: string;
+  /** Single-currency MVP rule (ADR-0003/DR-08); never silently converted. */
+  currency: string;
+}
+
+/**
+ * Completed income/expense totals for the period. Transfers and adjustments
+ * are excluded and opening balances never appear here (§9.4).
+ */
+export interface SummaryTotals {
+  incomeMinor: string;
+  expenseMinor: string;
+  /**
+   * Qualifying INCOME/EXPENSE rows in the period — distinguishes an empty
+   * period from a real zero so the UI can render honest empty states (§5.10).
+   */
+  transactionCount: number;
+}
+
+/**
+ * One expense category in a period. Archived categories stay readable in
+ * historical totals (§5.5); colour is decoration only.
+ */
+export interface CategorySpendSummary {
+  categoryId: string;
+  name: string;
+  /** `#RRGGBB` hint, or null; meaning is always carried by the name (§5.5). */
+  color: string | null;
+  status: CategoryStatus;
+  expenseMinor: string;
+  /**
+   * Percentage ×10 (`"267"` displays as 26.7%), half-up at the last display
+   * step (§7); null when the period total is zero ("not set").
+   */
+  percentTimes10: string | null;
+}
+
+/** Bounded recent-activity row enriched for display (IT-8). */
+export interface RecentSummaryTransaction {
+  id: string;
+  type: TransactionType;
+  amountMinor: string;
+  currency: string;
+  /** Resolved UTC instant, ISO 8601. */
+  occurredAt: string;
+  /** `1` (increase) or `-1` (decrease) for ADJUSTMENT; null otherwise. */
+  adjustmentSign: 1 | -1 | null;
+  note: string | null;
+  categoryName: string | null;
+  categoryColor: string | null;
+}
+
+/** `GET /api/v1/dashboard` response (requirements.md §5.6, §8.6). */
+export interface DashboardResponse {
+  period: SummaryPeriod;
+  /**
+   * Σ derived balances of ACTIVE accounts; archived accounts are excluded
+   * but stay viewable in Accounts (§9.4).
+   */
+  totalTrackedBalanceMinor: string;
+  /** Honest empty-state context; never a fabricated figure (§5.6). */
+  activeAccountCount: number;
+  totals: SummaryTotals;
+  /**
+   * Latest activity overall (not limited to `period`), ordered
+   * `occurredAt DESC, id DESC` and bounded by `recentLimit` (default 5).
+   */
+  recentTransactions: RecentSummaryTransaction[];
+  /** Period expenses by category, largest first (`amount DESC, categoryId ASC`). */
+  spendingByCategory: CategorySpendSummary[];
+}
+
+/** One series bucket; sparse — only periods with qualifying activity appear. */
+export interface ReportSeriesBucket {
+  /** Local calendar dates `YYYY-MM-DD`, inclusive on both ends. */
+  startDate: string;
+  endDate: string;
+  incomeMinor: string;
+  expenseMinor: string;
+}
+
+/** `GET /api/v1/reports/summary` response (requirements.md §5.10). */
+export interface ReportSummaryResponse {
+  period: SummaryPeriod;
+  totals: SummaryTotals;
+  granularity: ReportGranularity;
+  /** Present only for weekly series (DR-11 default, owner-confirmed). */
+  weekStartsOn: WeekStartsOn | null;
+  series: ReportSeriesBucket[];
+}
+
+/** `GET /api/v1/reports/categories` response (requirements.md §5.10). */
+export interface ReportCategoriesResponse {
+  period: SummaryPeriod;
+  totalExpenseMinor: string;
+  categories: CategorySpendSummary[];
+}
