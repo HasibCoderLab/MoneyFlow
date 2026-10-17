@@ -409,5 +409,50 @@ describe('listing', () => {
       path: '/api/v1/transactions?limit=500',
     });
     expect(badLimit.status).toBe(400);
+
+    // Category, amount, and account filters (IT-6 acceptance). The transfer
+    // exercises the account filter's transfer sides (from/to, not accountId).
+    await postTransaction({
+      type: 'TRANSFER',
+      amount: '5',
+      occurredDate: dhakaDate(-15),
+      fromAccountId: cashId,
+      toAccountId: bankId,
+    });
+
+    const groceriesOnly = await authed(testApp.baseUrl, user, {
+      path: `/api/v1/transactions?categoryId=${groceriesId}`,
+    });
+    expect(groceriesOnly.body).toMatchObject({ total: 3 });
+
+    const atLeast25 = await authed(testApp.baseUrl, user, {
+      path: '/api/v1/transactions?minAmount=25',
+    });
+    expect(atLeast25.body).toMatchObject({ total: 2 }); // 30 expense + 100 income
+
+    const band = await authed(testApp.baseUrl, user, {
+      path: '/api/v1/transactions?minAmount=15&maxAmount=25',
+    });
+    expect(band.body).toMatchObject({ total: 1 }); // the 20 expense only
+
+    const bankSide = await authed(testApp.baseUrl, user, {
+      path: `/api/v1/transactions?accountId=${bankId}`,
+    });
+    expect(bankSide.body).toMatchObject({ total: 1 }); // transfer destination
+
+    const cashSide = await authed(testApp.baseUrl, user, {
+      path: `/api/v1/transactions?accountId=${cashId}`,
+    });
+    expect(cashSide.body).toMatchObject({ total: 5 }); // four rows + transfer source
+
+    // Transfers never surface in income/expense listings (IT-7 criterion).
+    const stillIncomeOnly = await authed(testApp.baseUrl, user, {
+      path: '/api/v1/transactions?type=INCOME',
+    });
+    expect(stillIncomeOnly.body).toMatchObject({ total: 1 });
+    const expensesOnly = await authed(testApp.baseUrl, user, {
+      path: '/api/v1/transactions?type=EXPENSE',
+    });
+    expect(expensesOnly.body).toMatchObject({ total: 3 });
   });
 });

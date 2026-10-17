@@ -318,16 +318,55 @@ describe('TransactionsService.listTransactions', () => {
     });
   });
 
-  it('rejects invalid list parameters', async () => {
-    const { prisma } = mockDb();
+  it('builds the account OR clause plus the category and amount-range filters', async () => {
+    const { prisma, top } = mockDb();
+    top.transaction.count.mockResolvedValue(0);
+    top.transaction.findMany.mockResolvedValue([]);
     const service = new TransactionsService(prisma);
 
-    await expect(service.listTransactions(USER_ID, { limit: '0' })).rejects.toBeInstanceOf(
-      BadRequestException,
-    );
-    await expect(service.listTransactions(USER_ID, { type: 'REFUND' })).rejects.toBeInstanceOf(
-      BadRequestException,
-    );
+    await service.listTransactions(USER_ID, {
+      accountId: CASH_ID,
+      categoryId: CATEGORY_ID,
+      minAmount: '10.00',
+      maxAmount: '20.50',
+    });
+
+    // The account filter must catch every side of a transfer (IT-7 rows
+    // carry from/to instead of accountId); amounts compare in minor units.
+    expect(top.transaction.findMany).toHaveBeenCalledWith({
+      where: {
+        userId: USER_ID,
+        categoryId: CATEGORY_ID,
+        OR: [{ accountId: CASH_ID }, { fromAccountId: CASH_ID }, { toAccountId: CASH_ID }],
+        amountMinor: { gte: 1000n, lte: 2050n },
+      },
+      orderBy: [{ occurredAt: 'desc' }, { id: 'desc' }],
+      skip: 0,
+      take: 21,
+    });
+  });
+
+  it('rejects invalid list parameters before touching the database', async () => {
+    const { prisma, top } = mockDb();
+    const service = new TransactionsService(prisma);
+
+    const cases: Record<string, unknown>[] = [
+      { limit: '0' },
+      { limit: '101' },
+      { type: 'REFUND' },
+      { accountId: 'not-a-uuid' },
+      { categoryId: 42 },
+      { dateFrom: '2026-13-40' },
+      { dateFrom: '2026-10-31', dateTo: '2026-10-01' },
+      { minAmount: 'abc' },
+      { minAmount: '20.00', maxAmount: '10.00' },
+    ];
+    for (const query of cases) {
+      await expect(service.listTransactions(USER_ID, query)).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+    }
+    expect(top.transaction.findMany).not.toHaveBeenCalled();
   });
 });
 

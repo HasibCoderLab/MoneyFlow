@@ -197,6 +197,12 @@ same pattern; all depend on the approved accounting rules.
   filters (date range, type, account, category, amount), stable pagination,
   idempotency replay, server-side validation per accounting-rules §3,
   balance/summary consistency after edit/delete, isolation tests.
+  **Status (2026-10-17): Implemented and verified** — audit found the
+  backend complete; the missing acceptance evidence was added: unit coverage
+  for the account/filter clauses, amount ranges and impossible-combination
+  rejections, plus integration coverage for the category, amount-range and
+  account (both transfer sides) filters over real PostgreSQL. Database-free
+  gates pass locally; the integration suite runs in the CI PostgreSQL 16 job.
 - **IT-7 Transfers:** single-row transfer create/edit/delete, invariants
   (distinct accounts, same currency, active accounts), exclusion from
   income/expense/budget, atomicity tests.
