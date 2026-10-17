@@ -1,0 +1,94 @@
+# MoneyFlow CI (requirements.md §15.2, docs/architecture/database-and-testing.md).
+#
+# Two jobs, mirroring the local quality-gate list:
+#
+# - checks: formatting, lint, type-check, unit tests, production build, and
+#   `prisma validate` against a placeholder DATABASE_URL — nothing connects.
+# - integration: the real-PostgreSQL-16 suites (`pnpm test:integration`).
+#   The vitest global setup applies the committed migrations to the service
+#   container's empty `moneyflow_test` database, and the harness additionally
+#   refuses any `TEST_DATABASE_URL` that is not localhost.
+#
+# No repository secrets are used. The service-container credentials are
+# throwaway values that exist only inside the runner — the same disposable
+# setup the local runbook documents. Never point TEST_DATABASE_URL at Neon,
+# staging, or production.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: Checks (format, lint, typecheck, unit tests, build)
+    runs-on: ubuntu-latest
+    env:
+      # Placeholder only: the Prisma CLI config requires the variables to
+      # exist, and `prisma validate` parses the schema without connecting.
+      DATABASE_URL: postgresql://placeholder:placeholder@localhost:5432/placeholder?schema=public
+      DIRECT_URL: postgresql://placeholder:placeholder@localhost:5432/placeholder?schema=public
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/setup@v3
+        with:
+          # Node 24.x per README prerequisites; pnpm comes from the
+          # `packageManager` pin and the lockfile is enforced frozen.
+          runtime: node@24
+          cache: true
+          require-lockfile: true
+      - name: Check formatting
+        run: pnpm format:check
+      - name: Lint
+        run: pnpm lint
+      - name: Type-check
+        run: pnpm typecheck
+      - name: Unit tests
+        run: pnpm test
+      - name: Build
+        run: pnpm build
+      - name: Validate Prisma schema
+        run: pnpm db:validate
+
+  integration:
+    name: Integration tests (PostgreSQL 16)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: moneyflow
+          POSTGRES_PASSWORD: moneyflow
+          POSTGRES_DB: moneyflow_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      # Localhost-only by design: the integration harness refuses any
+      # non-local host before a single query runs (test/support/
+      # local-database.ts). This container is disposable.
+      TEST_DATABASE_URL: postgresql://moneyflow:moneyflow@localhost:5432/moneyflow_test
+      DATABASE_URL: postgresql://moneyflow:moneyflow@localhost:5432/moneyflow_test
+      DIRECT_URL: postgresql://moneyflow:moneyflow@localhost:5432/moneyflow_test
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/setup@v3
+        with:
+          runtime: node@24
+          cache: true
+          require-lockfile: true
+      - name: Build shared packages
+        run: pnpm build:packages
+      - name: Integration tests (real PostgreSQL 16)
+        run: pnpm test:integration
