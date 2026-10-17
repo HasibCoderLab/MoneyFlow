@@ -1,0 +1,30 @@
+# LF normalization for the 20 approved stable files (applied 2026-10-16).
+#
+# Prettier enforces "endOfLine: lf", but Windows checkouts with
+# core.autocrlf=true materialize these files as CRLF, failing
+# `pnpm format:check` on content that already matches HEAD. `text eol=lf`
+# pins LF for exactly these paths; no other file is affected.
+# Verified before applying: CRLF -> LF changes line endings only
+# (1,294 CRLF pairs removed; content byte-identical to the committed
+# blobs for all 20 files).
+
+OldREADME.md text eol=lf
+apps/web/src/app/app/dashboard/page.tsx text eol=lf
+apps/web/src/components/card.tsx text eol=lf
+apps/web/src/components/category-bars.tsx text eol=lf
+apps/web/src/components/mock-data-banner.tsx text eol=lf
+apps/web/src/components/placeholder-notice.tsx text eol=lf
+apps/web/src/components/progress-bar.tsx text eol=lf
+apps/web/src/components/stat-card.tsx text eol=lf
+apps/web/src/components/transaction-list.tsx text eol=lf
+apps/web/src/lib/format.ts text eol=lf
+apps/web/tsconfig.json text eol=lf
+apps/web/vitest.config.mts text eol=lf
+docs/architecture/domain-model.md text eol=lf
+docs/architecture/README.md text eol=lf
+docs/decisions/0005-goal-tracking.md text eol=lf
+docs/decisions/0008-email-provider.md text eol=lf
+docs/product/mvp-scope.md text eol=lf
+docs/product/README.md text eol=lf
+packages/contracts/tsconfig.json text eol=lf
+packages/test-utils/tsconfig.json text eol=lf

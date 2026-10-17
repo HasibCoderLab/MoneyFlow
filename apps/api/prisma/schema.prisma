@@ -1,0 +1,217 @@
+// Prisma schema for the MoneyFlow API (IT-2).
+//
+// Contents:
+// - Better Auth core tables (User, Session, AuthAccount, Verification),
+//   generated with the official `auth` CLI. `Account` is renamed to
+//   `AuthAccount` via the Better Auth `modelName` option so the financial
+//   `Account` keeps the product's name (ADR-0006, requirements.md §9.1).
+// - Financial tables (Account, Category, Transaction) per
+//   docs/architecture/domain-model.md (ADR-0004).
+//
+// Type-specific CHECK constraints and the case-insensitive account-name
+// uniqueness index cannot be expressed here; they are hand-added raw SQL in
+// the initial migration (docs/architecture/database-and-testing.md).
+// Migrations are committed to source control (requirements.md §9.2, §15.3).
+
+generator client {
+  // Prisma 7 TypeScript client generator (replaces prisma-client-js).
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  // The API compiles to CommonJS (NestJS + tsconfig module NodeNext).
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ── Better Auth core tables ─────────────────────────────────────────────
+//
+// Generated with the official `auth` CLI from src/auth.ts (see
+// docs/runbooks/local-development.md for the exact command). Deliberate
+// manual edits only:
+// - the credential table is `AuthAccount` (rename via Better Auth's
+//   `modelName`, above);
+// - every DateTime column carries @db.Timestamptz(3), so all timestamps in
+//   this database are unambiguous UTC instants (re-check the diff if the
+//   CLI regenerates this section).
+// Better Auth generates its own random string ids, so `id` columns are
+// text — financial tables below use plain `String` for `userId` to match.
+
+model User {
+  id            String        @id
+  name          String
+  email         String
+  emailVerified Boolean       @default(false)
+  image         String?
+  createdAt     DateTime      @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime      @updatedAt @db.Timestamptz(3)
+  sessions      Session[]
+  authaccounts  AuthAccount[]
+  accounts      Account[]
+  categories    Category[]
+  transactions  Transaction[]
+
+  @@unique([email])
+  @@map("user")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime @db.Timestamptz(3)
+  token     String
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@index([userId])
+  @@map("session")
+}
+
+model AuthAccount {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime? @db.Timestamptz(3)
+  refreshTokenExpiresAt DateTime? @db.Timestamptz(3)
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt             DateTime  @updatedAt @db.Timestamptz(3)
+
+  @@index([userId])
+  @@map("authAccount")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime @db.Timestamptz(3)
+  createdAt  DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt  DateTime @updatedAt @db.Timestamptz(3)
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+// ── Financial domain (ADR-0003, ADR-0004, docs/architecture/domain-model.md)
+//
+// Money is integer minor units (BIGINT); balances are always derived from
+// transactions, never stored. `userId` is text to match `User.id`. The
+// per-user case-insensitive name uniqueness (`account`) and all
+// type-specific CHECK constraints (`transaction`) are raw SQL in the
+// initial migration because Prisma cannot express them.
+
+enum AccountType {
+  CASH
+  BANK
+  MOBILE_WALLET
+  SAVINGS
+  OTHER
+}
+
+enum AccountStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+model Account {
+  id                  String        @id @default(uuid()) @db.Uuid
+  userId              String
+  name                String        @db.VarChar(80)
+  type                AccountType
+  currency            String        @db.VarChar(3)
+  openingBalanceMinor BigInt
+  status              AccountStatus @default(ACTIVE)
+  archivedAt          DateTime?     @db.Timestamptz(3)
+  createdAt           DateTime      @default(now()) @db.Timestamptz(3)
+  updatedAt           DateTime      @updatedAt @db.Timestamptz(3)
+  user                User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions        Transaction[] @relation("TransactionAccount")
+  outgoingTransfers   Transaction[] @relation("TransactionFromAccount")
+  incomingTransfers   Transaction[] @relation("TransactionToAccount")
+
+  // No plain @@index([userId]): the raw unique index on
+  // (userId, lower(name)) below covers both the FK and userId lookups.
+  @@map("account")
+}
+
+enum CategoryType {
+  INCOME
+  EXPENSE
+}
+
+enum CategoryStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+model Category {
+  id           String         @id @default(uuid()) @db.Uuid
+  userId       String
+  name         String         @db.VarChar(60)
+  // Lowercased/trimmed name for case-insensitive uniqueness; maintained by
+  // the service layer (IT-5).
+  nameKey      String         @db.VarChar(60)
+  type         CategoryType
+  color        String?
+  status       CategoryStatus @default(ACTIVE)
+  createdAt    DateTime       @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime       @updatedAt @db.Timestamptz(3)
+  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+
+  @@unique([userId, nameKey, type])
+  @@map("category")
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+  TRANSFER
+  ADJUSTMENT
+}
+
+model Transaction {
+  id             String          @id @default(uuid()) @db.Uuid
+  userId         String
+  type           TransactionType
+  // Strictly > 0 (raw SQL CHECK); direction comes from `type`.
+  amountMinor    BigInt
+  currency       String          @db.VarChar(3)
+  occurredAt     DateTime        @db.Timestamptz(3)
+  accountId      String?         @db.Uuid
+  fromAccountId  String?         @db.Uuid
+  toAccountId    String?         @db.Uuid
+  categoryId     String?         @db.Uuid
+  adjustmentSign Int?            @db.SmallInt
+  note           String?         @db.VarChar(500)
+  idempotencyKey String?
+  createdAt      DateTime        @default(now()) @db.Timestamptz(3)
+  updatedAt      DateTime        @updatedAt @db.Timestamptz(3)
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // NO ACTION (not CASCADE): deleting a referenced account/category must
+  // fail at the database level so history is never silently lost; the
+  // explicit deletion workflow (IT-12) removes rows in dependency order.
+  account        Account?        @relation("TransactionAccount", fields: [accountId], references: [id], onDelete: NoAction)
+  fromAccount    Account?        @relation("TransactionFromAccount", fields: [fromAccountId], references: [id], onDelete: NoAction)
+  toAccount      Account?        @relation("TransactionToAccount", fields: [toAccountId], references: [id], onDelete: NoAction)
+  category       Category?       @relation(fields: [categoryId], references: [id], onDelete: NoAction)
+
+  @@unique([userId, idempotencyKey])
+  @@index([userId, occurredAt(sort: Desc)])
+  @@index([userId, accountId, occurredAt(sort: Desc)])
+  @@index([userId, categoryId, occurredAt])
+  @@index([userId, type, occurredAt])
+  @@map("transaction")
+}

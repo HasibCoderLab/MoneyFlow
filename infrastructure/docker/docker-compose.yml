@@ -1,0 +1,28 @@
+# Local PostgreSQL for MoneyFlow development.
+#
+# Contains NO credentials: every value is interpolated from your .env file.
+# From the repository root:
+#   docker compose --env-file .env -f infrastructure/docker/docker-compose.yml up -d
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?Set POSTGRES_USER in .env (see .env.example)}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env (see .env.example)}
+      POSTGRES_DB: ${POSTGRES_DB:?Set POSTGRES_DB in .env (see .env.example)}
+    ports:
+      - '${POSTGRES_PORT:-5432}:5432'
+    volumes:
+      - moneyflow-postgres-data:/var/lib/postgresql/data
+      # Creates the throwaway integration-test database (`moneyflow_test`)
+      # on first startup (fresh volume only) — see initdb/.
+      - ./initdb:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  moneyflow-postgres-data:

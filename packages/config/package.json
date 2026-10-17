@@ -1,0 +1,21 @@
+{
+  "name": "@moneyflow/config",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Shared TypeScript and ESLint configuration for the MoneyFlow workspace.",
+  "exports": {
+    "./eslint": "./eslint.base.mjs",
+    "./tsconfig": "./tsconfig.base.json"
+  },
+  "scripts": {
+    "lint": "eslint ."
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.12.0",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.13.0",
+    "typescript-eslint": "^8.71.2"
+  }
+}

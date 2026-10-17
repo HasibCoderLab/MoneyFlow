@@ -1,0 +1,29 @@
+{
+  "name": "moneyflow",
+  "version": "0.0.0",
+  "private": true,
+  "description": "MoneyFlow (working title) — Personal Finance SaaS monorepo. See requirements.md for product scope.",
+  "packageManager": "pnpm@12.11.2",
+  "engines": {
+    "node": ">=20.11"
+  },
+  "scripts": {
+    "dev": "pnpm -r --parallel --if-present dev",
+    "dev:web": "pnpm --filter @moneyflow/web dev",
+    "dev:api": "pnpm --filter @moneyflow/api dev",
+    "lint": "pnpm -r --if-present lint",
+    "build:packages": "pnpm --filter @moneyflow/contracts build && pnpm --filter @moneyflow/test-utils build",
+    "typecheck": "pnpm run build:packages && pnpm -r --if-present typecheck",
+    "test": "pnpm run build:packages && pnpm -r --if-present test",
+    "test:integration": "pnpm --filter @moneyflow/api test:integration",
+    "build": "pnpm run build:packages && pnpm -r --if-present build",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "db:migrate": "pnpm --filter @moneyflow/api db:migrate",
+    "db:deploy": "pnpm --filter @moneyflow/api db:deploy",
+    "db:validate": "pnpm --filter @moneyflow/api db:validate"
+  },
+  "devDependencies": {
+    "prettier": "^3.9.10"
+  }
+}
