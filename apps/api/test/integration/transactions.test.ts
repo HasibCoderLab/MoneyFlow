@@ -360,6 +360,95 @@ describe('edit and delete consistency', () => {
   });
 });
 
+describe('transfer semantics (IT-7)', () => {
+  it('edits both sides atomically and reverts both balances on delete', async () => {
+    const day = dhakaDate(-10);
+    const transfer = await postTransaction({
+      type: 'TRANSFER',
+      amount: '2000',
+      occurredDate: day,
+      fromAccountId: cashId,
+      toAccountId: bankId,
+    });
+    expect(transfer.status).toBe(201);
+    const id = (transfer.body as { id: string }).id;
+    expect(transfer.body).toMatchObject({ categoryId: null, amountMinor: '200000' });
+    expect(await balanceOf(cashId)).toBe('800000');
+    expect(await balanceOf(bankId)).toBe('200000');
+
+    const edited = await authed(testApp.baseUrl, user, {
+      method: 'PATCH',
+      path: `/api/v1/transactions/${id}`,
+      body: { amount: '500', occurredDate: day, fromAccountId: cashId, toAccountId: bankId },
+    });
+    expect(edited.status).toBe(200);
+    expect(await balanceOf(cashId)).toBe('950000');
+    expect(await balanceOf(bankId)).toBe('50000');
+
+    const deleted = await authed(testApp.baseUrl, user, {
+      method: 'DELETE',
+      path: `/api/v1/transactions/${id}`,
+    });
+    expect(deleted.status).toBe(204);
+    expect(await balanceOf(cashId)).toBe('1000000');
+    expect(await balanceOf(bankId)).toBe('0');
+  });
+
+  it('allows edits that keep referenced archived accounts but refuses moving onto an archived account', async () => {
+    const day = dhakaDate(-10);
+    const transfer = await postTransaction({
+      type: 'TRANSFER',
+      amount: '1000',
+      occurredDate: day,
+      fromAccountId: cashId,
+      toAccountId: bankId,
+    });
+    const id = (transfer.body as { id: string }).id;
+
+    const savings = await authed(testApp.baseUrl, user, {
+      method: 'POST',
+      path: '/api/v1/accounts',
+      body: { name: 'Savings', type: 'BANK', currency: 'BDT', openingBalance: '0' },
+    });
+    const savingsId = (savings.body as { id: string }).id;
+    for (const accountId of [bankId, savingsId]) {
+      const archived = await authed(testApp.baseUrl, user, {
+        method: 'POST',
+        path: `/api/v1/accounts/${accountId}/archive`,
+      });
+      expect(archived.status).toBe(200);
+    }
+
+    // Keeping the already-referenced (now archived) destination is allowed...
+    const keepArchived = await authed(testApp.baseUrl, user, {
+      method: 'PATCH',
+      path: `/api/v1/transactions/${id}`,
+      body: { amount: '700', occurredDate: day, fromAccountId: cashId, toAccountId: bankId },
+    });
+    expect(keepArchived.status).toBe(200);
+    expect(await balanceOf(cashId)).toBe('930000');
+    expect(await balanceOf(bankId)).toBe('70000');
+
+    // ...while moving the transfer onto a different archived account is not;
+    // a refused edit leaves both balances untouched (no partial write).
+    const moveToArchived = await authed(testApp.baseUrl, user, {
+      method: 'PATCH',
+      path: `/api/v1/transactions/${id}`,
+      body: { amount: '700', occurredDate: day, fromAccountId: cashId, toAccountId: savingsId },
+    });
+    expect(moveToArchived.status).toBe(400);
+    expect(await balanceOf(cashId)).toBe('930000');
+    expect(await balanceOf(bankId)).toBe('70000');
+
+    // History stays readable after the archive.
+    const fetched = await authed(testApp.baseUrl, user, {
+      path: `/api/v1/transactions/${id}`,
+    });
+    expect(fetched.status).toBe(200);
+    expect(fetched.body).toMatchObject({ toAccountId: bankId, amountMinor: '70000' });
+  });
+});
+
 describe('listing', () => {
   it('filters, orders stably, and paginates with totals', async () => {
     const day = dhakaDate(-20);

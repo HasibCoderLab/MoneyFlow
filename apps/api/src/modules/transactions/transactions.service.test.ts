@@ -15,6 +15,7 @@ import { TransactionsService } from './transactions.service';
 
 const USER_ID = 'user-1';
 const CASH_ID = '11111111-1111-4111-8111-111111111111';
+const BANK_ID = '22222222-2222-4222-8222-222222222222';
 const CATEGORY_ID = '33333333-3333-4333-8333-333333333333';
 const TX_ID = '44444444-4444-4434-8434-444444444444';
 
@@ -163,6 +164,31 @@ describe('TransactionsService.createTransaction', () => {
         undefined,
       ),
     ).rejects.toBeInstanceOf(BadRequestException);
+    expect(tx.transaction.create).not.toHaveBeenCalled();
+  });
+
+  it('rejects transfers across different currencies', async () => {
+    // MVP accounts are BDT-only, so the mismatch is only reachable with a
+    // mocked second account — the service rule itself must still hold.
+    const { prisma, tx } = mockDb();
+    tx.account.findFirst
+      .mockResolvedValueOnce(accountRow(CASH_ID))
+      .mockResolvedValueOnce(accountRow(BANK_ID, { currency: 'USD' }));
+    const service = new TransactionsService(prisma);
+
+    await expect(
+      service.createTransaction(
+        USER_ID,
+        {
+          type: 'TRANSFER',
+          amount: '100',
+          occurredDate: '2026-10-10',
+          fromAccountId: CASH_ID,
+          toAccountId: BANK_ID,
+        },
+        undefined,
+      ),
+    ).rejects.toThrow(/same currency/);
     expect(tx.transaction.create).not.toHaveBeenCalled();
   });
 

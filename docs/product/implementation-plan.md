@@ -206,6 +206,16 @@ same pattern; all depend on the approved accounting rules.
 - **IT-7 Transfers:** single-row transfer create/edit/delete, invariants
   (distinct accounts, same currency, active accounts), exclusion from
   income/expense/budget, atomicity tests.
+  **Status (2026-10-17): Implemented and verified** — audit confirmed the
+  single-row model and its invariants; missing evidence was added: unit
+  coverage for the same-currency rule (unreachable over HTTP while accounts
+  are BDT-only) and integration coverage for transfer edit (both balances
+  re-derive), delete (both balances revert), the archived-account edit rules
+  (already-referenced accounts stay editable; moving onto an archived account
+  is refused with no partial write), and transfers staying out of
+  income/expense listings. The same rule is re-tested where totals first
+  exist (summary service in IT-8, budgets in IT-9). Database-free gates pass
+  locally; the integration suite runs in the CI PostgreSQL 16 job.
 
 ## Phase C — summaries, budgets, goals
 

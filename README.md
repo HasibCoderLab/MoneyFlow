@@ -246,7 +246,7 @@ Implemented IT-1 work in `apps/api/src/domain/money/` (per ADR-0003/ADR-0004 and
 - `effects.ts` — pure transaction effect matrix for `INCOME` / `EXPENSE` / `TRANSFER` / `ADJUSTMENT` (direction from type, never from a typed sign; transfers net to zero). `REFUND` is deferred by decision.
 - `errors.ts` — typed `MoneyDomainError` with stable machine-readable codes.
 
-Test state (actually run on 2026-10-17, `pnpm test`): **API unit 230 of 230 pass** (26 files: money domain, env validation, health, auth, accounts, categories, transactions, exception filter, Prisma service); **web 128 of 128 pass** (28 files). The integration suites (`pnpm test:integration`: auth/accounts/transactions/categories + schema/constraints against real PostgreSQL) need a reachable PostgreSQL 16 and run in CI's PostgreSQL 16 job.
+Test state (actually run on 2026-10-17, `pnpm test`): **API unit 232 of 232 pass** (26 files: money domain, env validation, health, auth, accounts, categories, transactions, exception filter, Prisma service); **web 128 of 128 pass** (28 files). The integration suites (`pnpm test:integration`: auth/accounts/transactions/categories + schema/constraints against real PostgreSQL) need a reachable PostgreSQL 16 and run in CI's PostgreSQL 16 job.
 
 ## Database
 
@@ -282,7 +282,7 @@ Existing coverage: money-domain unit tests live beside the code (`apps/api/src/d
 | [`docs/decisions/`](./docs/decisions/README.md)                                | ADRs 0001–0004, 0006–0007 Accepted; 0005, 0008 Proposed; `decision-register.md` tracks DR-01–DR-17 (DR-01/02/04/05 approved 2026-10-16) |
 | [`docs/product/`](./docs/product/README.md)                                    | Scope summary + implementation status                                                                                                   |
 | [`docs/product/mvp-scope.md`](./docs/product/mvp-scope.md)                     | MVP feature map + 12 interpretation calls needing owner confirmation + mock-data exit plan                                              |
-| [`docs/product/implementation-plan.md`](./docs/product/implementation-plan.md) | Phased tasks IT-1…IT-13 with acceptance criteria; IT-1…IT-5 implemented, IT-6/IT-7 review next                                          |
+| [`docs/product/implementation-plan.md`](./docs/product/implementation-plan.md) | Phased tasks IT-1…IT-13 with acceptance criteria; IT-1…IT-7 implemented and verified, IT-8 next                                         |
 | [`docs/runbooks/local-development.md`](./docs/runbooks/local-development.md)   | Setup, quality checks, DB commands, ports, troubleshooting                                                                              |
 | [`AGENTS.md`](./AGENTS.md)                                                     | Mandatory operating rules for AI agents and contributors                                                                                |
 
@@ -316,8 +316,10 @@ Financial data is sensitive by default (`requirements.md` §10):
 The implementation plan (`docs/product/implementation-plan.md`) is the
 source of truth for status: IT-1 (money module), IT-2 (schema + migration +
 test harness), IT-3 (auth + sessions), IT-4 (accounts + transaction ledger
-backend), and IT-5 (categories) are implemented; IT-6/IT-7 acceptance review
-is next, and wiring the web screens to the live API is a later frontend task.
+backend), IT-5 (categories), IT-6 (transaction filters/pagination/idempotency
+acceptance), and IT-7 (transfers) are implemented and verified against the
+CI PostgreSQL 16 job; IT-8 (summary service + dashboard/report endpoints) is
+next, and wiring the web screens to the live API is a later frontend task.
 See [`docs/decisions/decision-register.md`](./docs/decisions/decision-register.md).
 
 ## License
