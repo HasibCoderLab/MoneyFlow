@@ -72,13 +72,19 @@ column.
 | `status`                | `CategoryStatus` | `ACTIVE`, `ARCHIVED`                                    |
 | `createdAt`/`updatedAt` | timestamptz      |                                                         |
 
-Constraints: `@@unique([userId, nameKey, type])`. Default categories
-(e.g. Salary, Other income, Groceries, Utilities, Transport, Other expense)
-are **cloned per user at first sign-in** from a seed definition — every
-category has an owner, avoiding nullable-owner query branches. Recommended
-default list lives with the implementation task.
+Constraints: `@@unique([userId, nameKey, type])`. Default categories are
+**cloned per user at first sign-in** from a seed definition — every
+category has an owner, avoiding nullable-owner query branches.
+**Implemented (IT-5, owner ruling 2026-10-17):** the seed is Salary,
+Freelance, Gifts (income) and Groceries, Transport, Food & dining,
+Utilities, Other expense (expense), each with a hex colour. Cloning runs
+in the sign-up hook (`databaseHooks.user.create.after`) and again
+idempotently on the first categories read, which backfills users created
+before IT-5; `apps/api/src/modules/categories/category-defaults.ts` is the
+one place the list lives.
 Deletion: only when unreferenced by any transaction; otherwise archive
-(§5.5). Archived categories keep historical reports readable.
+(§5.5). Archived categories keep historical reports readable. Renames
+recompute `nameKey` and are allowed while archived; `type` is immutable.
 
 ### `Transaction`
 

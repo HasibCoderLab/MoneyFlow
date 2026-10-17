@@ -183,6 +183,16 @@ same pattern; all depend on the approved accounting rules.
 - **IT-5 Categories:** default-category clone at first sign-in, CRUD,
   case-insensitive uniqueness, archive vs delete rules, archived categories
   keep reports readable; reassignment explicitly deferred with a clear error.
+  **Status (2026-10-17): Implemented** — `apps/api/src/modules/categories/`
+  (`GET`/`POST /api/v1/categories`, `PATCH /:id`, `POST /:id/archive`,
+  `POST /:id/unarchive`, `DELETE /:id` only while unreferenced), shared
+  contracts, the sign-up clone hook plus the idempotent lazy backfill, and
+  unit + real-PostgreSQL integration suites. Owner rulings (same date): the
+  8-category seed list with hex colours (`category-defaults.ts`); rename
+  collisions and referenced deletes answer 409; archived categories stay
+  renameable; `type` stays immutable; category UI wiring deferred to IT-8.
+  Database-free gates pass locally; the integration suite runs in the CI
+  PostgreSQL 16 job.
 - **IT-6 Transactions (income/expense):** create/list/get/edit/delete,
   filters (date range, type, account, category, amount), stable pagination,
   idempotency replay, server-side validation per accounting-rules §3,

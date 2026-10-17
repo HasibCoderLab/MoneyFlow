@@ -107,13 +107,19 @@ apps/
     src/config/         env validation + dev .env loading
     src/common/         API error-envelope filter
     src/domain/money/   IT-1 money module: parse, arithmetic, effects, tests
-    src/modules/auth/   IT-3: options factory, Argon2id hooks, global session
-                        guard, thin /me endpoints
-    src/modules/health/ health controller/service
-    src/prisma/         Prisma client service + unit tests
+    src/modules/auth/         IT-3: options factory, Argon2id hooks, global
+                              session guard, thin /me endpoints, sign-up
+                              default-category clone hook (IT-5)
+    src/modules/health/       health controller/service
+    src/modules/accounts/     IT-4: CRUD + archive, derived balances
+    src/modules/categories/   IT-5: default clone + backfill, CRUD,
+                              archive/unarchive, unreferenced-delete rules
+    src/modules/transactions/ IT-4/IT-6/IT-7: ledger rows, filters, stable
+                              pagination, idempotent creates, transfers
+    src/prisma/               Prisma client service + unit tests
     prisma/             schema.prisma (7 models) + initial migration
 packages/
-  contracts/            API_BASE_PATH, HealthResponse, ApiErrorResponse (no amount/auth types yet)
+  contracts/            API_BASE_PATH + health/auth/account/category/transaction request + response types
   config/               Shared tsconfig base + ESLint flat config
   test-utils/           Runner-agnostic test helpers (expectShape)
 docs/
@@ -216,13 +222,16 @@ Design tokens (`requirements.md` §7.2, full light/dark sets in `globals.css`): 
 
 Base path: `/api/v1` (global prefix in `apps/api/src/main.ts`).
 
-| Endpoint                                                                                                                                   | State                                                                                       |
-| ------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------- |
-| `GET /api/v1/health`                                                                                                                       | Implemented (liveness + database status)                                                    |
-| `POST /api/v1/auth/sign-up/email`, `POST /api/v1/auth/sign-in/email`                                                                       | Implemented (IT-3; Better Auth, Argon2id, rate-limited)                                     |
-| `POST /api/v1/auth/sign-out`, `GET /api/v1/auth/get-session`                                                                               | Implemented (sessions are revocable database rows; HttpOnly cookies)                        |
-| `GET /api/v1/me`, `PATCH /api/v1/me`                                                                                                       | Implemented (session-derived identity; display-name update only)                            |
-| Accounts, transactions, categories, budgets, goals, dashboard, reports, preferences, AI, recurring, notifications (`requirements.md` §8.6) | Not served yet — build in `docs/product/implementation-plan.md` order (next: IT-4 accounts) |
+| Endpoint                                                                                                                                                                       | State                                                                                                               |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------- |
+| `GET /api/v1/health`                                                                                                                                                           | Implemented (liveness + database status)                                                                            |
+| `POST /api/v1/auth/sign-up/email`, `POST /api/v1/auth/sign-in/email`                                                                                                           | Implemented (IT-3; Better Auth, Argon2id, rate-limited)                                                             |
+| `POST /api/v1/auth/sign-out`, `GET /api/v1/auth/get-session`                                                                                                                   | Implemented (sessions are revocable database rows; HttpOnly cookies)                                                |
+| `GET /api/v1/me`, `PATCH /api/v1/me`                                                                                                                                           | Implemented (session-derived identity; display-name update only)                                                    |
+| `GET/POST /api/v1/accounts`, `GET/PATCH /api/v1/accounts/:id`, `POST /api/v1/accounts/:id/archive`, `POST /api/v1/accounts/:id/unarchive`                                      | Implemented (IT-4; derived balances, opening-balance freeze, archive semantics)                                     |
+| `GET/POST /api/v1/categories`, `PATCH /api/v1/categories/:id`, `DELETE /api/v1/categories/:id`, `POST /api/v1/categories/:id/archive`, `POST /api/v1/categories/:id/unarchive` | Implemented (IT-5; default clone + backfill, case-insensitive uniqueness, delete only while unreferenced)           |
+| `GET/POST /api/v1/transactions`, `GET/PATCH/DELETE /api/v1/transactions/:id`                                                                                                   | Implemented (IT-4 base; filters, idempotency, transfers, adjustments — IT-6/IT-7 review in the implementation plan) |
+| Budgets, goals, dashboard/reports, preferences, CSV export, AI, recurring, notifications (`requirements.md` §8.6)                                                              | Not served yet — build in `docs/product/implementation-plan.md` order                                               |
 
 Conventions for future endpoints (`requirements.md` §8.5): RESTful naming, input validation at the boundary, consistent error envelope with safe message + trace/request ID, pagination with stable sort tie-breaker, ISO 8601 timestamps, decimal-safe amount representation (amounts as strings, never silently rounded), idempotency where retries could duplicate, no stack traces/SQL/secrets in production responses.
 
@@ -237,7 +246,7 @@ Implemented IT-1 work in `apps/api/src/domain/money/` (per ADR-0003/ADR-0004 and
 - `effects.ts` — pure transaction effect matrix for `INCOME` / `EXPENSE` / `TRANSFER` / `ADJUSTMENT` (direction from type, never from a typed sign; transfers net to zero). `REFUND` is deferred by decision.
 - `errors.ts` — typed `MoneyDomainError` with stable machine-readable codes.
 
-Test state (actually run during IT-3 verification on 2026-10-16, `pnpm test`): **API unit 119 of 119 pass** (17 files: money domain, env validation, health, auth options/hooks/guard/service/`/me`, exception filter, Prisma service); **web 112 of 112 pass** (25 files). The integration suite (`pnpm test:integration`, including `apps/api/test/integration/auth.test.ts`) needs a reachable PostgreSQL 16 and runs in CI.
+Test state (actually run on 2026-10-17, `pnpm test`): **API unit 230 of 230 pass** (26 files: money domain, env validation, health, auth, accounts, categories, transactions, exception filter, Prisma service); **web 128 of 128 pass** (28 files). The integration suites (`pnpm test:integration`: auth/accounts/transactions/categories + schema/constraints against real PostgreSQL) need a reachable PostgreSQL 16 and run in CI's PostgreSQL 16 job.
 
 ## Database
 
@@ -273,7 +282,7 @@ Existing coverage: money-domain unit tests live beside the code (`apps/api/src/d
 | [`docs/decisions/`](./docs/decisions/README.md)                                | ADRs 0001–0004, 0006–0007 Accepted; 0005, 0008 Proposed; `decision-register.md` tracks DR-01–DR-17 (DR-01/02/04/05 approved 2026-10-16) |
 | [`docs/product/`](./docs/product/README.md)                                    | Scope summary + implementation status                                                                                                   |
 | [`docs/product/mvp-scope.md`](./docs/product/mvp-scope.md)                     | MVP feature map + 12 interpretation calls needing owner confirmation + mock-data exit plan                                              |
-| [`docs/product/implementation-plan.md`](./docs/product/implementation-plan.md) | Phased tasks IT-1…IT-13 with acceptance criteria; IT-1…IT-3 implemented (awaiting review), IT-4 next                                    |
+| [`docs/product/implementation-plan.md`](./docs/product/implementation-plan.md) | Phased tasks IT-1…IT-13 with acceptance criteria; IT-1…IT-5 implemented, IT-6/IT-7 review next                                          |
 | [`docs/runbooks/local-development.md`](./docs/runbooks/local-development.md)   | Setup, quality checks, DB commands, ports, troubleshooting                                                                              |
 | [`AGENTS.md`](./AGENTS.md)                                                     | Mandatory operating rules for AI agents and contributors                                                                                |
 
@@ -304,7 +313,12 @@ Financial data is sensitive by default (`requirements.md` §10):
 
 `requirements.md` §19 order: brief + accounting decisions → monorepo/tooling (done) → schema/auth/isolation → accounts + transactions with tested calculations → categories/dashboard/reports → goals/budgets → customization/preferences → export/deletion/audit/ops → MVP usability testing → V1 (recurring, notifications, AI assistant) → hardening + limited beta → subscriptions/integrations only after validated demand.
 
-The next implementation task is IT-4 (accounts) after owner review; wiring the web auth shells to the IT-3 API is the next frontend task. IT-1 (money module), IT-2 (Prisma schema v1 + initial migration + test harness), and IT-3 (Better Auth endpoints/sessions, global guard, `/me`) are implemented and awaiting owner review. See [`docs/decisions/decision-register.md`](./docs/decisions/decision-register.md).
+The implementation plan (`docs/product/implementation-plan.md`) is the
+source of truth for status: IT-1 (money module), IT-2 (schema + migration +
+test harness), IT-3 (auth + sessions), IT-4 (accounts + transaction ledger
+backend), and IT-5 (categories) are implemented; IT-6/IT-7 acceptance review
+is next, and wiring the web screens to the live API is a later frontend task.
+See [`docs/decisions/decision-register.md`](./docs/decisions/decision-register.md).
 
 ## License
 
