@@ -113,6 +113,43 @@ describe('initial migration (real PostgreSQL)', () => {
     expect(accountRow.openingBalanceMinor).toBe(-1234567890123n);
   });
 
+  it('pins the database session to UTC so stored instants are never shifted', async () => {
+    // The driver adapter serializes DateTime values as timezone-naive text
+    // that PostgreSQL interprets in the *session* timezone (see
+    // buildPrismaClientOptions). On a host whose server default is not UTC
+    // every stored occurredAt would shift by the session offset — and
+    // Prisma's own read path compensates symmetrically, hiding the shift
+    // from round-trip assertions. This guard renders the stored instant
+    // server-side, where any shift is visible on any host — including UTC
+    // CI containers.
+    const sessionTimezone = await prisma.$queryRaw<Array<{ TimeZone: string }>>`SHOW timezone`;
+    expect(sessionTimezone[0]?.TimeZone).toBe('UTC');
+
+    const user = await createUser(prisma);
+    const account = await createAccount(prisma, user.id);
+    const category = await createCategory(prisma, user.id, { type: 'INCOME' });
+    const occurredAt = new Date('2026-02-28T18:30:00.000Z'); // local 1 Mar 00:30 in Asia/Dhaka
+
+    await prisma.transaction.create({
+      data: {
+        userId: user.id,
+        type: 'INCOME',
+        amountMinor: 1n,
+        currency: 'BDT',
+        occurredAt,
+        accountId: account.id,
+        categoryId: category.id,
+      },
+    });
+
+    const stored = await prisma.$queryRaw<Array<{ storedText: string }>>`
+      SELECT "occurredAt"::text AS "storedText" FROM "transaction"
+    `;
+    // Server-rendered text in the session (UTC) zone — no client-side
+    // compensation possible.
+    expect(stored[0]?.storedText).toBe('2026-02-28 18:30:00+00');
+  });
+
   it('accepts the legal transfer and adjustment row shapes', async () => {
     const user = await createUser(prisma);
     const from = await createAccount(prisma, user.id, { name: 'From account' });

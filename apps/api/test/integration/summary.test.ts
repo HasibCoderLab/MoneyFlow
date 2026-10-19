@@ -58,20 +58,29 @@ beforeEach(async () => {
     await createAccount(prisma, other.userId, { name: 'Other cash', openingBalanceMinor: 0n })
   ).id;
 
+  // nameKeys are suffixed because sign-up clones the IT-5 default categories
+  // ("Salary"/"Groceries"/"Transport" included) and the database's
+  // `(userId, nameKey, type)` index is unique — same pattern as the
+  // transactions suite. Display names stay realistic; assertions below
+  // match on names, never on nameKeys.
   salaryId = (
-    await createCategory(prisma, user.userId, { name: 'Salary', nameKey: 'salary', type: 'INCOME' })
+    await createCategory(prisma, user.userId, {
+      name: 'Salary',
+      nameKey: `salary-${Date.now()}`,
+      type: 'INCOME',
+    })
   ).id;
   groceriesId = (
     await createCategory(prisma, user.userId, {
       name: 'Groceries',
-      nameKey: 'groceries',
+      nameKey: `groceries-${Date.now()}`,
       type: 'EXPENSE',
     })
   ).id;
   transportId = (
     await createCategory(prisma, user.userId, {
       name: 'Transport',
-      nameKey: 'transport',
+      nameKey: `transport-${Date.now()}`,
       type: 'EXPENSE',
     })
   ).id;
@@ -86,7 +95,7 @@ beforeEach(async () => {
   otherSalaryId = (
     await createCategory(prisma, other.userId, {
       name: 'Salary',
-      nameKey: 'salary',
+      nameKey: `salary-${Date.now()}`,
       type: 'INCOME',
     })
   ).id;
@@ -382,7 +391,10 @@ describe('GET /api/v1/dashboard', () => {
   });
 
   it('returns honest empty states for a user with no accounts or records', async () => {
-    const response = await getJson(periodQuery('/api/v1/dashboard'), other);
+    // A freshly signed-up user with nothing recorded — `other` already has
+    // an account from `beforeEach`, so it cannot represent "no accounts".
+    const empty = await signUpUser(testApp.baseUrl, 'summary-empty');
+    const response = await getJson(periodQuery('/api/v1/dashboard'), empty);
     expect(response.status).toBe(200);
     const body = response.body as DashboardBody;
 

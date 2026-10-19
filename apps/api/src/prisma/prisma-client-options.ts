@@ -16,6 +16,18 @@ export const UNCONFIGURED_DATABASE_URL =
  * the `@prisma/adapter-pg` driver adapter (ADR-0007) with deliberate pool
  * settings — tolerate Neon scale-to-zero cold starts and keep a modest
  * per-instance pool (docs/architecture/database-and-testing.md).
+ *
+ * `options: '-c TimeZone=UTC'` pins every session to UTC (verified locally,
+ * 2026-10-19). With the driver adapter, Prisma serializes `DateTime` values
+ * as timezone-naive text that PostgreSQL interprets in the *session*
+ * timezone; on a server whose default timezone is not UTC (e.g.
+ * `Asia/Dhaka`), every stored `occurredAt` was silently shifted by the
+ * session offset — a financial-correctness defect that UTC-based CI
+ * containers never exposed. The API's documented convention is exact UTC
+ * instants with explicit IANA local-day math in the query layer
+ * (accounting-rules.md §6); pinning the session keeps that invariant
+ * regardless of host or server defaults. Reads stay exact: with a UTC
+ * session the adapter's round-trip is symmetric.
  */
 export function buildPrismaClientOptions(connectionString: string | undefined): {
   adapter: PrismaPg;
@@ -25,6 +37,8 @@ export function buildPrismaClientOptions(connectionString: string | undefined): 
       connectionString: connectionString ?? UNCONFIGURED_DATABASE_URL,
       connectionTimeoutMillis: 15_000,
       max: 10,
+      // Startup parameter: applied to every pooled connection.
+      options: '-c TimeZone=UTC',
     }),
   };
 }

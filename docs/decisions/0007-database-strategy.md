@@ -86,3 +86,18 @@ approval (decision register DR-05):
   existing `infrastructure/docker/docker-compose.yml` PostgreSQL 16 setup.
   Required database acceptance checks run against real PostgreSQL, never
   mocks.
+
+## Status update (2026-10-19): UTC session pinning
+
+Running the IT-8 integration suite against a non-UTC local PostgreSQL
+(UTC+6) exposed a financial-correctness defect the UTC CI containers
+masked: the Prisma driver adapter serializes `DateTime` values as
+timezone-naive text that PostgreSQL interprets in the _session_ timezone,
+so every stored `occurredAt` was shifted by the server's default offset,
+while Prisma's symmetric read path hid the shift from round-trip
+assertions. Fix: `buildPrismaClientOptions` pins every pooled connection
+with `options: '-c TimeZone=UTC'` — the documented convention (exact UTC
+instants, explicit IANA local-day math in the query layer,
+`accounting-rules.md` §6) now holds regardless of host or server defaults.
+Covered by a new integration guard in `schema.test.ts` (session timezone
+plus a server-rendered stored instant) that runs on any host.

@@ -75,7 +75,16 @@ the functional unique index as one reviewed migration.
   `TEST_DATABASE_URL` placeholders.
 - All timestamps are stored as `timestamptz(3)` (`@db.Timestamptz(3)`),
   including the Better Auth tables, so every stored instant is an
-  unambiguous UTC point.
+  unambiguous UTC point. **Session pinning (2026-10-19):** the Prisma
+  driver adapter serializes `DateTime` values as timezone-naive text that
+  PostgreSQL interprets in the _session_ timezone, so on a server whose
+  default is not UTC every stored instant was silently shifted by the
+  session offset (found while running the IT-8 integration suite on a
+  UTC+6 machine; UTC-based CI never exposed it). `buildPrismaClientOptions`
+  now pins every pooled connection with `options: '-c TimeZone=UTC'`, and
+  the integration suite (`schema.test.ts`) asserts both the session
+  timezone and a server-rendered stored instant so any regression is
+  visible on any host.
 
 ## Testing strategy
 
