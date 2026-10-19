@@ -51,6 +51,8 @@ function mockDb() {
   const tx = {
     category: { create: vi.fn(), findFirst: vi.fn(), update: vi.fn(), delete: vi.fn() },
     transaction: { count: vi.fn() },
+    // IT-9: delete stays refused while a budget limit references the row.
+    budgetCategoryLimit: { count: vi.fn().mockResolvedValue(0) },
   };
   const top = {
     category: { findFirst: vi.fn(), findMany: vi.fn(), createMany: vi.fn() },
@@ -271,6 +273,17 @@ describe('CategoriesService.deleteCategory', () => {
       where: { userId: USER_ID, categoryId: CATEGORY_ID },
     });
     expect(tx.category.delete).toHaveBeenCalledWith({ where: { id: CATEGORY_ID } });
+  });
+
+  it('answers 409 while a budget limit references the category (IT-9)', async () => {
+    const { prisma, tx } = mockDb();
+    tx.category.findFirst.mockResolvedValue(categoryRow());
+    tx.transaction.count.mockResolvedValue(0);
+    tx.budgetCategoryLimit.count.mockResolvedValue(1);
+    const service = new CategoriesService(prisma);
+
+    await expect(service.deleteCategory(USER_ID, CATEGORY_ID)).rejects.toThrow(ConflictException);
+    expect(tx.category.delete).not.toHaveBeenCalled();
   });
 
   it('answers 409 while any transaction references the category', async () => {

@@ -156,9 +156,11 @@ describe('dashboard route (wired to GET /api/v1/dashboard)', () => {
         'Savings goal tracking is not available in this build yet — no goal figures are shown.',
       ),
     ).toBeTruthy();
+    // Budgets exist since IT-9 but live on their own page; the card points
+    // there honestly and shows no invented figures (IT-9).
     expect(
       screen.getByText(
-        'Budget tracking is not available in this build yet — no budget figures are shown.',
+        'Budgets live on their own page: create a monthly plan and track spending against it there. No budget figures are shown here.',
       ),
     ).toBeTruthy();
     expect(container.querySelector('.mf-progress')).toBeNull();

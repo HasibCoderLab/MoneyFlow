@@ -3,9 +3,9 @@
  * requirements.md §7.4: English (default) and Bangla.
  *
  * Scope: the shared chrome (app shell, landing navigation and footer) and
- * the wired dashboard, reports, and categories pages translate through
- * this dictionary, including their loading, signed-out, empty, and error
- * states. Accounts, transactions, budgets, goals, and settings still
+ * the wired dashboard, reports, categories, and budgets pages translate
+ * through this dictionary, including their loading, signed-out, empty,
+ * and error states. Accounts, transactions, goals, and settings still
  * render English only — a known, deliberate limitation, not an accident,
  * so the dictionaries below only contain keys whose Bangla text has
  * actually been reviewed.
@@ -70,13 +70,13 @@ const en = {
   'app.addTransaction': 'Add Transaction',
   'app.menu': 'Menu',
   'app.footerNote':
-    'Foundation build — dashboard, reports, and categories show your recorded data; accounts, transactions, budgets, and goals are still previews.',
+    'Foundation build — dashboard, reports, categories, and budgets show your recorded data; accounts, transactions, and goals are still previews.',
 
   // Sample-data banner — rendered only on pages that still use mock data
   'banner.ariaLabel': 'Preview data notice',
   'banner.title': 'UI preview — sample data.',
   'banner.body':
-    'The figures on this page are still fictional sample data; dashboard, reports, and categories already use your recorded data.',
+    'The figures on this page are still fictional sample data; dashboard, reports, categories, and budgets already use your recorded data.',
 
   // Transaction rows (recent activity + sample browser)
   'tx.type.income': 'Income',
@@ -146,9 +146,9 @@ const en = {
   'dashboard.goalsPlaceholder':
     'Savings goal tracking is not available in this build yet — no goal figures are shown.',
   'dashboard.budgetsTitle': 'Budgets',
-  'dashboard.budgetsSubtitle': 'Arrives with a later update',
+  'dashboard.budgetsSubtitle': 'Monthly spending plans',
   'dashboard.budgetsPlaceholder':
-    'Budget tracking is not available in this build yet — no budget figures are shown.',
+    'Budgets live on their own page: create a monthly plan and track spending against it there. No budget figures are shown here.',
 
   // Reports — wired to the IT-8 report endpoints
   'reports.title': 'Reports',
@@ -178,6 +178,57 @@ const en = {
   'reports.moreSeries': 'Daily, weekly, and monthly series are included above.',
   'reports.moreBudgets': 'Budget and savings-goal reporting arrives with later updates.',
   'reports.moreExports': 'CSV export and scheduled reports arrive with the export work.',
+
+  // Budgets — wired to the IT-9 budget endpoints
+  'budgets.title': 'Budgets',
+  'budgets.subtitle': 'Monthly spending plans — recorded expenses only, computed on the server.',
+  'budgets.newButton': 'New budget',
+  'budgets.editButton': 'Edit',
+  'budgets.deleteButton': 'Delete',
+  'budgets.pauseButton': 'Pause',
+  'budgets.resumeButton': 'Resume',
+  'budgets.archiveButton': 'Archive',
+  'budgets.unarchiveButton': 'Unarchive',
+  'budgets.paused': 'Paused',
+  'budgets.archived': 'Archived',
+  'budgets.pausedNote':
+    'This plan is paused: recorded spending is shown for reference, but it is not an active plan.',
+  'budgets.emptyTitle': 'No budgets yet.',
+  'budgets.emptyBody':
+    'Create a monthly budget to plan spending per category and see how much of it you have used.',
+  'budgets.noCategories':
+    'You need an active expense category first — create one on the Categories page.',
+  'budgets.totalRow': 'Total budget',
+  'budgets.spentOf': '{spent} of {limit} spent',
+  'budgets.remaining': '{amount} remaining',
+  'budgets.overBy': '{amount} over the limit',
+  'budgets.percentUsed': '{percent} used',
+  'budgets.formCreateTitle': 'New budget',
+  'budgets.formEditTitle': 'Edit budget',
+  'budgets.fieldName': 'Budget name',
+  'budgets.fieldMonth': 'Month',
+  'budgets.fieldTotal': 'Total limit (optional)',
+  'budgets.fieldCategory': 'Category',
+  'budgets.fieldLimit': 'Limit',
+  'budgets.selectCategory': 'Select a category',
+  'budgets.addLimit': 'Add category limit',
+  'budgets.removeLimit': 'Remove',
+  'budgets.save': 'Save budget',
+  'budgets.saving': 'Saving…',
+  'budgets.cancel': 'Cancel',
+  'budgets.deleteConfirmTitle': 'Delete this budget?',
+  'budgets.deleteConfirmBody':
+    '“{name}” and its category limits will be removed. Your recorded transactions are not affected.',
+  'budgets.deleteConfirmButton': 'Delete budget',
+  'budgets.errorNameRequired': 'Enter a budget name.',
+  'budgets.errorNameTooLong': 'The name must be at most 80 characters.',
+  'budgets.errorMonthRequired': 'Choose the month this budget applies to.',
+  'budgets.errorAmountFormat': 'Enter an amount like 1500 or 1500.50.',
+  'budgets.errorAmountPositive': 'The limit must be greater than zero.',
+  'budgets.errorNeedLimits': 'Set a total limit and/or at least one category limit.',
+  'budgets.errorTooManyLimits': 'A budget can track up to 50 categories.',
+  'budgets.errorDuplicateCategory': 'Each category can appear only once.',
+  'budgets.serverError': 'The budget could not be saved. Please try again.',
 
   // Categories — wired to `GET /api/v1/categories` (IT-5 API)
   'categories.title': 'Categories',
@@ -223,12 +274,12 @@ const bn: Record<TranslationKey, string> = {
   'app.addTransaction': 'লেনদেন যোগ করুন',
   'app.menu': 'মেনু',
   'app.footerNote':
-    'ফাউন্ডেশন বিল্ড — ড্যাশবোর্ড, রিপোর্ট ও ক্যাটাগরিতে আপনার রেকর্ড করা ডেটা দেখা যায়; অ্যাকাউন্ট, লেনদেন, বাজেট ও লক্ষ্য এখনো প্রিভিউ।',
+    'ফাউন্ডেশন বিল্ড — ড্যাশবোর্ড, রিপোর্ট, ক্যাটাগরি ও বাজেটে আপনার রেকর্ড করা ডেটা দেখা যায়; অ্যাকাউন্ট, লেনদেন ও লক্ষ্য এখনো প্রিভিউ।',
 
   'banner.ariaLabel': 'প্রিভিউ ডেটা নোটিশ',
   'banner.title': 'ইউআই প্রিভিউ — নমুনা ডেটা।',
   'banner.body':
-    'এই পেজের হিসাব এখনো কাল্পনিক নমুনা ডেটা; ড্যাশবোর্ড, রিপোর্ট ও ক্যাটাগরিতে ইতিমধ্যে আপনার রেকর্ড করা ডেটা ব্যবহৃত হয়।',
+    'এই পেজের হিসাব এখনো কাল্পনিক নমুনা ডেটা; ড্যাশবোর্ড, রিপোর্ট, ক্যাটাগরি ও বাজেটে ইতিমধ্যে আপনার রেকর্ড করা ডেটা ব্যবহৃত হয়।',
 
   'tx.type.income': 'আয়',
   'tx.type.expense': 'খরচ',
@@ -293,9 +344,9 @@ const bn: Record<TranslationKey, string> = {
   'dashboard.goalsPlaceholder':
     'এই বিল্ডে সঞ্চয় লক্ষ্য ট্র্যাকিং এখনো নেই — কোনো লক্ষ্যের হিসাব দেখানো হচ্ছে না।',
   'dashboard.budgetsTitle': 'বাজেট',
-  'dashboard.budgetsSubtitle': 'পরবর্তী আপডেটে আসছে',
+  'dashboard.budgetsSubtitle': 'মাসিক খরচের পরিকল্পনা',
   'dashboard.budgetsPlaceholder':
-    'এই বিল্ডে বাজেট ট্র্যাকিং এখনো নেই — কোনো বাজেটের হিসাব দেখানো হচ্ছে না।',
+    'বাজেট আলাদা পেজে রাখা আছে: সেখানে মাসিক পরিকল্পনা তৈরি করে খরচের সাথে মিলিয়ে দেখুন। এখানে কোনো বাজেটের হিসাব দেখানো হচ্ছে না।',
 
   'reports.title': 'রিপোর্ট',
   'reports.subtitle': 'চলতি মাসের রেকর্ড করা আয়, খরচ ও ক্যাটাগরিভিত্তিক মোট।',
@@ -324,6 +375,55 @@ const bn: Record<TranslationKey, string> = {
   'reports.moreSeries': 'দৈনিক, সাপ্তাহিক ও মাসিক সিরিজ উপরে দেখানো হয়েছে।',
   'reports.moreBudgets': 'বাজেট ও সঞ্চয় লক্ষ্যের রিপোর্ট পরবর্তী আপডেটে আসছে।',
   'reports.moreExports': 'CSV এক্সপোর্ট ও সময়সূচিভিত্তিক রিপোর্ট এক্সপোর্ট কাজের সাথে আসবে।',
+
+  'budgets.title': 'বাজেট',
+  'budgets.subtitle': 'মাসিক খরচের পরিকল্পনা — শুধু রেকর্ড করা খরচ, সার্ভারে হিসাব করা।',
+  'budgets.newButton': 'নতুন বাজেট',
+  'budgets.editButton': 'সম্পাদনা',
+  'budgets.deleteButton': 'মুছুন',
+  'budgets.pauseButton': 'সাময়িক বিরতি',
+  'budgets.resumeButton': 'চালু করুন',
+  'budgets.archiveButton': 'আর্কাইভ',
+  'budgets.unarchiveButton': 'আর্কাইভ থেকে ফেরান',
+  'budgets.paused': 'সাময়িক বিরতিতে',
+  'budgets.archived': 'আর্কাইভ করা',
+  'budgets.pausedNote':
+    'এই পরিকল্পনা সাময়িক বিরতিতে আছে: রেকর্ড করা খরচ কেবল তথ্যের জন্য দেখানো হয়, এটি সক্রিয় পরিকল্পনা নয়।',
+  'budgets.emptyTitle': 'এখনো কোনো বাজেট নেই।',
+  'budgets.emptyBody':
+    'মাসিক খরচের পরিকল্পনা তৈরি করুন — ক্যাটাগরি অনুযায়ী খরচ দেখে নিন কতটুকু ব্যবহার করেছেন।',
+  'budgets.noCategories': 'আগে একটি সক্রিয় খরচের ক্যাটাগরি দরকার — ক্যাটাগরি পেজে তৈরি করুন।',
+  'budgets.totalRow': 'মোট বাজেট',
+  'budgets.spentOf': '{limit} থেকে {spent} খরচ হয়েছে',
+  'budgets.remaining': '{amount} বাকি আছে',
+  'budgets.overBy': 'সীমার {amount} বেশি খরচ',
+  'budgets.percentUsed': '{percent} ব্যবহৃত',
+  'budgets.formCreateTitle': 'নতুন বাজেট',
+  'budgets.formEditTitle': 'বাজেট সম্পাদনা',
+  'budgets.fieldName': 'বাজেটের নাম',
+  'budgets.fieldMonth': 'মাস',
+  'budgets.fieldTotal': 'মোট সীমা (ঐচ্ছিক)',
+  'budgets.fieldCategory': 'ক্যাটাগরি',
+  'budgets.fieldLimit': 'সীমা',
+  'budgets.selectCategory': 'ক্যাটাগরি বাছুন',
+  'budgets.addLimit': 'ক্যাটাগরি সীমা যোগ করুন',
+  'budgets.removeLimit': 'সরান',
+  'budgets.save': 'বাজেট সংরক্ষণ',
+  'budgets.saving': 'সংরক্ষণ হচ্ছে…',
+  'budgets.cancel': 'বাতিল',
+  'budgets.deleteConfirmTitle': 'এই বাজেটটি মুছবেন?',
+  'budgets.deleteConfirmBody':
+    '“{name}” ও এর ক্যাটাগরি সীমাগুলো মুছে যাবে। আপনার রেকর্ড করা লেনদেনে কোনো প্রভাব পড়বে না।',
+  'budgets.deleteConfirmButton': 'বাজেট মুছুন',
+  'budgets.errorNameRequired': 'বাজেটের নাম লিখুন।',
+  'budgets.errorNameTooLong': 'নাম সর্বোচ্চ ৮০ অক্ষরের হতে পারে।',
+  'budgets.errorMonthRequired': 'যে মাসের জন্য বাজেট, সেটি বাছুন।',
+  'budgets.errorAmountFormat': '১৫০০ বা ১৫০০.৫০ আকারে পরিমাণ লিখুন।',
+  'budgets.errorAmountPositive': 'সীমা শূন্যের চেয়ে বেশি হতে হবে।',
+  'budgets.errorNeedLimits': 'মোট সীমা এবং/অথবা অন্তত একটি ক্যাটাগরি সীমা দিন।',
+  'budgets.errorTooManyLimits': 'একটি বাজেটে সর্বোচ্চ ৫০টি ক্যাটাগরি রাখা যায়।',
+  'budgets.errorDuplicateCategory': 'একই ক্যাটাগরি একাধিকবার দেওয়া যায় না।',
+  'budgets.serverError': 'বাজেট সংরক্ষণ করা যায়নি। আবার চেষ্টা করুন।',
 
   'categories.title': 'ক্যাটাগরি',
   'categories.subtitle': 'আপনার টাকা যে লেবেলে রেকর্ড হয় — আয়, খরচ ও আর্কাইভ করা ইতিহাস।',

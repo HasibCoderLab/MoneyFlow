@@ -1577,6 +1577,56 @@ a {
   color: var(--mf-warm-ink);
 }
 
+/* ── Budgets view (IT-9) ──────────────────────────────────────────────── */
+/* Standalone API-backed budget cards, per-category rows, actions, and the
+   limit form. Additive only; reuses --mf-* tokens for both themes. */
+
+.mf-budget-list {
+  display: grid;
+  gap: var(--mf-space-3);
+}
+
+.mf-budget-list .mf-budget-row {
+  padding: var(--mf-space-3);
+  border: 1px solid var(--mf-border);
+  border-radius: var(--mf-radius-md);
+  background: var(--mf-surface);
+}
+
+.mf-budget-row + .mf-budget-row {
+  margin-top: 0;
+}
+
+.mf-budget-row__category {
+  display: grid;
+  gap: var(--mf-space-2);
+}
+
+.mf-budget-row__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mf-space-2);
+  margin-top: var(--mf-space-3);
+}
+
+.mf-budget-form__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--mf-space-2);
+}
+
+.mf-budget-form__row .mf-field {
+  flex: 1 1 9rem;
+}
+
+.mf-dialog__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mf-space-2);
+  margin-top: var(--mf-space-3);
+}
+
 /* ── Placeholder pages ─────────────────────────────────────────────── */
 
 .mf-placeholder h1 {

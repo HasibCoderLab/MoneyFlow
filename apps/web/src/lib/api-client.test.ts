@@ -2,10 +2,15 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   ApiClientError,
+  createBudget,
+  deleteBudget,
+  fetchBudgets,
   fetchCategories,
   fetchDashboard,
   fetchReportCategories,
   fetchReportSummary,
+  moveBudget,
+  updateBudget,
 } from './api-client';
 
 const BASE_URL = 'http://localhost:4000';
@@ -146,5 +151,97 @@ describe('error handling', () => {
 
     expect(error.status).toBe(0);
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('budget client (IT-9)', () => {
+  it('fetches budgets with an explicit includeArchived flag and the session cookie', async () => {
+    process.env.NEXT_PUBLIC_API_URL = BASE_URL;
+    const fetchMock = mockFetchOnce({ body: [] });
+
+    await fetchBudgets();
+
+    expect(fetchMock).toHaveBeenCalledWith(`${BASE_URL}/api/v1/budgets?includeArchived=false`, {
+      credentials: 'include',
+      headers: { accept: 'application/json' },
+    });
+
+    await fetchBudgets(true);
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      `${BASE_URL}/api/v1/budgets?includeArchived=true`,
+      expect.objectContaining({ credentials: 'include' }),
+    );
+  });
+
+  it('POSTs a create body as JSON and returns the created budget', async () => {
+    process.env.NEXT_PUBLIC_API_URL = BASE_URL;
+    const fetchMock = mockFetchOnce({ status: 201, body: { id: 'b1' } });
+
+    const body = await createBudget({
+      name: 'October plan',
+      startDate: '2026-10-01',
+      totalLimit: '8000',
+      categoryLimits: [{ categoryId: 'c1', limit: '5000' }],
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${BASE_URL}/api/v1/budgets`,
+      expect.objectContaining({
+        method: 'POST',
+        credentials: 'include',
+        body: JSON.stringify({
+          name: 'October plan',
+          startDate: '2026-10-01',
+          totalLimit: '8000',
+          categoryLimits: [{ categoryId: 'c1', limit: '5000' }],
+        }),
+      }),
+    );
+    expect(body).toEqual({ id: 'b1' });
+  });
+
+  it('PATCHes edits, POSTs status moves, and DELETEs with the right verbs', async () => {
+    process.env.NEXT_PUBLIC_API_URL = BASE_URL;
+    const fetchMock = mockFetchOnce({ body: { id: 'b1' } });
+
+    await updateBudget('b1', { name: 'Renamed', totalLimit: null });
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      `${BASE_URL}/api/v1/budgets/b1`,
+      expect.objectContaining({ method: 'PATCH' }),
+    );
+
+    await moveBudget('b1', 'pause');
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      `${BASE_URL}/api/v1/budgets/b1/pause`,
+      expect.objectContaining({ method: 'POST' }),
+    );
+
+    await deleteBudget('b1');
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      `${BASE_URL}/api/v1/budgets/b1`,
+      expect.objectContaining({ method: 'DELETE' }),
+    );
+  });
+
+  it('surfaces the server message with its status on failure', async () => {
+    process.env.NEXT_PUBLIC_API_URL = BASE_URL;
+    mockFetchOnce({
+      ok: false,
+      status: 409,
+      body: {
+        message: 'Another active budget already limits one of these categories for this month.',
+      },
+    });
+
+    const error = await catchApiError(
+      createBudget({
+        name: 'X',
+        startDate: '2026-10-01',
+        categoryLimits: [{ categoryId: 'c1', limit: '1' }],
+      }),
+    );
+
+    expect(error.status).toBe(409);
+    expect(error.message).toContain('already limits');
   });
 });

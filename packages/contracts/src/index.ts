@@ -340,3 +340,95 @@ export interface ReportCategoriesResponse {
   totalExpenseMinor: string;
   categories: CategorySpendSummary[];
 }
+
+// ── IT-9: budgets ──────────────────────────────────────────────────────────
+// Budgets are monthly spending plans per the accepted model
+// (requirements.md §5.9/§9.1, domain-model.md "Budget and
+// BudgetCategoryLimit", accounting-rules.md §1.1/§6/§7/§9). Spent figures
+// count qualifying EXPENSE transactions in the budget's local-month period
+// only — transfers, income, and adjustments never count; refunds subtract
+// when the REFUND type exists. Every money figure is a minor-unit integer
+// string (§11.1); remaining amounts are never clamped, so an overspend is
+// shown truthfully as a negative remainder and a percentage above 100%.
+
+/** Budget period granularity; only monthly exists in the MVP (V1: weekly/yearly). */
+export type BudgetPeriod = 'MONTHLY';
+
+/** Budget lifecycle (domain-model.md). Paused budgets are on hold, archived budgets are history. */
+export type BudgetStatus = 'ACTIVE' | 'PAUSED' | 'ARCHIVED';
+
+/**
+ * Utilization figures for one limit (a budget's total or a category limit).
+ * All money is minor-unit strings; percentages are display-only, half-up to
+ * one decimal (§7). `percentTimes10` is a string because it is a bigint on
+ * the server — it can exceed JSON's safe integer range only in theory, but
+ * the contract keeps every derived number exact.
+ */
+export interface BudgetFigures {
+  /** Planned limit in minor units (strictly > 0). */
+  limitMinor: string;
+  /** Qualifying recorded spending in the budget period (§9.4 "Budget spent"). */
+  spentMinor: string;
+  /** `limitMinor - spentMinor`; negative means over budget — never clamped. */
+  remainingMinor: string;
+  /** Percentage ×10 ("267" = 26.7%), half-up; null only when the limit is zero. */
+  percentTimes10: string | null;
+}
+
+/** One per-category limit inside a budget, with its period utilization. */
+export interface BudgetCategoryLimitResponse {
+  id: string;
+  categoryId: string;
+  /** Denormalized for display; archived categories stay readable (§5.5). */
+  categoryName: string;
+  /** `#RRGGBB` hint or null; the name always carries the meaning (§5.5). */
+  categoryColor: string | null;
+  figures: BudgetFigures;
+}
+
+/** A monthly budget with its current-period utilization (requirements.md §5.9). */
+export interface BudgetResponse {
+  id: string;
+  name: string;
+  period: BudgetPeriod;
+  /** Local date `YYYY-MM-DD`; always the first day of a month (§6). */
+  startDate: string;
+  status: BudgetStatus;
+  /**
+   * The optional total budget (§5.9 "set a total budget and optionally
+   * category budgets"). `null` when the user never set one — the UI must
+   * not render this as a zero budget.
+   */
+  totalFigures: BudgetFigures | null;
+  /** Deterministic order: largest limit first, then categoryId ascending. */
+  categoryLimits: BudgetCategoryLimitResponse[];
+  /** Single-currency MVP (DR-08/ADR-0003); budgets never convert. */
+  currency: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** One category limit in create/update requests; `limit` is a canonical decimal string. */
+export interface BudgetCategoryLimitInput {
+  categoryId: string;
+  limit: string;
+}
+
+/** `POST /api/v1/budgets` body (requirements.md §5.9/§8.6). */
+export interface CreateBudgetRequest {
+  name: string;
+  /** Local month `YYYY-MM` (or a date whose day is 1); resolved server-side. */
+  startDate: string;
+  /** Optional total budget; omit for category limits only. */
+  totalLimit?: string;
+  categoryLimits: BudgetCategoryLimitInput[];
+}
+
+/** `PATCH /api/v1/budgets/:id` body; all fields optional, `categoryLimits` replaces the set. */
+export interface UpdateBudgetRequest {
+  name?: string;
+  startDate?: string;
+  /** `null` clears the total budget. */
+  totalLimit?: string | null;
+  categoryLimits?: BudgetCategoryLimitInput[];
+}

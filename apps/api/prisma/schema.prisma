@@ -51,6 +51,7 @@ model User {
   accounts      Account[]
   categories    Category[]
   transactions  Transaction[]
+  budgets       Budget[]
 
   @@unique([email])
   @@map("user")
@@ -157,19 +158,20 @@ enum CategoryStatus {
 }
 
 model Category {
-  id           String         @id @default(uuid()) @db.Uuid
+  id           String                @id @default(uuid()) @db.Uuid
   userId       String
-  name         String         @db.VarChar(60)
+  name         String                @db.VarChar(60)
   // Lowercased/trimmed name for case-insensitive uniqueness; maintained by
   // the service layer (IT-5).
-  nameKey      String         @db.VarChar(60)
+  nameKey      String                @db.VarChar(60)
   type         CategoryType
   color        String?
-  status       CategoryStatus @default(ACTIVE)
-  createdAt    DateTime       @default(now()) @db.Timestamptz(3)
-  updatedAt    DateTime       @updatedAt @db.Timestamptz(3)
-  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status       CategoryStatus        @default(ACTIVE)
+  createdAt    DateTime              @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime              @updatedAt @db.Timestamptz(3)
+  user         User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
   transactions Transaction[]
+  budgetLimits BudgetCategoryLimit[]
 
   @@unique([userId, nameKey, type])
   @@map("category")
@@ -214,4 +216,63 @@ model Transaction {
   @@index([userId, categoryId, occurredAt])
   @@index([userId, type, occurredAt])
   @@map("transaction")
+}
+
+// ── Budgets (IT-9, requirements.md §5.9/§9.1, domain-model.md) ─────────────
+//
+// Monthly spending plans: one optional total limit plus 1–50 per-category
+// limits (service-validated), utilization derived from qualifying expense
+// transactions in the budget's local-month period (accounting-rules.md §9
+// "Budget spent"). `startDate` is always the first day of a month (raw SQL
+// CHECK in the migration, mirroring the IT-2 hand-added constraints);
+// spending figures are never stored — they are computed on read.
+
+enum BudgetPeriod {
+  // Weekly/yearly periods are V1 (domain-model.md).
+  MONTHLY
+}
+
+enum BudgetStatus {
+  ACTIVE
+  PAUSED
+  ARCHIVED
+}
+
+model Budget {
+  id              String                @id @default(uuid()) @db.Uuid
+  userId          String
+  name            String                @db.VarChar(80)
+  period          BudgetPeriod          @default(MONTHLY)
+  // First day of the monthly period (local date, user timezone; §6).
+  startDate       DateTime              @db.Date
+  // Optional total budget in minor units; null = category limits only.
+  totalLimitMinor BigInt?
+  status          BudgetStatus          @default(ACTIVE)
+  createdAt       DateTime              @default(now()) @db.Timestamptz(3)
+  updatedAt       DateTime              @updatedAt @db.Timestamptz(3)
+  user            User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  categoryLimits  BudgetCategoryLimit[]
+
+  @@index([userId, status])
+  @@index([userId, startDate])
+  @@map("budget")
+}
+
+model BudgetCategoryLimit {
+  id         String   @id @default(uuid()) @db.Uuid
+  budgetId   String   @db.Uuid
+  // NO ACTION (not CASCADE): deleting a category that a budget limit points
+  // at must fail at the database level so a plan is never silently broken —
+  // same history-preserving rule as Transaction.category (IT-5/IT-9).
+  categoryId String   @db.Uuid
+  // Strictly > 0 (raw SQL CHECK in the migration).
+  limitMinor BigInt
+  createdAt  DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt  DateTime @updatedAt @db.Timestamptz(3)
+  budget     Budget   @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: NoAction)
+
+  @@unique([budgetId, categoryId])
+  @@index([categoryId])
+  @@map("budgetCategoryLimit")
 }

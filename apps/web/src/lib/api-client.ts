@@ -1,9 +1,12 @@
 import type {
+  BudgetResponse,
   CategoryResponse,
+  CreateBudgetRequest,
   DashboardResponse,
   ReportCategoriesResponse,
   ReportGranularity,
   ReportSummaryResponse,
+  UpdateBudgetRequest,
 } from '@moneyflow/contracts';
 
 import { getApiBaseUrl } from './auth-client';
@@ -126,4 +129,56 @@ export function fetchReportCategories(query: SummaryQuery = {}): Promise<ReportC
 export function fetchCategories(includeArchived = true): Promise<CategoryResponse[]> {
   const flag = includeArchived ? 'true' : 'false';
   return getJson<CategoryResponse[]>(`/api/v1/categories?includeArchived=${flag}`);
+}
+
+/** Body helper shared by the budget mutations. */
+async function sendJson<T>(path: string, method: string, body: unknown): Promise<T> {
+  const baseUrl = getApiBaseUrl();
+  if (!baseUrl) {
+    throw new ApiClientError(UNAVAILABLE_MESSAGE, 0);
+  }
+  let response: Response;
+  try {
+    response = await fetch(`${baseUrl}${path}`, {
+      method,
+      credentials: 'include',
+      headers: { accept: 'application/json', 'content-type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+  } catch {
+    throw new ApiClientError(UNAVAILABLE_MESSAGE, 0);
+  }
+  const parsed: unknown = await response.json().catch(() => null);
+  if (!response.ok) {
+    throw new ApiClientError(readMessage(parsed), response.status);
+  }
+  return parsed as T;
+}
+
+/** `GET /api/v1/budgets` — the caller's budgets with utilization (IT-9). */
+export function fetchBudgets(includeArchived = false): Promise<BudgetResponse[]> {
+  return getJson<BudgetResponse[]>(`/api/v1/budgets?includeArchived=${includeArchived}`);
+}
+
+/** `POST /api/v1/budgets` — creates a monthly budget. */
+export function createBudget(body: CreateBudgetRequest): Promise<BudgetResponse> {
+  return sendJson<BudgetResponse>('/api/v1/budgets', 'POST', body);
+}
+
+/** `PATCH /api/v1/budgets/:id` — renames, re-anchors, replaces the limit set. */
+export function updateBudget(id: string, body: UpdateBudgetRequest): Promise<BudgetResponse> {
+  return sendJson<BudgetResponse>(`/api/v1/budgets/${id}`, 'PATCH', body);
+}
+
+/** `POST /api/v1/budgets/:id/{pause,resume,archive,unarchive}` — status moves. */
+export function moveBudget(
+  id: string,
+  action: 'pause' | 'resume' | 'archive' | 'unarchive',
+): Promise<BudgetResponse> {
+  return sendJson<BudgetResponse>(`/api/v1/budgets/${id}/${action}`, 'POST', {});
+}
+
+/** `DELETE /api/v1/budgets/:id` — hard delete (limits cascade). */
+export function deleteBudget(id: string): Promise<void> {
+  return sendJson<void>(`/api/v1/budgets/${id}`, 'DELETE', {});
 }

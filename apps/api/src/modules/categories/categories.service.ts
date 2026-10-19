@@ -17,6 +17,9 @@ const CATEGORY_NAME_CONFLICT_INDEX = 'category_userId_nameKey_type_key';
 const CATEGORY_IN_USE_MESSAGE =
   'This category is used by existing transactions. Archive it instead.';
 
+const BUDGET_CATEGORY_IN_USE_MESSAGE =
+  'This category is used by a budget limit. Remove the limit (or delete the budget) instead.';
+
 /**
  * Categories domain service (IT-5, requirements.md §5.5, domain-model.md
  * "Category").
@@ -116,11 +119,12 @@ export class CategoriesService {
   }
 
   /**
-   * Deletes the category only while no transaction references it; a
-   * referenced category answers 409 (`CATEGORY_IN_USE`) and the caller is
-   * expected to archive instead. The FK (NO ACTION) is the race referee:
-   * a transaction inserted between the count and the delete surfaces the
-   * same 409, never a 500.
+   * Deletes the category only while no transaction or budget limit
+   * references it; a referenced category answers 409 (`CATEGORY_IN_USE`)
+   * and the caller is expected to archive instead. The FKs (NO ACTION on
+   * both `transaction.categoryId` and `budgetCategoryLimit.categoryId`) are
+   * the race referees: a row inserted between the counts and the delete
+   * surfaces the same 409, never a 500.
    */
   public async deleteCategory(userId: string, rawId: string): Promise<void> {
     const id = assertUuid(rawId, 'Category');
@@ -132,6 +136,10 @@ export class CategoriesService {
       const referenced = await tx.transaction.count({ where: { userId, categoryId: id } });
       if (referenced > 0) {
         throw new ConflictException(CATEGORY_IN_USE_MESSAGE);
+      }
+      const budgetReferences = await tx.budgetCategoryLimit.count({ where: { categoryId: id } });
+      if (budgetReferences > 0) {
+        throw new ConflictException(BUDGET_CATEGORY_IN_USE_MESSAGE);
       }
       try {
         await tx.category.delete({ where: { id } });

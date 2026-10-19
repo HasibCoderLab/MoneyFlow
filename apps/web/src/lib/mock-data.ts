@@ -11,9 +11,6 @@
 // marketing material (AGENTS.md rule 12: nothing fake presented as real).
 // ──────────────────────────────────────────────────────────────────────────────
 
-/** Fixed sample period label — deterministic, no date maths. */
-export const MOCK_PERIOD_LABEL = 'October 2026';
-
 /** One-line disclaimer rendered next to every preview figure. */
 export const MOCK_DATA_DISCLAIMER =
   'All amounts, names, and dates below are fictional sample data shown for UI review only.';
@@ -127,58 +124,9 @@ export const MOCK_SAVINGS_GOALS: readonly MockSavingsGoal[] = [
   },
 ];
 
-export type MockBudget = {
-  readonly id: string;
-  readonly category: string;
-  readonly spent: string;
-  readonly limit: string;
-  /** Literal utilisation percentage — not calculated. */
-  readonly percentUsed: number;
-  /** Literal remaining amount — not calculated. */
-  readonly remaining: string;
-  /** Neutral status copy; meaning is text, never color alone. */
-  readonly statusLabel: string;
-};
-
-/** Budget snapshot (sample). */
-export const MOCK_BUDGETS: readonly MockBudget[] = [
-  {
-    id: 'mock-budget-1',
-    category: 'Groceries',
-    spent: '3,200',
-    limit: '5,000',
-    percentUsed: 64,
-    remaining: '1,800',
-    statusLabel: 'Within plan',
-  },
-  {
-    id: 'mock-budget-2',
-    category: 'Food & dining',
-    spent: '2,400',
-    limit: '2,500',
-    percentUsed: 96,
-    remaining: '100',
-    statusLabel: 'Close to limit',
-  },
-  {
-    id: 'mock-budget-3',
-    category: 'Transport',
-    spent: '1,500',
-    limit: '2,000',
-    percentUsed: 75,
-    remaining: '500',
-    statusLabel: 'Within plan',
-  },
-  {
-    id: 'mock-budget-4',
-    category: 'Entertainment',
-    spent: '850',
-    limit: '1,000',
-    percentUsed: 85,
-    remaining: '150',
-    statusLabel: 'Close to limit',
-  },
-];
+// Budget sample data was removed with IT-9: the budgets page renders real
+// API data (list, utilization, create/edit/delete) like dashboard,
+// reports, and categories.
 
 export type MockAccount = {
   readonly id: string;

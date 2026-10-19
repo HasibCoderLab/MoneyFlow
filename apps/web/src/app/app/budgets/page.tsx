@@ -1,69 +1,37 @@
 import type { Metadata } from 'next';
 
 import { AppShell } from '@/components/app-shell';
-import { Card } from '@/components/card';
-import { ProgressBar } from '@/components/progress-bar';
-import { Button } from '@/components/ui/button';
-import { formatBdt } from '@/lib/format';
-import { MOCK_BUDGETS, MOCK_PERIOD_LABEL } from '@/lib/mock-data';
+import { BudgetsView } from '@/components/budgets-view';
+import { I18nText } from '@/components/i18n-text';
 
 export const metadata: Metadata = {
-  title: 'Budgets — MoneyFlow UI preview',
+  title: 'Budgets — MoneyFlow',
+  description: 'Monthly spending plans with server-computed usage — recorded expenses only.',
 };
 
 /**
- * Budgets route (requirements.md §4.3, §5.9). Layout preview only: sample
- * monthly category budgets with spent, remaining, and utilisation figures.
- * Every figure is a hand-written literal — the UI derives nothing. Real
- * budget rules (expense-only spending, period boundaries, overspend copy)
- * are computed server-side once the budgets API lands (IT-9). Creation and
- * editing stay disabled until then.
+ * Budgets route (requirements.md §4.3, §5.9). The view renders the IT-9
+ * budget endpoints: monthly plans with per-category and optional total
+ * limits, utilization computed server-side from qualifying expense
+ * transactions in the budget's local month (accounting-rules.md §1/§6/§9).
+ * Overspend is shown truthfully with neutral copy; create/edit/delete and
+ * pause/archive all talk to the API — no figure is derived in the browser.
  */
 export default function BudgetsPage() {
   return (
     <AppShell>
       <header className="mf-page-header">
         <div>
-          <h1>Budgets</h1>
+          <h1>
+            <I18nText k="budgets.title" />
+          </h1>
           <p className="mf-page-header__subtitle">
-            Monthly spending plan per category — sample budgets for {MOCK_PERIOD_LABEL}.
+            <I18nText k="budgets.subtitle" />
           </p>
         </div>
-        <Button disabled aria-disabled="true" title="Budget creation connects with IT-9">
-          New budget
-        </Button>
       </header>
 
-      <Card title="October budgets" subtitle="Sample limits">
-        {MOCK_BUDGETS.map((budget) => {
-          const attention = budget.statusLabel === 'Close to limit';
-          return (
-            <div key={budget.id} className="mf-budget-row">
-              <p className="mf-budget-row__title">
-                <span>{budget.category}</span>
-                <span
-                  className={`mf-budget-row__status${
-                    attention ? ' mf-budget-row__status--attention' : ''
-                  }`}
-                >
-                  {budget.statusLabel}
-                </span>
-              </p>
-              <ProgressBar
-                label={`${budget.category} budget usage`}
-                percent={budget.percentUsed}
-                valueText={`${formatBdt(budget.spent)} of ${formatBdt(budget.limit)} limit`}
-                emphasis={attention ? 'attention' : 'normal'}
-              />
-              <p className="mf-budget-row__remaining">{formatBdt(budget.remaining)} remaining</p>
-            </div>
-          );
-        })}
-        <p className="mf-chart-note">
-          Only recorded expenses count toward a budget — transfers between your own accounts never
-          do. Figures above are samples; real utilisation is computed server-side.
-        </p>
-      </Card>
+      <BudgetsView />
     </AppShell>
   );
 }

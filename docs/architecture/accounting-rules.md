@@ -246,6 +246,27 @@ are half-open `[start, end)` in the resolved IANA timezone (default
 the same `deriveAccountBalance` effects matrix used by Accounts, over active
 accounts only.
 
+**Implementation note (IT-9, 2026-10-20):** budgets are realized by
+`apps/api/src/modules/budgets/` behind `GET/POST /api/v1/budgets`,
+`PATCH/DELETE /api/v1/budgets/:id`, and
+`POST /api/v1/budgets/:id/{pause,resume,archive,unarchive}`. Per-category
+utilization is the `Budget spent` above: `EXPENSE` transactions with a
+category matching the limit, inside the half-open local-month boundaries
+derived from `Budget.startDate`, summed by PostgreSQL as exact
+`SUM(...)::text` bigints. The optional total compares every qualifying
+expense in the month, regardless of category. Remaining amounts are never
+clamped: overspend returns a negative remainder and a percentage above 100,
+and only the progress bar caps visually. Amounts above `Number.MAX_SAFE_INTEGER`
+stay exact because they never pass through a JSON number. Spending figures
+are computed only from `EXPENSE` rows, so transfers, income, and adjustments
+cannot contribute; `REFUND` handling stays deferred until that type is
+persisted (§1.1). `PAUSED` and `ARCHIVED` budgets are still listed
+(`?includeArchived=true`) with their recorded spending for reference, but
+their limits do not participate in the one-ACTIVE-limit-per-category-per-month
+rule, which is enforced on create, update, resume, and unarchive.
+Timezones follow the same limitation as §9: the user preference arrives in
+IT-11, so calculations use the documented `Asia/Dhaka` default.
+
 ## 10. Edge cases that must be tested
 
 - Zero, 1 minor unit (0.01), maximum-allowed, and over-max amounts; extra

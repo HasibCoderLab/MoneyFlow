@@ -5,6 +5,7 @@ import { ApiExceptionFilter } from './common/filters/api-exception.filter';
 import { AuthModule } from './modules/auth/auth.module';
 import { HealthModule } from './modules/health/health.module';
 import { AccountsModule } from './modules/accounts/accounts.module';
+import { BudgetsModule } from './modules/budgets/budgets.module';
 import { CategoriesModule } from './modules/categories/categories.module';
 import { SummaryModule } from './modules/summary/summary.module';
 import { TransactionsModule } from './modules/transactions/transactions.module';
@@ -29,6 +30,7 @@ import { TransactionsModule } from './modules/transactions/transactions.module';
     CategoriesModule,
     TransactionsModule,
     SummaryModule,
+    BudgetsModule,
   ],
   providers: [
     {

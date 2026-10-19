@@ -63,7 +63,9 @@ here), self-managed PostgreSQL (ops burden).
 Later schema changes follow expand → migrate → contract for anything risky.
 The initial migration landed with IT-2 (2026-10-16): generated with
 `prisma migrate diff`, then hand-extended with the CHECK constraints and
-the functional unique index as one reviewed migration.
+the functional unique index as one reviewed migration. IT-9 added
+`20261019173444_add_budgets` (`budget`, `budgetCategoryLimit`, the
+month-anchor CHECK, and the positive-limit CHECK).
 
 ## Local development setup (implemented by IT-2)
 
@@ -107,9 +109,10 @@ the functional unique index as one reviewed migration.
 - Setup: `prisma migrate deploy` on an empty test database; truncate between
   suites; deterministic synthetic fixtures only (§12.4).
 - Cover: transaction create/edit/delete consistency, transfer atomicity,
-  goal contribution/reversal, idempotent replays, uniqueness constraints,
-  CHECK constraints, pagination/filtering, and **cross-user isolation** for
-  every resource and nested resource.
+  goal contribution/reversal, budget utilization (month boundaries,
+  expense-only counting, status moves, overlap rule), idempotent replays,
+  uniqueness constraints, CHECK constraints, pagination/filtering, and
+  **cross-user isolation** for every resource and nested resource.
 - Concurrency smoke test: two simultaneous creates do not corrupt aggregates.
 
 ### End-to-end tests (later phase)

@@ -236,13 +236,29 @@ same pattern; all depend on the approved accounting rules.
   empty / error+retry states (en + bn). The fake hero sparkline was removed,
   goals/budgets stay honest figure-free placeholders until IT-9/IT-10, and
   the sample-data banner now renders only on the pages that still use mock
-  data (accounts, transactions, budgets, goals). Categories wiring follows
+  data (accounts, transactions, goals — budgets were wired in IT-9). Categories wiring follows
   decision D5: real taxonomy via the IT-5 list API (`includeArchived=true`),
   read-only, creation disabled with accurate copy. Database-free gates pass
   locally; the integration suite runs in the CI PostgreSQL 16 job.
 - **IT-9 Budgets:** monthly budget CRUD, per-category limits, spent/
   remaining/percent per accounting rules, neutral overspend copy, edit/
   archive behavior, boundary tests (month edges, timezone).
+  **Status (2026-10-20): Implemented** — `apps/api/src/modules/budgets/`
+  (schema `Budget`/`BudgetCategoryLimit` + migration
+  `20261019173444_add_budgets`, DTOs, service, controller): create/list/
+  update/delete plus pause/resume/archive/unarchive moves; optional total and
+  1–50 ACTIVE expense-category limits, one ACTIVE limit per category per
+  month; utilization computed per request from `EXPENSE` transactions in the
+  half-open local-month boundaries (default `Asia/Dhaka` until IT-11), summed
+  by PostgreSQL as exact `::text` bigints; remaining amounts never clamped.
+  Shared contracts + unit tests (DTO, service, percentage boundaries,
+  > 2^53-safe amounts) + a real-PostgreSQL integration suite (categorization,
+  > transfers/income excluded, month edges, isolation, overlap rule, status
+  > transitions). Web wiring: the budgets page lists server-computed figures,
+  > shows overspend truthfully (bar capped, text exact), and provides create/
+  > edit (local validation + server rejection), delete confirmation, and
+  > pause/archive actions in English and Bangla; the sample-data banner no
+  > longer renders there.
 - **IT-10 Goals + contributions:** goal CRUD with statuses, contribution
   add/reverse, progress/overfunding rules (ADR-0005), deadline display,
   emergency-fund template, double-counting tests (balances, budgets, income
