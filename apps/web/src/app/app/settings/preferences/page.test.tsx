@@ -7,13 +7,16 @@ vi.mock('next/navigation', () => ({
 
 import PreferencesPage from './page';
 
-describe('preferences route (preview, nothing saved)', () => {
+describe('preferences route (preview, nothing saved server-side)', () => {
   it('renders the preferences heading and points at the single working theme control', () => {
     render(<PreferencesPage />);
     expect(screen.getByRole('heading', { level: 1, name: 'Preferences' })).toBeTruthy();
     expect(screen.getByText(/theme switches from the top bar/i)).toBeTruthy();
-    // The header owns the only theme control; a duplicate here could show a stale choice.
+    // The header owns the single theme and language control; duplicates here
+    // could show a stale choice.
     expect(screen.getAllByRole('button', { name: /^Theme:/ })).toHaveLength(1);
+    expect(screen.getAllByRole('button', { name: /^Language:/ })).toHaveLength(1);
+    expect(screen.getAllByText(/^works locally$/i).length).toBeGreaterThanOrEqual(2);
   });
 
   it('lists every planned preference with its real decision status', () => {
@@ -32,9 +35,9 @@ describe('preferences route (preview, nothing saved)', () => {
     expect(screen.getAllByText(/awaiting decision/i).length).toBeGreaterThanOrEqual(1);
   });
 
-  it('states that nothing on the page is stored, and offers no fake save', () => {
+  it('states that nothing is saved to an account, and offers no fake save', () => {
     render(<PreferencesPage />);
-    expect(screen.getByText(/nothing on this page is stored/i)).toBeTruthy();
+    expect(screen.getByText(/nothing here is saved to an account yet/i)).toBeTruthy();
     expect(screen.getByText(/no preference is saved to an account yet/i)).toBeTruthy();
     expect(screen.queryByRole('button', { name: /save/i })).toBeNull();
   });

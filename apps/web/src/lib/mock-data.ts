@@ -18,19 +18,6 @@ export const MOCK_PERIOD_LABEL = 'October 2026';
 export const MOCK_DATA_DISCLAIMER =
   'All amounts, names, and dates below are fictional sample data shown for UI review only.';
 
-export type MockSummary = {
-  readonly totalBalance: string;
-  readonly monthlyIncome: string;
-  readonly monthlySpent: string;
-};
-
-/** Headline numbers for the dashboard summary cards (sample). */
-export const MOCK_SUMMARY: MockSummary = {
-  totalBalance: '12,450',
-  monthlyIncome: '18,000',
-  monthlySpent: '9,750',
-};
-
 export type MockTransaction = {
   readonly id: string;
   readonly description: string;
@@ -95,23 +82,6 @@ export const MOCK_RECENT_TRANSACTIONS: readonly MockTransaction[] = [
     amount: '1,200',
     dateLabel: '7 Oct 2026',
   },
-];
-
-export type MockCategorySpend = {
-  readonly name: string;
-  readonly amount: string;
-  /** Literal share of the sample total, hand-written — never derived. */
-  readonly percentOfTotal: number;
-};
-
-/** Spending-by-category breakdown (sample). Amounts and shares are literals. */
-export const MOCK_SPENDING_BY_CATEGORY: readonly MockCategorySpend[] = [
-  { name: 'Groceries', amount: '3,200', percentOfTotal: 33 },
-  { name: 'Food & dining', amount: '2,400', percentOfTotal: 25 },
-  { name: 'Transport', amount: '1,500', percentOfTotal: 15 },
-  { name: 'Utilities', amount: '1,200', percentOfTotal: 12 },
-  { name: 'Entertainment', amount: '850', percentOfTotal: 9 },
-  { name: 'Other', amount: '600', percentOfTotal: 6 },
 ];
 
 export type MockSavingsGoal = {
@@ -260,36 +230,4 @@ export const MOCK_ACCOUNTS: readonly MockAccount[] = [
     openingBalance: '10,000',
     status: 'archived',
   },
-];
-
-export type MockCategory = {
-  readonly id: string;
-  readonly name: string;
-  readonly kind: 'income' | 'expense';
-  /** Sample swatch color — decorative only; meaning is always the name text. */
-  readonly color: string;
-  readonly status: 'active' | 'archived';
-};
-
-/**
- * Default + custom categories (sample, requirements.md §5.5). Colors are
- * decoration; the name carries the meaning. Deletion safeguards and
- * reassignment arrive with the categories API (IT-5); the archived row
- * shows history stays readable.
- */
-export const MOCK_CATEGORIES: readonly MockCategory[] = [
-  { id: 'mock-cat-1', name: 'Salary', kind: 'income', color: '#15803d', status: 'active' },
-  { id: 'mock-cat-2', name: 'Freelance', kind: 'income', color: '#0369a1', status: 'active' },
-  { id: 'mock-cat-3', name: 'Gifts', kind: 'income', color: '#7c3aed', status: 'active' },
-  { id: 'mock-cat-4', name: 'Groceries', kind: 'expense', color: '#2563eb', status: 'active' },
-  { id: 'mock-cat-5', name: 'Transport', kind: 'expense', color: '#06b6d4', status: 'active' },
-  {
-    id: 'mock-cat-6',
-    name: 'Food & dining',
-    kind: 'expense',
-    color: '#f59e0b',
-    status: 'active',
-  },
-  { id: 'mock-cat-7', name: 'Utilities', kind: 'expense', color: '#be123c', status: 'active' },
-  { id: 'mock-cat-8', name: 'Old hobby', kind: 'expense', color: '#64748b', status: 'archived' },
 ];

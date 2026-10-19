@@ -28,7 +28,9 @@ describe('site footer', () => {
   it('carries the honesty disclaimers without invented claims', () => {
     render(<SiteFooter />);
     expect(screen.getByText(/nothing here is financial advice/i)).toBeTruthy();
-    expect(screen.getByText(/no figures in the preview are real/i)).toBeTruthy();
+    // Wired app pages now show real recorded data, so the footer must not
+    // claim that every figure in the preview is unreal (IT-8).
+    expect(screen.queryByText(/no figures in the preview are real/i)).toBeNull();
     expect(screen.queryByText(/testimonial|users|\d+%/i)).toBeNull();
   });
 

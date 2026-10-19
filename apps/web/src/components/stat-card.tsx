@@ -1,11 +1,10 @@
 import type { ReactNode } from 'react';
 
-import { formatBdt } from '@/lib/format';
-
 type StatCardProps = {
-  readonly label: string;
-  /** Pre-formatted amount string (sample data in the preview). */
-  readonly amount: string;
+  /** Label may be a runtime string so translated pages can pass I18nText. */
+  readonly label: ReactNode;
+  /** Pre-formatted exact amount text, e.g. "BDT 3,500" from the money formatter. */
+  readonly amountText: string;
   /** Short neutral context, e.g. the period the figure belongs to. */
   readonly context?: string;
   /** Optional decorative icon tile (decorative only — label carries meaning). */
@@ -13,8 +12,8 @@ type StatCardProps = {
   readonly tone?: 'default' | 'income' | 'expense';
 };
 
-/** KPI figure card: icon tile + label + BDT amount + context line. */
-export function StatCard({ label, amount, context, icon, tone = 'default' }: StatCardProps) {
+/** KPI figure card: icon tile + label + pre-formatted amount + context line. */
+export function StatCard({ label, amountText, context, icon, tone = 'default' }: StatCardProps) {
   return (
     <div className="mf-stat-card">
       {icon ? (
@@ -23,7 +22,7 @@ export function StatCard({ label, amount, context, icon, tone = 'default' }: Sta
         </span>
       ) : null}
       <p className="mf-stat-card__label">{label}</p>
-      <p className="mf-stat-card__amount">{formatBdt(amount)}</p>
+      <p className="mf-stat-card__amount">{amountText}</p>
       {context ? <p className="mf-stat-card__context">{context}</p> : null}
     </div>
   );

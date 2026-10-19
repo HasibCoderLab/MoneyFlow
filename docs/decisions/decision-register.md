@@ -35,13 +35,18 @@
 | DR-08 | Launch geography & BDT-only MVP   | P2       | Proposed               | Bangladesh, BDT-only, stored currency                         | **Confirm**            |
 | DR-09 | Product name & domain             | P3       | Unresolved             | No recommendation possible (branding)                         | **Owner-only**         |
 | DR-10 | Age policy for accounts           | P3       | Proposed               | 18+ for MVP (avoid minor-consent obligations)                 | **Confirm**            |
-| DR-11 | Week-start / locale defaults      | P3       | Proposed               | Default Saturday for `bn-BD`, user-configurable               | Confirm                |
+| DR-11 | Week-start / locale defaults      | P3       | Accepted               | Default Saturday for `bn-BD`, user-configurable               | Approved 2026-10-17    |
 | DR-12 | Multiple dashboard layouts        | P3       | Proposed               | Single persisted layout in MVP, multiple in V1                | Confirm                |
 | DR-13 | AI timing (MVP vs V1)             | P2       | Proposed               | Defer AI to V1                                                | Confirm                |
 | DR-14 | Hosting / deployment              | P2       | Unresolved             | Options below; needs owner budget/accounts                    | **Owner**              |
 | DR-15 | Backups, RPO/RTO                  | P3       | Unresolved             | Needs owner risk tolerance and Neon plan choice               | **Owner**              |
 | DR-16 | Export/deletion/retention & audit | P2       | Proposed               | CSV export; hard delete; minimal audit events                 | **Required**           |
 | DR-17 | Pricing, payments, legal review   | P3       | Out of scope (for now) | None — after validation (§3.2, §18.12/13)                     | Owner, later           |
+
+**Added 2026-10-17:** the Bangla/English label toggle in the UI preview is
+now implemented as a browser-local display preference (ADR-0009). It does
+not settle DR-08 (launch geography) or DR-11 (default locale/week start);
+the default stays English until the owner confirms those.
 
 ---
 
@@ -255,7 +260,7 @@ review (§18.13).
 
 **Approval required: yes (confirm).**
 
-## DR-11 — Week-start / locale defaults (P3, Proposed)
+## DR-11 — Week-start / locale defaults (P3, Accepted)
 
 **Context:** §5.2 week-start preference; Bangladesh convention (weekend
 Friday–Saturday) makes Saturday the natural default for `bn-BD`.
@@ -265,6 +270,11 @@ configurable; day/month boundaries in `Asia/Dhaka` by default. Affects
 summaries and budget periods only via the preference.
 
 **Approval required: confirm (low impact).**
+
+**Status update (2026-10-17):** confirmed by the product owner before IT-8 so
+weekly report buckets can ship; IT-8 uses `weekStartsOn = Saturday` for the
+weekly aggregation until the IT-11 preference exists (owner ruling recorded
+with the IT-8 plan).
 
 ## DR-12 — Multiple dashboard layouts (P3, Proposed)
 

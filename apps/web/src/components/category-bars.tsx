@@ -1,5 +1,7 @@
-import { formatBdt } from '@/lib/format';
-import type { MockCategorySpend } from '@/lib/mock-data';
+'use client';
+
+import { useLocale } from '@/lib/i18n/locale-context';
+import type { CategoryBarDatum } from '@/lib/summary-display';
 
 /**
  * Brand-palette segments, ordered as authored. Token references (not hex
@@ -23,32 +25,33 @@ const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 const RING_WIDTH = 17;
 
 type CategoryBarsProps = {
-  readonly categories: readonly MockCategorySpend[];
+  readonly categories: readonly CategoryBarDatum[];
   readonly periodLabel: string;
-  /** Pre-formatted total shown in the donut centre (sample figure). */
-  readonly totalAmount: string;
+  /** Pre-formatted exact total shown in the donut centre (from the API). */
+  readonly totalText: string;
 };
 
 /**
- * Spending-by-category donut + legend (sample). Charts must answer a
- * real question and include an accessible summary (requirements.md
- * §7.3), so a plain-text summary precedes the visual, the legend carries
- * every amount and share as text, and the SVG is decorative
- * (`aria-hidden`). Percentages come from mock data as literals; only
- * their stroke geometry is computed here.
+ * Spending-by-category donut + legend over API data. Charts must answer a
+ * real question and include an accessible summary (requirements.md §7.3),
+ * so a plain-text summary precedes the visual, the legend carries every
+ * amount and server-computed share as text, and the SVG is decorative
+ * (`aria-hidden`). Shares arrive as server percentages; only their stroke
+ * geometry is computed here — no money math, no client-side rounding.
  */
-export function CategoryBars({ categories, periodLabel, totalAmount }: CategoryBarsProps) {
+export function CategoryBars({ categories, periodLabel, totalText }: CategoryBarsProps) {
+  const { t } = useLocale();
   const topCategory = categories[0];
 
   let runningPercent = 0;
   const segments = categories.map((category, index) => {
     const startPercent = runningPercent;
-    runningPercent += category.percentOfTotal;
+    runningPercent += category.sharePercent;
     return {
       ...category,
       color: SEGMENT_COLORS[index % SEGMENT_COLORS.length],
       dashOffset: -(startPercent / 100) * CIRCUMFERENCE,
-      dashLength: (category.percentOfTotal / 100) * CIRCUMFERENCE,
+      dashLength: (category.sharePercent / 100) * CIRCUMFERENCE,
     };
   });
 
@@ -56,8 +59,13 @@ export function CategoryBars({ categories, periodLabel, totalAmount }: CategoryB
     <div className="mf-category-bars">
       <p className="mf-chart-summary" data-testid="chart-summary">
         {topCategory
-          ? `In this sample period, ${topCategory.name} is the largest category at ${formatBdt(topCategory.amount)} (${topCategory.percentOfTotal}% of the sample spending).`
-          : 'No sample spending data.'}
+          ? t('summary.categorySummary', {
+              period: periodLabel,
+              name: topCategory.name,
+              amount: topCategory.amountText,
+              percent: topCategory.percentText,
+            })
+          : t('summary.noSpending')}
       </p>
 
       <div className="mf-donut">
@@ -78,7 +86,7 @@ export function CategoryBars({ categories, periodLabel, totalAmount }: CategoryB
           />
           {segments.map((segment) => (
             <circle
-              key={segment.name}
+              key={segment.categoryId}
               cx={CHART_SIZE / 2}
               cy={CHART_SIZE / 2}
               r={RADIUS}
@@ -93,23 +101,23 @@ export function CategoryBars({ categories, periodLabel, totalAmount }: CategoryB
           ))}
         </svg>
         <div className="mf-donut__center">
-          <p className="mf-donut__total">{formatBdt(totalAmount)}</p>
-          <p className="mf-donut__caption">spent (sample)</p>
+          <p className="mf-donut__total">{totalText}</p>
+          <p className="mf-donut__caption">{t('summary.spentCaption')}</p>
         </div>
       </div>
 
       <ul className="mf-legend">
         {segments.map((segment) => (
-          <li key={segment.name} className="mf-legend__row">
+          <li key={segment.categoryId} className="mf-legend__row">
             <span className="mf-legend__dot" style={{ background: segment.color }} />
             <span className="mf-legend__name">{segment.name}</span>
-            <span className="mf-legend__value">{formatBdt(segment.amount)}</span>
-            <span className="mf-legend__percent">{segment.percentOfTotal}%</span>
+            <span className="mf-legend__value">{segment.amountText}</span>
+            <span className="mf-legend__percent">{segment.percentText}</span>
           </li>
         ))}
       </ul>
 
-      <p className="mf-chart-note">Sample spending for {periodLabel}.</p>
+      <p className="mf-chart-note">{t('summary.categoryNote', { period: periodLabel })}</p>
     </div>
   );
 }

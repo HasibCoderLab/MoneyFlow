@@ -145,6 +145,17 @@ export function TransferIcon(props: IconProps) {
   );
 }
 
+export function AdjustmentIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M8 4v13" />
+      <path d="m5 14 3 3 3-3" />
+      <path d="M16 20V7" />
+      <path d="m13 10 3-3 3 3" />
+    </Icon>
+  );
+}
+
 export function InfoIcon(props: IconProps) {
   return (
     <Icon {...props}>

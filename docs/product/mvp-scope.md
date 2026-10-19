@@ -120,8 +120,11 @@ benchmarks; the owner may adjust them.
 
 ## Mock-data exit plan
 
-The dashboard preview intentionally uses labelled sample data
-(`apps/web/src/lib/mock-data.ts`). During implementation the dashboard is
-wired widget-by-widget to real API data (IT-8); the mock module and banner
-are removed only when every widget renders real data, so the app never mixes
-sample and real figures (§13.5).
+The dashboard preview intentionally used labelled sample data
+(`apps/web/src/lib/mock-data.ts`). Status (2026-10-17): the dashboard,
+reports, and categories pages are wired to real API data (IT-8) and carry no
+mock figures or unsupported trends. The module still feeds the accounts,
+transactions, budgets, and goals previews, and since IT-8 the sample-data
+banner renders only on exactly those pages, so the app never mixes sample
+and real figures (§13.5). The module and banner are removed completely once
+those pages render real data (IT-9/IT-10 and their wiring).

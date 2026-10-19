@@ -232,6 +232,20 @@ Rules: all figures come from the same summary service (no per-widget SQL
 duplication); zero-data periods render honest empty states, not zero trends;
 charts keep a text/table alternative (§5.10).
 
+**Implementation note (IT-8, 2026-10-17):** §9 is realized by the summary
+service (`apps/api/src/modules/summary/`) behind `GET /api/v1/dashboard`,
+`GET /api/v1/reports/summary` (sparse daily/weekly/monthly buckets, weeks
+starting Saturday per DR-11, clipped to the requested period), and
+`GET /api/v1/reports/categories`. Totals filter on explicit
+`INCOME`/`EXPENSE` types only, so transfers, adjustments, and any future
+`REFUND` rows (§1.1) can never leak into income or expense sums — refund
+effects must be subtracted in that aggregation if the type is added. Shares
+are half-up at the last display step via `percentTimes10`. Period boundaries
+are half-open `[start, end)` in the resolved IANA timezone (default
+`Asia/Dhaka` until IT-11 preferences exist). The total tracked balance sums
+the same `deriveAccountBalance` effects matrix used by Accounts, over active
+accounts only.
+
 ## 10. Edge cases that must be tested
 
 - Zero, 1 minor unit (0.01), maximum-allowed, and over-max amounts; extra

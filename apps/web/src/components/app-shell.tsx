@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import type { ComponentType, ReactNode } from 'react';
 
 import { MockDataBanner } from '@/components/mock-data-banner';
+import { LanguageToggle } from '@/components/language-toggle';
 import { ThemeToggle } from '@/components/theme-toggle';
 import {
   BudgetsIcon,
@@ -18,27 +19,30 @@ import {
   WalletIcon,
   type IconProps,
 } from '@/components/icons';
+import { useLocale } from '@/lib/i18n/locale-context';
+import type { TranslationKey } from '@/lib/i18n/translations';
 
 type NavItem = {
-  readonly label: string;
+  readonly labelKey: TranslationKey;
   readonly href: string;
   readonly icon: ComponentType<IconProps>;
 };
 
 /**
  * Primary navigation following the information architecture in
- * requirements.md §4.3 (routes are kept stable). Active state uses
- * aria-current plus a visual marker; every item is a real link.
+ * requirements.md §4.3 (routes are kept stable). Labels resolve through
+ * the locale context. Active state uses aria-current plus a visual
+ * marker; every item is a real link.
  */
 export const APP_NAV_ITEMS: readonly NavItem[] = [
-  { label: 'Dashboard', href: '/app/dashboard', icon: DashboardIcon },
-  { label: 'Accounts', href: '/app/accounts', icon: WalletIcon },
-  { label: 'Transactions', href: '/app/transactions', icon: TransactionsIcon },
-  { label: 'Categories', href: '/app/categories', icon: TagIcon },
-  { label: 'Budgets', href: '/app/budgets', icon: BudgetsIcon },
-  { label: 'Savings goals', href: '/app/goals', icon: GoalsIcon },
-  { label: 'Reports', href: '/app/reports', icon: ReportsIcon },
-  { label: 'Settings', href: '/app/settings', icon: SettingsIcon },
+  { labelKey: 'nav.dashboard', href: '/app/dashboard', icon: DashboardIcon },
+  { labelKey: 'nav.accounts', href: '/app/accounts', icon: WalletIcon },
+  { labelKey: 'nav.transactions', href: '/app/transactions', icon: TransactionsIcon },
+  { labelKey: 'nav.categories', href: '/app/categories', icon: TagIcon },
+  { labelKey: 'nav.budgets', href: '/app/budgets', icon: BudgetsIcon },
+  { labelKey: 'nav.goals', href: '/app/goals', icon: GoalsIcon },
+  { labelKey: 'nav.reports', href: '/app/reports', icon: ReportsIcon },
+  { labelKey: 'nav.settings', href: '/app/settings', icon: SettingsIcon },
 ];
 
 /**
@@ -50,11 +54,12 @@ export const APP_NAV_ITEMS: readonly NavItem[] = [
  */
 export function AppShell({ children }: { readonly children: ReactNode }) {
   const pathname = usePathname();
+  const { t } = useLocale();
 
   return (
     <div className="mf-app">
       <a className="mf-skip-link" href="#main-content">
-        Skip to main content
+        {t('app.skipToContent')}
       </a>
 
       <header className="mf-app-header">
@@ -63,22 +68,23 @@ export function AppShell({ children }: { readonly children: ReactNode }) {
             M
           </span>
           <p className="mf-app-header__brand">
-            MoneyFlow <span className="mf-app-header__working-title">(working title)</span>
+            MoneyFlow <span className="mf-app-header__working-title">{t('app.workingTitle')}</span>
           </p>
         </div>
         <div className="mf-app-header__right">
-          <p className="mf-app-header__badge">UI preview</p>
+          <p className="mf-app-header__badge">{t('app.badge')}</p>
+          <LanguageToggle />
           <ThemeToggle />
           <Link className="mf-btn mf-btn--primary" href="/app/transactions/new">
             <PlusIcon />
-            <span>Add Transaction</span>
+            <span>{t('app.addTransaction')}</span>
           </Link>
         </div>
       </header>
 
       <div className="mf-app-body">
-        <nav className="mf-nav" aria-label="Main">
-          <p className="mf-nav__label">Menu</p>
+        <nav className="mf-nav" aria-label={t('nav.ariaMain')}>
+          <p className="mf-nav__label">{t('app.menu')}</p>
           <ul className="mf-nav__list">
             {APP_NAV_ITEMS.map((item) => {
               const isActive = pathname === item.href;
@@ -91,7 +97,7 @@ export function AppShell({ children }: { readonly children: ReactNode }) {
                     aria-current={isActive ? 'page' : undefined}
                   >
                     <NavIcon className="mf-nav__icon" />
-                    <span>{item.label}</span>
+                    <span>{t(item.labelKey)}</span>
                   </Link>
                 </li>
               );
@@ -105,10 +111,7 @@ export function AppShell({ children }: { readonly children: ReactNode }) {
             {children}
           </main>
           <footer className="mf-app-footer">
-            <p>
-              Preview build — sample data only. No accounts, bank connections, or APIs are wired up
-              yet.
-            </p>
+            <p>{t('app.footerNote')}</p>
           </footer>
         </div>
       </div>

@@ -2,6 +2,9 @@
 
 import { useEffect, useRef, type ReactNode } from 'react';
 
+import { useLocale } from '@/lib/i18n/locale-context';
+import type { TranslationKey } from '@/lib/i18n/translations';
+
 /**
  * Accessible mobile navigation for the public landing page.
  *
@@ -9,16 +12,17 @@ import { useEffect, useRef, type ReactNode } from 'react';
  * the trigger, and traps focus inside the open menu. SSR renders the trigger
  * only; the panel mounts client-side, so no server markup mismatch.
  */
-type NavItem = { readonly label: string; readonly href: string };
+type NavItem = { readonly labelKey: TranslationKey; readonly href: string };
 
 const NAV_ITEMS: readonly NavItem[] = [
-  { label: 'Features', href: '#capabilities' },
-  { label: 'How it works', href: '#how-it-works' },
-  { label: 'Privacy', href: '#trust' },
-  { label: 'Roadmap', href: '#roadmap' },
+  { labelKey: 'landing.features', href: '#capabilities' },
+  { labelKey: 'landing.howItWorks', href: '#how-it-works' },
+  { labelKey: 'landing.privacy', href: '#trust' },
+  { labelKey: 'landing.roadmap', href: '#roadmap' },
 ];
 
 export function LandingNav({ children }: { readonly children: ReactNode }) {
+  const { t } = useLocale();
   const buttonRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const firstFocusRef = useRef<HTMLAnchorElement>(null);
@@ -70,7 +74,7 @@ export function LandingNav({ children }: { readonly children: ReactNode }) {
         <span className="mf-landing-nav__toggle-bar" aria-hidden="true" />
         <span className="mf-landing-nav__toggle-bar" aria-hidden="true" />
         <span className="mf-landing-nav__toggle-bar" aria-hidden="true" />
-        <span className="mf-landing-nav__toggle-label">Menu</span>
+        <span className="mf-landing-nav__toggle-label">{t('landing.menu')}</span>
       </button>
       <div
         ref={panelRef}
@@ -78,9 +82,9 @@ export function LandingNav({ children }: { readonly children: ReactNode }) {
         className="mf-landing-nav__panel"
         role="dialog"
         aria-modal="true"
-        aria-label="Navigation menu"
+        aria-label={t('landing.ariaNavMenu')}
       >
-        <nav aria-label="Primary">
+        <nav aria-label={t('landing.ariaPrimary')}>
           <ul>
             {NAV_ITEMS.map((item, i) => (
               <li key={item.href}>
@@ -90,7 +94,7 @@ export function LandingNav({ children }: { readonly children: ReactNode }) {
                   className="mf-landing-nav__panel-link"
                   onClick={() => close()}
                 >
-                  {item.label}
+                  {t(item.labelKey)}
                 </a>
               </li>
             ))}

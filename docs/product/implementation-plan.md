@@ -224,6 +224,22 @@ same pattern; all depend on the approved accounting rules.
   breakdown, recent transactions); the dashboard UI consumes real API data
   widget-by-widget; mock data and banner removed when the last widget is
   real; empty/loading/error states reviewed.
+  **Status (2026-10-17): Implemented** — `apps/api/src/modules/summary/`
+  (one service behind `GET /api/v1/dashboard`, `GET /api/v1/reports/summary`,
+  `GET /api/v1/reports/categories`: period totals, sparse daily/weekly/monthly
+  series with Saturday week starts (DR-11), period-clipped buckets, category
+  breakdown with server half-up shares, bounded recent activity, and the
+  Σ-active-account tracked balance via `deriveAccountBalance`), shared
+  contracts, unit + real-PostgreSQL integration suites. Web wiring: the
+  dashboard, reports, and categories pages consume the live endpoints through
+  `apps/web/src/lib/api-client.ts` with translated loading / signed-out /
+  empty / error+retry states (en + bn). The fake hero sparkline was removed,
+  goals/budgets stay honest figure-free placeholders until IT-9/IT-10, and
+  the sample-data banner now renders only on the pages that still use mock
+  data (accounts, transactions, budgets, goals). Categories wiring follows
+  decision D5: real taxonomy via the IT-5 list API (`includeArchived=true`),
+  read-only, creation disabled with accurate copy. Database-free gates pass
+  locally; the integration suite runs in the CI PostgreSQL 16 job.
 - **IT-9 Budgets:** monthly budget CRUD, per-category limits, spent/
   remaining/percent per accounting rules, neutral overspend copy, edit/
   archive behavior, boundary tests (month edges, timezone).

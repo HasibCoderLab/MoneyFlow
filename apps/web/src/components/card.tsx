@@ -1,9 +1,10 @@
 import type { ReactNode } from 'react';
 
 type CardProps = {
-  readonly title?: string;
+  /** Title may be a runtime string so translated pages can pass I18nText. */
+  readonly title?: ReactNode;
   /** Optional short context line shown under the title. */
-  readonly subtitle?: string;
+  readonly subtitle?: ReactNode;
   /** Optional trailing action slot, e.g. a "View all" link. */
   readonly action?: ReactNode;
   readonly children: ReactNode;

@@ -35,9 +35,9 @@ const PLANNED_PREFERENCES: readonly PlannedPreference[] = [
   },
   {
     name: 'Locale',
-    state: 'Awaiting decision',
+    state: 'Works locally',
     scope:
-      'Bangla and English labels are planned; the launch locale pairs with the launch geography decision.',
+      'Top-bar toggle switches Bangla and English labels (requirements.md §7.4); stored in this browser only. The default locale and server-side saving still await the launch-geography decision (DR-08/DR-11).',
   },
   {
     name: 'Timezone',
@@ -60,9 +60,10 @@ const PLANNED_PREFERENCES: readonly PlannedPreference[] = [
 
 /**
  * Preferences route (requirements.md §4.3 `/app/settings/preferences`, §5.2).
- * The theme control is the only genuinely working preference in this preview,
- * and it says where it is stored. Every other preference is listed with its
- * real decision status instead of a control that would silently do nothing
+ * Two preferences genuinely work in this preview: the theme control in the
+ * header, and the Bangla/English language toggle beside it. Both say where
+ * they are stored. Every other preference is listed with its real decision
+ * status instead of a control that would silently do nothing
  * (AGENTS.md rule 12).
  */
 export default function PreferencesPage() {
@@ -77,15 +78,15 @@ export default function PreferencesPage() {
         </div>
       </header>
 
-      <Card title="Appearance" subtitle="The one preference that works in this preview">
+      <Card title="Appearance" subtitle="What works in this preview">
         <div className="mf-empty">
           <p className="mf-empty__title">Theme switches from the top bar on every app page</p>
           <p className="mf-empty__text">
-            The theme control in the header cycles System, Light, and Dark. It applies immediately
-            and this browser remembers your choice through local storage, so it is already a real
-            preference — it just is not tied to an account yet. A second copy of the same control
-            here could disagree with the header, so the header keeps the single control until
-            preferences are saved server-side.
+            The theme control in the header switches Light and Dark. It applies immediately and this
+            browser remembers your choice through local storage, so it is already a real preference
+            — it just is not tied to an account yet. A second copy of the same control here could
+            disagree with the header, so the header keeps the single controls (theme and language)
+            until preferences are saved server-side.
           </p>
         </div>
       </Card>
@@ -102,17 +103,18 @@ export default function PreferencesPage() {
         </ul>
         <p className="mf-chart-note">
           Preferences are saved server-side per user once the preferences API and authentication
-          land. Nothing on this page is stored, and the theme choice is browser-only.
+          land. Nothing here is saved to an account yet — the theme and language choices are
+          remembered by this browser only.
         </p>
       </Card>
 
       <aside className="mf-status-note" role="note" aria-label="Why preferences are not editable">
         <p className="mf-status-note__title">No preference is saved to an account yet</p>
         <p className="mf-status-note__body">
-          This preview has no signed-in user, so there is nowhere to store a locale or currency
-          choice. Controls that looked saved but were not would be misleading, so each preference
-          above shows its real status instead. Undecided defaults stay undecided until the product
-          owner confirms them.
+          This preview has no signed-in user, so there is nowhere to save a preference on the
+          server. The theme and language toggles remember their choice in this browser; every other
+          preference above shows its real decision status instead. Undecided defaults stay undecided
+          until the product owner confirms them.
         </p>
       </aside>
     </AppShell>

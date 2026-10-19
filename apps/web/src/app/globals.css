@@ -1251,6 +1251,11 @@ a {
   color: var(--mf-transfer);
 }
 
+.mf-tx--adjustment .mf-tx__icon {
+  background: var(--mf-surface-muted);
+  color: var(--mf-muted-text);
+}
+
 .mf-tx__main {
   min-width: 0;
   flex: 1;
@@ -1301,6 +1306,11 @@ a {
   color: var(--mf-transfer);
 }
 
+.mf-tx--adjustment .mf-tx__type {
+  background: var(--mf-surface-muted);
+  color: var(--mf-muted-text);
+}
+
 .mf-tx__amount {
   margin: 0;
   white-space: nowrap;
@@ -1319,6 +1329,10 @@ a {
 
 .mf-tx--transfer .mf-tx__amount {
   color: var(--mf-transfer);
+}
+
+.mf-tx--adjustment .mf-tx__amount {
+  color: var(--mf-muted-text);
 }
 
 /* ── Spending donut + legend ───────────────────────────────────────── */
@@ -1835,6 +1849,117 @@ a {
   margin: 0;
   color: var(--mf-muted-text);
   font-size: 0.9rem;
+}
+
+/* ── Wired summary views (IT-8) ────────────────────────────────────── */
+/* Period/context rows, the granularity control, and the accessible
+   series table. Additive only; reuses --mf-* tokens for both themes. */
+
+.mf-summary-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mf-space-2) var(--mf-space-3);
+  margin-bottom: var(--mf-space-3);
+}
+
+.mf-summary-meta .mf-chart-note {
+  margin: 0;
+}
+
+.mf-report-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--mf-space-2) var(--mf-space-3);
+  margin-bottom: var(--mf-space-3);
+}
+
+.mf-report-toolbar__right {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mf-space-2);
+}
+
+.mf-segmented {
+  display: inline-flex;
+  gap: 0.25rem;
+  padding: 0.2rem;
+  border: 1px solid var(--mf-border);
+  border-radius: var(--mf-radius-sm);
+  background: var(--mf-surface-muted);
+}
+
+.mf-segmented__option {
+  border: 0;
+  border-radius: calc(var(--mf-radius-sm) - 0.2rem);
+  padding: 0.3rem 0.7rem;
+  background: transparent;
+  color: var(--mf-muted-text);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.mf-segmented__option:hover {
+  background: var(--mf-surface-hover);
+}
+
+.mf-segmented__option--active {
+  background: var(--mf-surface);
+  color: var(--mf-primary);
+  font-weight: 600;
+}
+
+.mf-table-wrap {
+  overflow-x: auto;
+}
+
+.mf-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.mf-table__caption {
+  padding-bottom: var(--mf-space-2);
+  color: var(--mf-faint-text);
+  font-size: 0.82rem;
+  text-align: left;
+}
+
+.mf-table th,
+.mf-table td {
+  padding: 0.45rem 0.6rem;
+  border-bottom: 1px solid var(--mf-border);
+  text-align: left;
+  font-size: 0.9rem;
+}
+
+.mf-table thead th {
+  color: var(--mf-muted-text);
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.mf-table th + th,
+.mf-table td + td {
+  text-align: right;
+}
+
+.mf-table tbody th {
+  font-weight: 600;
+}
+
+.mf-table tfoot th,
+.mf-table tfoot td {
+  border-bottom: 0;
+  border-top: 2px solid var(--mf-border-strong);
+  font-weight: 700;
 }
 
 /* Route error state — calm, actionable, no internals. */

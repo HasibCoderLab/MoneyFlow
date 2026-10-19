@@ -2,7 +2,9 @@ import Link from 'next/link';
 import type { ComponentType, ReactNode } from 'react';
 
 import { CheckIcon, ShieldIcon, WalletIcon, type IconProps } from '@/components/icons';
+import { LanguageToggle } from '@/components/language-toggle';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { I18nText } from '@/components/i18n-text';
 
 type Principle = {
   readonly title: string;
@@ -41,7 +43,7 @@ export function AuthShell({ children }: { readonly children: ReactNode }) {
   return (
     <div className="mf-auth-page">
       <a className="mf-skip-link" href="#main-content">
-        Skip to main content
+        <I18nText k="app.skipToContent" />
       </a>
       <div className="mf-auth-shell">
         <aside className="mf-auth-aside" aria-label="About MoneyFlow">
@@ -54,12 +56,15 @@ export function AuthShell({ children }: { readonly children: ReactNode }) {
               M
             </span>
             <span>
-              MoneyFlow <span className="mf-auth-aside__working">(working title)</span>
+              MoneyFlow{' '}
+              <span className="mf-auth-aside__working">
+                <I18nText k="app.workingTitle" />
+              </span>
             </span>
           </p>
           <div className="mf-auth-aside__body">
             <p className="mf-auth-aside__tagline">
-              Know your money. Build better habits. Reach your goals.
+              <I18nText k="footer.promise" />
             </p>
             <ul className="mf-auth-aside__points">
               {PRINCIPLES.map((principle) => {
@@ -84,6 +89,7 @@ export function AuthShell({ children }: { readonly children: ReactNode }) {
         </aside>
         <main id="main-content" className="mf-auth-main">
           <div className="mf-auth-theme">
+            <LanguageToggle />
             <ThemeToggle />
           </div>
           <div className="mf-auth-card">{children}</div>

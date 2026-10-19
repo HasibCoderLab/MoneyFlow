@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 
+import { LocaleProvider } from '@/lib/i18n/locale-context';
+
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -27,7 +29,9 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
             __html: `(function(){try{var t=localStorage.getItem("mf-theme");if(t!=="light"&&t!=="dark")t="light";document.documentElement.setAttribute("data-theme",t);}catch(e){document.documentElement.setAttribute("data-theme","light");}})();`,
           }}
         />
-        {children}
+        {/* Bangla/English label preference for every route (requirements.md
+            §5.2, §7.4). The provider is client-side; see locale-context.tsx. */}
+        <LocaleProvider>{children}</LocaleProvider>
       </body>
     </html>
   );
