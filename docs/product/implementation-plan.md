@@ -20,21 +20,21 @@
 
 ## Decision dependencies (what must be settled before what)
 
-| Decision (register)                 | Blocks                                                   | Can wait?                                        |
-| ----------------------------------- | -------------------------------------------------------- | ------------------------------------------------ |
-| DR-01 money representation          | IT-1 (money module), IT-2 (schema)                       | **No**                                           |
-| DR-02 accounting semantics          | IT-1, IT-2, IT-6, IT-7                                   | **No**                                           |
-| DR-04 auth/session strategy         | IT-2 (auth tables), IT-3                                 | **No**                                           |
-| DR-05 database/Prisma strategy      | IT-2 (migration + adapter)                               | **No**                                           |
-| DR-03 savings-goal method           | IT-10 (schema lands later; document rule now)            | No — accepted 2026-10-20                         |
-| DR-06 email provider                | IT-13 (verification/recovery), not IT-3 development path | Yes, before launch                               |
-| DR-07 MVP scope confirmation        | Sequencing/deadline expectations generally               | Recommended before IT-1                          |
-| DR-08/09/10 launch assumptions      | Public pages, legal text, age gate                       | Yes until launch                                 |
-| DR-11 locale defaults (week start)  | IT-11 (preference default only)                          | Resolved (accepted; IT-11 uses Saturday default) |
-| DR-12 multiple layouts              | V1 customization scope                                   | Yes — single layout in MVP; decision stays open  |
-| DR-13 AI timing                     | V1 planning                                              | Yes                                              |
-| DR-14/15/16 ops, backups, retention | IT-13, production deployment                             | Yes until launch                                 |
-| DR-17 pricing/legal                 | Marketing/subscription work                              | Yes                                              |
+| Decision (register)                | Blocks                                                   | Can wait?                                        |
+| ---------------------------------- | -------------------------------------------------------- | ------------------------------------------------ |
+| DR-01 money representation         | IT-1 (money module), IT-2 (schema)                       | **No**                                           |
+| DR-02 accounting semantics         | IT-1, IT-2, IT-6, IT-7                                   | **No**                                           |
+| DR-04 auth/session strategy        | IT-2 (auth tables), IT-3                                 | **No**                                           |
+| DR-05 database/Prisma strategy     | IT-2 (migration + adapter)                               | **No**                                           |
+| DR-03 savings-goal method          | IT-10 (schema lands later; document rule now)            | No — accepted 2026-10-20                         |
+| DR-06 email provider               | IT-13 (verification/recovery), not IT-3 development path | Yes, before launch                               |
+| DR-07 MVP scope confirmation       | Sequencing/deadline expectations generally               | Recommended before IT-1                          |
+| DR-08/09/10 launch assumptions     | Public pages, legal text, age gate                       | Yes until launch                                 |
+| DR-11 locale defaults (week start) | IT-11 (preference default only)                          | Resolved (accepted; IT-11 uses Saturday default) |
+| DR-12 multiple layouts             | V1 customization scope                                   | Yes — single layout in MVP; decision stays open  |
+| DR-13 AI timing                    | V1 planning                                              | Yes                                              |
+| DR-14/15 ops, backups, retention   | IT-13, production deployment                             | DR-16 accepted; backup text due before launch    |
+| DR-17 pricing/legal                | Marketing/subscription work                              | Yes                                              |
 
 **DR-01, DR-02, DR-04, and DR-05 are accepted (2026-10-16)** after the
 clarification round (ADR-0003/ADR-0004, `accounting-rules.md` §11) and the
@@ -48,8 +48,10 @@ profile/preferences and a single validated dashboard layout. A follow-up
 integration audit closed the remaining sample-data screens: accounts and
 transactions (create/edit/delete/filter/paginate) now use the authenticated
 API, the browser bundle receives the repository-root API URL, and sign-in /
-sign-up / sign-out are live. **IT-12 is the next task.** Everything else can
-proceed incrementally.
+sign-up / sign-out are live. **IT-12 is implemented and awaiting owner
+review** (ADR-0011): streaming CSV export, self-service user-account
+deletion, and minimal audit events. **IT-13 is the next task.** Everything
+else can proceed incrementally.
 
 ## Phase A — foundations (the first implementation phase)
 
@@ -337,13 +339,63 @@ option; decision remains open). Detail: ADR-0010.
 - Gates: format, lint, typecheck, unit tests, integration tests, build,
   `db:validate`, and `git diff --check` run and reported truthfully.
 
-- **IT-12 Export, deletion, audit:** CSV export of the user's transactions
-  (scoped, tested); account deletion workflow honoring the retention policy
-  (DR-16); audit events for destructive/security actions; confirmation UX.
-- **IT-13 Hardening & launch gates:** email verification + password recovery
-  (DR-06/DR-08), rate-limit review, logging/monitoring baseline, backup and
-  restore runbook actually tested (DR-15), accessibility pass, performance
-  baseline, privacy text matching implementation, final mock-data sweep.
+### IT-12 — Export, account deletion, and audit events
+
+**Status:** Implemented 2026-10-20 — awaiting owner review.
+
+**Scope:** authenticated `GET /api/v1/transactions/export` streaming a CSV of
+the caller's own transactions with the same filters as the list endpoint;
+`DELETE /api/v1/me` requiring the current password and the exact phrase
+`DELETE`; the API-backed `/app/settings/data` screen with real download and
+deletion controls; and the minimal `AuditEvent` table written by destructive
+actions and exports. Detail: ADR-0011 (DR-16 accepted 2026-10-20).
+
+**Decisions required:** DR-16 (accepted). Backup/retention wording beyond the
+live database remains DR-15 and is deliberately not claimed as resolved.
+
+**Acceptance criteria**
+
+- The export is scoped to the session user, accepts the documented list
+  filters (ignoring pagination), and orders by `occurredAt DESC, id DESC`.
+- Rows are read in keyset chunks of 500 and streamed; empty results return a
+  header-only file. The CSV has a UTF-8 BOM, CRLF records, RFC 4180 quoting,
+  exact decimal amounts, UTC ISO timestamps, no internal IDs, and formula
+  neutralization on untrusted text.
+- Export requests are limited to five per user per rolling hour (single API
+  instance) and failures return safe JSON without claiming a download.
+- `DELETE /api/v1/me` has no client-supplied identity, verifies the current
+  Argon2id credential, rate-limits failed attempts to five per user per 15
+  minutes, and deletes all owned rows plus sessions in one transaction.
+- Successful deletion writes `USER_ACCOUNT_DELETED` in the same transaction;
+  the audit row survives with `userId = NULL`. Wrong password/phrase changes
+  nothing, and rollback removes both data and audit rows.
+- `TRANSACTION_DELETED`, `CATEGORY_DELETED`, `BUDGET_DELETED`, and
+  `GOAL_DELETED` are written in their delete transaction; export request and
+  stream-failure events never contain amounts, notes, tokens, or bodies.
+- The UI performs a real download (no fixture bytes), shows server errors,
+  requires both confirmation inputs, and displays only success the API
+  confirmed. It states that live rows are deleted while backups are not
+  claimed to be erased.
+- Unit, web, and real-PostgreSQL integration tests cover filters, CSV safety,
+  chunking, cross-user isolation, rate limits, audit atomicity, deletion
+  rollback, session invalidation, and the stale-cookie denial.
+
+**Tests:** `export-csv.test.ts`, `transactions-export.service.test.ts`,
+`deletion.test.ts`, `rate-limit.test.ts`, real-PostgreSQL
+`transactions-export.test.ts`, `account-deletion.test.ts`, and
+`audit.test.ts`, plus web data-control and API-client tests.
+
+**Verification:** format, lint, typecheck, unit tests, integration tests,
+build, `db:validate`, `git diff --check`, and desktop/mobile browser
+acceptance. Results are recorded in
+`docs/reports/2026-10-20-it12-verification-report.md`.
+
+### IT-13 — Hardening & launch gates
+
+- Email verification + password recovery (DR-06/DR-08), rate-limit review,
+  logging/monitoring baseline, backup and restore runbook actually tested
+  (DR-15), accessibility pass, performance baseline, privacy text matching
+  implementation, final mock-data sweep.
 
 ## Deliverable format for every implementation task
 

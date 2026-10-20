@@ -63,9 +63,12 @@ here), self-managed PostgreSQL (ops burden).
 Later schema changes follow expand → migrate → contract for anything risky.
 The initial migration landed with IT-2 (2026-10-16): generated with
 `prisma migrate diff`, then hand-extended with the CHECK constraints and
-the functional unique index as one reviewed migration. IT-9 added
-`20261019173444_add_budgets` (`budget`, `budgetCategoryLimit`, the
-month-anchor CHECK, and the positive-limit CHECK).
+the functional unique index as one reviewed migration. Later additive
+migrations: IT-9 `20261019173444_add_budgets` (`budget`,
+`budgetCategoryLimit`, month-anchor and positive-limit CHECKs); IT-10
+`20261020163000_add_goals`; IT-11 `20261020190000_add_preferences_and_layout`;
+IT-12 `20261020203000_add_audit_events` (audit enum/table, metadata-object
+CHECK, and user/type indexes). IT-12 changes no financial table.
 
 ## Local development setup (implemented by IT-2)
 
@@ -100,6 +103,9 @@ month-anchor CHECK, and the positive-limit CHECK).
 - Period math: `Asia/Dhaka` day/week/month boundaries, week-start preference,
   month-end, DST fixtures for a second timezone.
 - Customization schema validation, contract DTO validation.
+- CSV encoding (BOM/CRLF/RFC 4180 quoting/formula neutralization), export
+  filter parsing, filename generation, deletion input validation, and the
+  in-memory rate limiter.
 - These run in the current database-free CI job and must stay fast.
 
 ### Integration tests (real PostgreSQL)
@@ -111,8 +117,10 @@ month-anchor CHECK, and the positive-limit CHECK).
 - Cover: transaction create/edit/delete consistency, transfer atomicity,
   goal contribution/reversal, budget utilization (month boundaries,
   expense-only counting, status moves, overlap rule), idempotent replays,
-  uniqueness constraints, CHECK constraints, pagination/filtering, and
-  **cross-user isolation** for every resource and nested resource.
+  uniqueness constraints, CHECK constraints, pagination/filtering, CSV
+  export filters/format/streaming and audit atomicity, full account deletion
+  with rollback and session invalidation, and **cross-user isolation** for
+  every resource, nested resource, and export.
 - Concurrency smoke test: two simultaneous creates do not corrupt aggregates.
 
 ### End-to-end tests (later phase)

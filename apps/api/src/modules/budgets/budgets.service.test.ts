@@ -3,6 +3,7 @@ import { DEFAULT_USER_PREFERENCES } from '@moneyflow/contracts';
 import { describe, expect, it, vi } from 'vitest';
 
 import type { PrismaService } from '../../prisma/prisma.service';
+import type { AuditService } from '../audit/audit.service';
 import type { PreferencesService } from '../preferences/preferences.service';
 import { BudgetsService } from './budgets.service';
 
@@ -56,7 +57,7 @@ function budgetRow(overrides: Record<string, unknown> = {}) {
 
 function mockDb() {
   const tx = {
-    budget: { create: vi.fn(), update: vi.fn() },
+    budget: { create: vi.fn(), update: vi.fn(), findFirst: vi.fn(), delete: vi.fn() },
     budgetCategoryLimit: { createMany: vi.fn(), deleteMany: vi.fn(), upsert: vi.fn() },
   };
   const top = {
@@ -86,9 +87,13 @@ function serviceWith(top: ReturnType<typeof mockDb>['top']): BudgetsService {
       .fn()
       .mockResolvedValue({ ...DEFAULT_USER_PREFERENCES, updatedAt: null }),
   };
+  const audit = {
+    recordInTransaction: vi.fn().mockResolvedValue(undefined),
+  } as unknown as AuditService;
   return new BudgetsService(
     top as unknown as PrismaService,
     preferences as unknown as PreferencesService,
+    audit,
   );
 }
 
@@ -429,14 +434,14 @@ describe('BudgetsService status transitions', () => {
 
 describe('BudgetsService.deleteBudget', () => {
   it('deletes the caller\u2019s budget and answers 404 otherwise', async () => {
-    const { top } = mockDb();
-    top.budget.findFirst.mockResolvedValueOnce(budgetRow()).mockResolvedValueOnce(null);
+    const { top, tx } = mockDb();
+    tx.budget.findFirst.mockResolvedValueOnce(budgetRow()).mockResolvedValueOnce(null);
     const service = serviceWith(top);
 
     await service.deleteBudget(USER_ID, BUDGET_ID);
-    expect(top.budget.delete).toHaveBeenCalledWith({ where: { id: BUDGET_ID } });
+    expect(tx.budget.delete).toHaveBeenCalledWith({ where: { id: BUDGET_ID } });
 
     await expect(service.deleteBudget(USER_ID, OTHER_ID)).rejects.toThrow(NotFoundException);
-    expect(top.budget.delete).toHaveBeenCalledTimes(1);
+    expect(tx.budget.delete).toHaveBeenCalledTimes(1);
   });
 });

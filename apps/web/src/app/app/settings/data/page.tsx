@@ -2,40 +2,20 @@ import type { Metadata } from 'next';
 
 import { AppShell } from '@/components/app-shell';
 import { Card } from '@/components/card';
+import { DeleteAccountControl, ExportTransactionsControl } from '@/components/data-controls';
 
 export const metadata: Metadata = {
   title: 'Your data — MoneyFlow',
-  description: 'Your recorded data, and the export and deletion controls that are not built yet.',
+  description: 'Download your transactions as CSV or permanently delete your MoneyFlow account.',
 };
-
-type PlannedRight = {
-  readonly name: string;
-  readonly scope: string;
-};
-
-const PLANNED_RIGHTS: readonly PlannedRight[] = [
-  {
-    name: 'Export transactions (CSV)',
-    scope:
-      'Download your own recorded transactions, filtered or complete, scoped to your account only.',
-  },
-  {
-    name: 'Delete your account',
-    scope: 'A clearly explained deletion flow with explicit confirmation, not a hidden switch.',
-  },
-  {
-    name: 'Retention and audit record',
-    scope:
-      'A record of destructive and security actions will be kept without storing amounts or notes in it.',
-  },
-];
 
 /**
- * Data route (requirements.md §4.3 `/app/settings/data`, §5.1, §10.3).
- * Recorded accounts, transactions, categories, budgets, and goals are real
- * and persisted, but no export or deletion workflow exists yet, so neither
- * is offered as a control. Deletion and retention rules remain an
- * unconfirmed decision and are named as pending.
+ * Data route (requirements.md §4.3 `/app/settings/data`, §5.1, §10.3;
+ * ADR-0011). Both controls are real: the CSV is streamed by the API from the
+ * signed-in user's own rows, and deletion removes every owned row in one
+ * transaction after password and phrase confirmation. Retention wording stays
+ * limited to what the implementation can prove — backups are not claimed to
+ * be erased.
  */
 export default function DataSettingsPage() {
   return (
@@ -44,50 +24,42 @@ export default function DataSettingsPage() {
         <div>
           <h1>Your data</h1>
           <p className="mf-page-header__subtitle">
-            Export, deletion, and privacy — what exists today and what is still being decided.
+            Download your transactions, or permanently delete your MoneyFlow account.
           </p>
         </div>
       </header>
 
-      <Card title="Export and deletion" subtitle="Not built yet">
-        <div className="mf-empty">
-          <p className="mf-empty__title">Export and deletion are not available yet</p>
-          <p className="mf-empty__text">
-            Your recorded accounts, transactions, categories, budgets, and goals are stored in your
-            own MoneyFlow account. CSV export and account deletion are not implemented, so no
-            download or delete button is shown — a control with nothing real behind it would not be
-            honest. Nothing is exported or deleted by visiting this page.
-          </p>
-        </div>
+      <Card title="Export transactions" subtitle="CSV · generated from your own records">
+        <p className="mf-empty__text">
+          The export contains every transaction currently recorded in your account, newest first.
+          Amounts keep their exact recorded value, dates are UTC, and text that a spreadsheet could
+          treat as a formula is neutralized. Account and category names are included; internal
+          database identifiers are not.
+        </p>
+        <ExportTransactionsControl />
       </Card>
 
-      <Card title="Planned data rights" subtitle="Each arrives with its real workflow">
-        <ul className="mf-roadmap">
-          {PLANNED_RIGHTS.map((right) => (
-            <li key={right.name} className="mf-roadmap__row">
-              <span className="mf-roadmap__level">{right.name}</span>
-              <span className="mf-roadmap__state">Planned</span>
-              <span className="mf-roadmap__scope">{right.scope}</span>
-            </li>
-          ))}
-        </ul>
+      <Card title="Delete account" subtitle="Permanent · requires your password">
+        <p className="mf-empty__text">
+          Deletion removes your profile, financial accounts, transactions, categories, budgets,
+          goals and contributions, preferences, dashboard layout, sign-in credentials, and every
+          active session. Other people&apos;s records are never touched.
+        </p>
+        <DeleteAccountControl />
+      </Card>
+
+      <Card title="Retention and audit record" subtitle="Minimal, without financial content">
+        <p className="mf-empty__text">
+          Destructive actions and this export write a small audit event: the event type, your user
+          id, and a resource identifier where one exists. Audit metadata never contains amounts,
+          notes, passwords, tokens, or request bodies, and there is no public audit API. When you
+          delete your account, the audit rows remain with the user link removed.
+        </p>
         <p className="mf-chart-note">
-          Export will use the same trusted records as the rest of the app, so an export can never
-          include another person&apos;s data or invent figures that were not recorded.
+          Deletion removes your live records. Infrastructure backups are not claimed to be erased
+          here; they age out under the hosting provider&apos;s retention policy.
         </p>
       </Card>
-
-      <aside className="mf-status-note" role="note" aria-label="Pending data decisions">
-        <p className="mf-status-note__title">
-          Deletion, retention, and export format still need a decision
-        </p>
-        <p className="mf-status-note__body">
-          How long records are kept, what deletion removes from backups, and the exact export format
-          are open product and legal decisions. This page does not describe them as settled. Once
-          they are confirmed, the deletion flow and its confirmation steps will be built and this
-          notice replaced with the real behaviour.
-        </p>
-      </aside>
     </AppShell>
   );
 }

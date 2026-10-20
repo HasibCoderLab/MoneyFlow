@@ -4,6 +4,7 @@ import type { CategoryResponse, CategoryStatus, CategoryType } from '@moneyflow/
 import { assertUuid, isForeignKeyViolation, isUniqueViolationFor } from '../../common/http-errors';
 import type { Category as PrismaCategory } from '../../generated/prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
+import { AuditService } from '../audit/audit.service';
 import { ensureDefaultCategories } from './category-defaults';
 import {
   parseCreateCategoryInput,
@@ -42,7 +43,10 @@ const BUDGET_CATEGORY_IN_USE_MESSAGE =
  */
 @Injectable()
 export class CategoriesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly audit: AuditService,
+  ) {}
 
   public async listCategories(userId: string, query: unknown): Promise<CategoryResponse[]> {
     const { includeArchived } = parseListCategoriesQuery(query);
@@ -149,6 +153,12 @@ export class CategoriesService {
         }
         throw error;
       }
+      await this.audit.recordInTransaction(tx, {
+        userId,
+        type: 'CATEGORY_DELETED',
+        resourceType: 'category',
+        resourceId: id,
+      });
     });
   }
 

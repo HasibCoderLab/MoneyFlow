@@ -67,6 +67,23 @@ export interface UpdateMeRequest {
   name: string;
 }
 
+/**
+ * Exact phrase the user must type to confirm `DELETE /api/v1/me` (ADR-0011).
+ * Shared so the UI and API cannot disagree about the confirmation contract.
+ */
+export const DELETE_ACCOUNT_CONFIRMATION = 'DELETE';
+
+/**
+ * Body of `DELETE /api/v1/me` (IT-12, ADR-0011). The acting user is always
+ * the verified session; there is deliberately no user id field.
+ */
+export interface DeleteMeRequest {
+  /** Current account password, verified with the existing Argon2id hasher. */
+  password: string;
+  /** Must be exactly `DELETE`; any other value changes nothing. */
+  confirmation: string;
+}
+
 // ── IT-4: accounts & transactions ─────────────────────────────────────────
 // Request money arrives as canonical decimal strings (e.g. `"3500.00"`;
 // opening balances may carry one leading `-`); every money figure in a

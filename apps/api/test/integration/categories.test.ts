@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
+import { AuditService } from '../../src/modules/audit/audit.service';
 import { CategoriesService } from '../../src/modules/categories/categories.service';
 import { createTestPrismaClient, createUser, resetDatabase } from './harness';
 import { apiRequest, startTestApp, type TestApp } from './http-test-app';
@@ -162,7 +163,7 @@ describe('default categories', () => {
     // No session exists for a directly-inserted legacy user, so this drives
     // the domain service — the same lazy path the HTTP list triggers.
     const legacy = await createUser(prisma);
-    const service = new CategoriesService(prisma);
+    const service = new CategoriesService(prisma, new AuditService(prisma));
 
     await service.listCategories(legacy.id, {});
     await service.listCategories(legacy.id, {});

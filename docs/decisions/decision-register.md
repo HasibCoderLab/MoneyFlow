@@ -40,7 +40,7 @@
 | DR-13 | AI timing (MVP vs V1)             | P2       | Proposed               | Defer AI to V1                                                                                   | Confirm                |
 | DR-14 | Hosting / deployment              | P2       | Unresolved             | Options below; needs owner budget/accounts                                                       | **Owner**              |
 | DR-15 | Backups, RPO/RTO                  | P3       | Unresolved             | Needs owner risk tolerance and Neon plan choice                                                  | **Owner**              |
-| DR-16 | Export/deletion/retention & audit | P2       | Proposed               | CSV export; hard delete; minimal audit events                                                    | **Required**           |
+| DR-16 | Export/deletion/retention & audit | P2       | Accepted               | CSV export; hard delete; minimal audit events                                                    | Approved 2026-10-20    |
 | DR-17 | Pricing, payments, legal review   | P3       | Out of scope (for now) | None — after validation (§3.2, §18.12/13)                                                        | Owner, later           |
 
 **Added 2026-10-17:** the Bangla/English label toggle in the UI preview is
@@ -389,7 +389,7 @@ business decision and must be set by the owner, not assumed.
 
 **Approval required: owner decision before production launch.**
 
-## DR-16 — Export, deletion, retention, audit (P2, Proposed)
+## DR-16 — Export, deletion, retention, audit (P2, Accepted 2026-10-20)
 
 **Context:** §18.14 + §5.1/§9.1/§10.3.
 
@@ -403,7 +403,10 @@ business decision and must be set by the owner, not assumed.
 in the privacy text when DR-09/DR-13/DR-14 are decided (deletion must be
 described before launch).
 
-**Approval required: yes (confirm).**
+**Decision (2026-10-20):** the owner approved the recommended column. The
+implementation scope and safety rules are recorded in
+[ADR-0011](0011-export-deletion-audit.md). Session/password/recovery controls
+remain outside this decision.
 
 ## DR-17 — Pricing, payments, legal (P3, out of scope for now)
 

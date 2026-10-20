@@ -7,23 +7,30 @@ where the implementation currently stands.
 
 ## Scope levels (summary — see requirements.md §3)
 
-| Level | Contents                                                        | Status in this repo      |
-| ----- | --------------------------------------------------------------- | ------------------------ |
-| MVP   | Auth, accounts, transactions, goals, budgets, dashboard, export | Not started (foundation) |
-| V1    | AI assistant, recurring rules, notifications, advanced reports  | Not started              |
-| Later | Bank integrations, households, multi-currency, mobile apps      | Research only            |
+| Level | Contents                                                        | Status in this repo                             |
+| ----- | --------------------------------------------------------------- | ----------------------------------------------- |
+| MVP   | Auth, accounts, transactions, goals, budgets, dashboard, export | IT-1…IT-12 implemented; IT-13 hardening remains |
+| V1    | AI assistant, recurring rules, notifications, advanced reports  | Not started                                     |
+| Later | Bank integrations, households, multi-currency, mobile apps      | Research only                                   |
 
 ## Current implementation status
 
 - ✅ Repository foundation: monorepo, web/API apps, lint, type-check,
   tests, CI baseline, health endpoint.
-- 📋 Phase 1 design (proposed): decision register, domain model, accounting
-  rules, auth/session architecture, database/testing strategy,
-  MVP scope, and implementation plan — see
-  [`mvp-scope.md`](./mvp-scope.md) and
-  [`implementation-plan.md`](./implementation-plan.md).
-- ⬜ Everything in requirements.md §3.1 (MVP features) — each gets its own
-  task in the recommended order of §19.
+- ✅ Phase 1 decisions for the implemented features: accepted ADRs
+  0001–0007 and 0009–0011, with DR-12/DR-15 still open; see the
+  [decision register](../decisions/decision-register.md).
+- ✅ IT-1 money domain, IT-2 schema/migrations, IT-3 auth/sessions, IT-4
+  accounts + ledger, IT-5 categories, IT-6/IT-7 transaction acceptance and
+  transfers, IT-8 summaries/dashboard/reports, IT-9 budgets, IT-10
+  goals/contributions, IT-11 profile/preferences/customization, and IT-12
+  CSV export/account deletion/audit events.
+- ⬜ IT-13 hardening and launch gates: email verification/recovery,
+  backup/restore runbook, session/password management, accessibility and
+  performance baselines, privacy text, and the final mock-data sweep.
+
+Task detail and acceptance evidence live in
+[`implementation-plan.md`](./implementation-plan.md).
 
 ## Rules
 

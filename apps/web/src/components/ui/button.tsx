@@ -7,18 +7,18 @@ import type { ButtonHTMLAttributes } from 'react';
  * low-emphasis ghost actions. Destructive styling arrives with the first
  * destructive workflow that needs it.
  */
-type ButtonVariant = 'primary' | 'ghost';
+type ButtonVariant = 'primary' | 'ghost' | 'danger';
 
 type ButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'className'> & {
   readonly variant?: ButtonVariant;
 };
 
 export function Button({ variant = 'primary', type = 'button', ...props }: ButtonProps) {
-  return (
-    <button
-      type={type}
-      className={variant === 'primary' ? 'mf-btn mf-btn--primary' : 'mf-btn mf-btn--ghost'}
-      {...props}
-    />
-  );
+  const className =
+    variant === 'primary'
+      ? 'mf-btn mf-btn--primary'
+      : variant === 'danger'
+        ? 'mf-btn mf-btn--danger'
+        : 'mf-btn mf-btn--ghost';
+  return <button type={type} className={className} {...props} />;
 }

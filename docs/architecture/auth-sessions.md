@@ -33,6 +33,7 @@ holds an opaque session cookie — no session data in `localStorage`, no JWTs.
 | `GET /api/v1/auth/get-session`    | Raw session payload (Better Auth shape)      | Session cookie                            |
 | `GET /api/v1/me`                  | Caller's identity (`MeResponse` contract)    | Global guard                              |
 | `PATCH /api/v1/me`                | Update display name only                     | Global guard                              |
+| `DELETE /api/v1/me`               | Delete the user and every owned live row     | Global guard + password + `DELETE` phrase |
 | `GET /api/v1/health`              | Readiness probe                              | `@Public()`                               |
 
 ## Session policy (implemented values)
@@ -43,6 +44,7 @@ holds an opaque session cookie — no session data in `localStorage`, no JWTs.
 | Cookie                | `HttpOnly; Secure (https origins); SameSite=Lax; Path=/` | Host-only; `Max-Age` matches the 30-day lifetime |
 | Sign-out              | Deletes the current session row                          | Immediate revocation                             |
 | Sign out everywhere   | Deletes all sessions for the user                        | Requires re-authentication to trigger            |
+| Account deletion      | Deletes every session row in the deletion transaction    | Stale cookies fail; implemented in IT-12         |
 | Password change/reset | Revokes all sessions except the current                  | Deferred with password recovery                  |
 | Concurrent devices    | Allowed                                                  | Session list UI is a later enhancement           |
 
@@ -82,6 +84,19 @@ project (§5.1).
   connect from settings after signing in with the existing method.
 - Google identities are separate `AuthAccount` rows; the user table stays the
   single owner of financial data.
+
+### Self-service account deletion (implemented, IT-12)
+
+`DELETE /api/v1/me` acts only on the session-derived user; the body has no
+identity field. It requires the current password (verified with the existing
+Argon2id hasher) and the exact confirmation phrase `DELETE`. Failed attempts
+are limited in memory to five per user per 15 minutes for the single API
+instance. Deletion removes goal contributions, goals, budget category limits,
+budgets, transactions, categories, financial accounts, preferences, dashboard
+layout, verification rows, all sessions, auth accounts, and finally the user
+inside one database transaction; the `USER_ACCOUNT_DELETED` audit row is
+written in that same transaction. Because sessions are deleted, a copied
+cookie no longer authenticates. Backups are not claimed to be erased (DR-15).
 
 ### Password recovery (deferred, launch-gated)
 
@@ -186,7 +201,11 @@ Implemented on the backend:
 - Integration coverage against real PostgreSQL:
   `apps/api/test/integration/auth.test.ts`.
 
+IT-12 added password-confirmed self-service deletion (`DELETE /api/v1/me`) and
+server-side revocation of every session in the same transaction. The web
+sign-in/sign-up forms are live; the data settings screen calls the real
+deletion endpoint and shows success only after the API confirms it.
+
 Deferred, with launch gates recorded: email verification, password recovery,
-Google Sign-In (needs owner credentials), session-list UI. The web app's
-sign-in/sign-up shells are intentionally not connected yet — wiring them is
-the next frontend task.
+Google Sign-In (needs owner credentials), session-list UI, password change,
+and backup-erasure claims. These remain previews or absent, never simulated.

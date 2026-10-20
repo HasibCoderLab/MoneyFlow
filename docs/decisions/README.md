@@ -22,6 +22,7 @@ Superseded), **Context**, **Decision**, **Consequences**.
 | 0008 | Transactional email provider        | Proposed |
 | 0009 | UI language toggle                  | Accepted |
 | 0010 | Preferences and dashboard layout    | Accepted |
+| 0011 | Export, deletion, and audit events  | Accepted |
 
 ## Decision register
 

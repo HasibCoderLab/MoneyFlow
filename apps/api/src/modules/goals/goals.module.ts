@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 
 import { PrismaModule } from '../../prisma/prisma.module';
+import { AuditModule } from '../audit/audit.module';
 import { GoalsController } from './goals.controller';
 import { GoalsService } from './goals.service';
 
@@ -12,7 +13,7 @@ import { GoalsService } from './goals.service';
  * unarchive actions, and the contribution/reversal endpoints.
  */
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, AuditModule],
   controllers: [GoalsController],
   providers: [GoalsService],
 })

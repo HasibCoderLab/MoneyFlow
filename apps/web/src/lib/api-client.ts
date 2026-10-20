@@ -9,6 +9,7 @@ import type {
   CreateTransactionRequest,
   DashboardLayoutResponse,
   DashboardResponse,
+  DeleteMeRequest,
   GoalContributionResponse,
   GoalDetailResponse,
   GoalResponse,
@@ -235,6 +236,52 @@ export function deleteTransaction(id: string): Promise<void> {
   return sendJson<void>(`/api/v1/transactions/${id}`, 'DELETE', {});
 }
 
+/** Filters accepted by the export; paging is deliberately not offered. */
+export type TransactionExportQuery = Omit<TransactionListQuery, 'limit' | 'offset'>;
+
+function exportQueryString(query: TransactionExportQuery): string {
+  return transactionQueryString(query);
+}
+
+/** Files are named server-side; parse the header without trusting the body. */
+function exportFilename(response: Response): string {
+  const disposition = response.headers.get('content-disposition') ?? '';
+  const match = /filename="?([^";]+)"?/i.exec(disposition);
+  if (match?.[1]) {
+    return match[1];
+  }
+  return `moneyflow-transactions-${new Date().toISOString().slice(0, 10)}.csv`;
+}
+
+/**
+ * `GET /api/v1/transactions/export` — downloads the real CSV bytes with the
+ * session cookie. Errors are JSON, so they are parsed separately from the
+ * binary success body. The browser is never asked to fetch the API URL
+ * directly (that would drop the HttpOnly cookie).
+ */
+export async function downloadTransactionsCsv(
+  query: TransactionExportQuery = {},
+): Promise<{ blob: Blob; filename: string }> {
+  const baseUrl = getApiBaseUrl();
+  if (!baseUrl) {
+    throw new ApiClientError(UNAVAILABLE_MESSAGE, 0);
+  }
+  let response: Response;
+  try {
+    response = await fetch(`${baseUrl}/api/v1/transactions/export${exportQueryString(query)}`, {
+      credentials: 'include',
+      headers: { accept: 'text/csv' },
+    });
+  } catch {
+    throw new ApiClientError(UNAVAILABLE_MESSAGE, 0);
+  }
+  if (!response.ok) {
+    const body: unknown = await response.json().catch(() => null);
+    throw new ApiClientError(readMessage(body), response.status);
+  }
+  return { blob: await response.blob(), filename: exportFilename(response) };
+}
+
 /** Body helper shared by authenticated mutations. */
 async function sendJson<T>(
   path: string,
@@ -364,6 +411,16 @@ export function fetchMe(): Promise<MeResponse> {
 /** `PATCH /api/v1/me` — updates only the display name (session-derived id). */
 export function updateMe(body: UpdateMeRequest): Promise<MeResponse> {
   return sendJson<MeResponse>('/api/v1/me', 'PATCH', body);
+}
+
+/**
+ * `DELETE /api/v1/me` — permanently deletes the signed-in user and every
+ * owned row. The API requires the current password and the exact confirmation
+ * phrase; there is no user-id field, so this browser cannot target anyone
+ * else. On success all sessions are already revoked server-side.
+ */
+export async function deleteMyAccount(body: DeleteMeRequest): Promise<void> {
+  await sendJson<unknown>('/api/v1/me', 'DELETE', body);
 }
 
 /** `GET /api/v1/preferences` — saved values or documented server defaults. */

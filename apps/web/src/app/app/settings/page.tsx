@@ -43,14 +43,15 @@ const SECTIONS: readonly SettingsSection[] = [
     label: 'Data',
     href: '/app/settings/data',
     description:
-      'Your recorded data exists; CSV export and account deletion are not built yet, so nothing is exported or deleted here.',
+      'Download every recorded transaction as CSV, or permanently delete your account and its records.',
   },
 ];
 
 /**
- * Settings index (requirements.md §4.3). Profile, preferences, and the
- * dashboard layout are wired to authenticated APIs (IT-3/IT-11); security and
- * data remain honest previews for IT-12/IT-13.
+ * Settings index (requirements.md §4.3). Profile, preferences, layout, and
+ * data controls are wired to authenticated APIs (IT-3/IT-11/IT-12); security
+ * still states plainly that session management and password recovery are not
+ * built (IT-13).
  */
 export default function SettingsPage() {
   return (
@@ -76,8 +77,9 @@ export default function SettingsPage() {
           ))}
         </ul>
         <p className="mf-chart-note">
-          Authentication is live and enforced by the server. Session management, password recovery,
-          CSV export, and account deletion remain unbuilt and are never presented as operational.
+          Authentication is live and enforced by the server. Session management, password change,
+          and email recovery remain unbuilt and are never presented as operational. CSV export and
+          self-service account deletion are real and documented in Data.
         </p>
       </Card>
     </AppShell>

@@ -31,7 +31,8 @@ describe('settings index', () => {
     }
     expect(screen.getByText(/saved per user/i)).toBeTruthy();
     expect(screen.getByText(/server-enforced sessions are live/i)).toBeTruthy();
-    expect(screen.getByText(/CSV export and account deletion are not built yet/i)).toBeTruthy();
+    expect(screen.getByText(/download every recorded transaction as csv/i)).toBeTruthy();
+    expect(screen.getByText(/session management, password change/i)).toBeTruthy();
     expect(screen.queryByRole('link', { name: /forgot|reset|billing|subscription/i })).toBeNull();
   });
 

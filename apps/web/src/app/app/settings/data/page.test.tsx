@@ -7,29 +7,28 @@ vi.mock('next/navigation', () => ({
 
 import DataSettingsPage from './page';
 
-describe('data settings route (real records, no export yet)', () => {
-  it('says export and deletion are unavailable without claiming records do not exist', () => {
+describe('data settings route (real export and deletion controls)', () => {
+  it('renders the working export and deletion controls', () => {
     render(<DataSettingsPage />);
     expect(screen.getByRole('heading', { level: 1, name: 'Your data' })).toBeTruthy();
-    expect(screen.getByText(/export and deletion are not available yet/i)).toBeTruthy();
-    expect(screen.getByText(/are stored in your own MoneyFlow account/i)).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Download transactions CSV' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Delete my account…' })).toBeTruthy();
+    expect(screen.getByText(/internal database identifiers are not/i)).toBeTruthy();
   });
 
-  it('names the planned rights without rendering controls that do nothing', () => {
+  it('explains the destructive scope, password re-entry, and session revocation', () => {
     render(<DataSettingsPage />);
-    for (const name of [
-      'Export transactions (CSV)',
-      'Delete your account',
-      'Retention and audit record',
-    ]) {
-      expect(screen.getByText(name)).toBeTruthy();
-    }
-    expect(screen.queryByRole('button', { name: /export|download|delete/i })).toBeNull();
+    expect(screen.getByText(/permanently removes your user and every row it owns/i)).toBeTruthy();
+    expect(screen.getByText(/requires your password/i)).toBeTruthy();
+    expect(screen.getByText(/every active session/i)).toBeTruthy();
+    expect(screen.getByText(/financial accounts cannot be deleted individually/i)).toBeTruthy();
   });
 
-  it('marks retention and export details as undecided rather than settled', () => {
+  it('is honest about audit contents and backup retention', () => {
     render(<DataSettingsPage />);
-    expect(screen.getByText(/still need a decision/i)).toBeTruthy();
-    expect(screen.getByText(/does not describe them as settled/i)).toBeTruthy();
+    expect(screen.getByText(/no public audit api/i)).toBeTruthy();
+    expect(screen.getByText(/never contains amounts/i)).toBeTruthy();
+    expect(screen.getByText(/backups are not claimed to be erased/i)).toBeTruthy();
+    expect(screen.queryByText(/not available yet/i)).toBeNull();
   });
 });

@@ -12,9 +12,11 @@ import {
   Res,
 } from '@nestjs/common';
 import type { TransactionListResponse, TransactionResponse } from '@moneyflow/contracts';
+import type { ServerResponse } from 'node:http';
 
 import { CurrentUser } from '../auth/decorators';
 import type { AuthUser } from '../auth/auth.types';
+import { TransactionsExportService } from './transactions-export.service';
 import { TransactionsService } from './transactions.service';
 
 /** Minimal response surface for setting the create/replay status code. */
@@ -32,7 +34,10 @@ interface StatusSetter {
  */
 @Controller('transactions')
 export class TransactionsController {
-  constructor(private readonly transactions: TransactionsService) {}
+  constructor(
+    private readonly transactions: TransactionsService,
+    private readonly exporter: TransactionsExportService,
+  ) {}
 
   @Post()
   public async createTransaction(
@@ -52,6 +57,40 @@ export class TransactionsController {
     @Query() query: Record<string, unknown>,
   ): Promise<TransactionListResponse> {
     return this.transactions.listTransactions(user.id, query);
+  }
+
+  /**
+   * `GET /api/v1/transactions/export` — streams a real CSV of the caller's
+   * own rows. Declared before `:id` so the literal path can never be
+   * captured as a transaction id.
+   */
+  @Get('export')
+  public async exportTransactions(
+    @CurrentUser() user: AuthUser,
+    @Query() query: Record<string, unknown>,
+    @Res() res: ServerResponse,
+  ): Promise<void> {
+    const { stream, filename } = await this.exporter.createExport(user.id, query);
+    res.statusCode = 200;
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Cache-Control', 'no-store');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    stream.once('error', () => {
+      if (!res.headersSent) {
+        res.statusCode = 500;
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.end(JSON.stringify({ message: 'The export could not be completed.' }));
+        return;
+      }
+      res.destroy();
+    });
+    res.once('close', () => {
+      if (!stream.destroyed) {
+        stream.destroy();
+      }
+    });
+    stream.pipe(res);
   }
 
   @Get(':id')

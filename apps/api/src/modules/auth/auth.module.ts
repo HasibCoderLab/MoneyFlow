@@ -2,8 +2,11 @@ import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { betterAuth } from 'better-auth';
 
+import { RateLimiter } from '../../common/rate-limit';
 import { PrismaModule } from '../../prisma/prisma.module';
 import { PrismaService } from '../../prisma/prisma.service';
+import { AuditModule } from '../audit/audit.module';
+import { AccountDeletionService } from './account-deletion.service';
 import { createAuthOptions } from './auth-options';
 import { AUTH_INSTANCE } from './auth.tokens';
 import { AuthGuard } from './auth.guard';
@@ -26,7 +29,7 @@ import { MeController } from './me.controller';
  * generation) builds an identical instance from the same options factory.
  */
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, AuditModule],
   controllers: [MeController],
   providers: [
     {
@@ -36,6 +39,8 @@ import { MeController } from './me.controller';
         betterAuth(createAuthOptions({ prisma, env: process.env })),
     },
     AuthService,
+    AccountDeletionService,
+    RateLimiter,
     AuthGuard,
     {
       provide: APP_GUARD,

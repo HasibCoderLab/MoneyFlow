@@ -774,6 +774,22 @@ a {
   transform: translateY(1px);
 }
 
+/* Destructive actions (IT-12 account deletion) reuse the expense color so
+   the warning is visible in both themes without a new palette. */
+.mf-btn--danger {
+  background: var(--mf-expense);
+  color: var(--mf-primary-ink);
+  box-shadow: var(--mf-shadow-sm);
+}
+
+.mf-btn--danger:hover {
+  filter: brightness(1.08);
+}
+
+.mf-btn--danger:active {
+  transform: translateY(1px);
+}
+
 /* ── App shell ─────────────────────────────────────────────────────── */
 
 .mf-app {
@@ -901,6 +917,9 @@ a {
 .mf-nav {
   position: sticky;
   top: calc(3.4rem + var(--mf-space-4));
+  /* Grid items default to min-width:auto; the mobile row nav would otherwise
+     force the whole app body wider than the viewport. */
+  min-width: 0;
 }
 
 .mf-nav__label {

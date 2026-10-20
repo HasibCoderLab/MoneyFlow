@@ -1,7 +1,8 @@
 # Financial domain model (proposed)
 
-> Phase 1 design artifact — **proposal, not implemented**. Open decisions and
-> their approval status are tracked in
+> Phase 1 design artifact, implemented incrementally through IT-12; the
+> schema and migration history are the current source of truth. Open
+> decisions and their approval status are tracked in
 > [`docs/decisions/decision-register.md`](../decisions/decision-register.md).
 > Rules for money and accounting live in
 > [`accounting-rules.md`](./accounting-rules.md) and ADR-0003/ADR-0004.
@@ -222,18 +223,24 @@ layouts remain DR-12 (V1).
 
 ### `AuditEvent`
 
-| Field          | Type             | Rules                                                                             |
-| -------------- | ---------------- | --------------------------------------------------------------------------------- |
-| `id`           | uuid             | PK                                                                                |
-| `userId`       | string?          | Nullable after account deletion; no cascade into events                           |
-| `type`         | `AuditEventType` | e.g. `TRANSACTION_DELETED`, `ACCOUNT_DELETED`, `DATA_EXPORTED`, `SESSION_REVOKED` |
-| `resourceType` | string?          | e.g. `transaction`, `account`                                                     |
-| `resourceId`   | string?          |                                                                                   |
-| `metadata`     | jsonb?           | Safe, minimal metadata only — no amounts, notes, tokens                           |
-| `createdAt`    | timestamptz      |                                                                                   |
+**Implemented in IT-12** (migration
+`20261020203000_add_audit_events`, ADR-0011).
 
-MVP records audit events for destructive/security-relevant actions only
-(§9.1, DR-16); no full request bodies and no secrets.
+| Field          | Type             | Rules                                                                                                                                              |
+| -------------- | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`           | uuid             | PK                                                                                                                                                 |
+| `userId`       | string?          | FK → `User.id`, `ON DELETE SET NULL`; the event survives deletion while the actor link is anonymized                                               |
+| `type`         | `AuditEventType` | `TRANSACTION_DELETED`, `CATEGORY_DELETED`, `BUDGET_DELETED`, `GOAL_DELETED`, `DATA_EXPORT_REQUESTED`, `DATA_EXPORT_FAILED`, `USER_ACCOUNT_DELETED` |
+| `resourceType` | varchar(40)?     | `transaction`, `category`, `budget`, `goal`, `user`, or `transactions_export`                                                                      |
+| `resourceId`   | varchar(64)?     | Target id where one exists; never exposed through a public API                                                                                     |
+| `metadata`     | jsonb?           | Object-only JSONB; safe, minimal metadata only — no amounts, notes, tokens, passwords, or request bodies                                           |
+| `createdAt`    | timestamptz(3)   | UTC; indexed with `userId` and with `type`                                                                                                         |
+
+MVP records audit events for destructive/security-relevant actions and export
+requests only (§9.1, DR-16). Destructive-event writes share the caller's
+database transaction, so a rollback removes both the delete and the event.
+There is no public audit endpoint or UI, and no shorter anonymous-retention
+period has been approved.
 
 ## Relationships (textual ERD)
 
@@ -257,15 +264,15 @@ Transaction *─1 Category              (INCOME/EXPENSE)
 
 ## Delete / archive behavior (must be enforced server-side)
 
-| Resource     | Default action             | Hard delete allowed?                                        |
-| ------------ | -------------------------- | ----------------------------------------------------------- |
-| Account      | Archive                    | Only via full account deletion; history never silently lost |
-| Category     | Archive when referenced    | Delete only when unreferenced (else 409 with message)       |
-| Transaction  | Hard delete + confirmation | Yes, with audit event                                       |
-| Goal         | Archive/complete           | Delete allowed; contributions cascade after confirmation    |
-| Contribution | Reverse (linked row)       | Never deleted — reversal preserves history                  |
-| Budget       | Archive                    | Delete allowed with confirmation                            |
-| User         | Account deletion workflow  | Cascades all owned data (retention policy per DR-16)        |
+| Resource     | Default action             | Hard delete allowed?                                                                                                                      |
+| ------------ | -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| Account      | Archive                    | Only via full user-account deletion; history never silently lost                                                                          |
+| Category     | Archive when referenced    | Delete only when unreferenced (else 409 with message)                                                                                     |
+| Transaction  | Hard delete + confirmation | Yes, with audit event                                                                                                                     |
+| Goal         | Archive/complete           | Delete allowed; contributions cascade after confirmation                                                                                  |
+| Contribution | Reverse (linked row)       | Never deleted — reversal preserves history                                                                                                |
+| Budget       | Archive                    | Delete allowed with confirmation                                                                                                          |
+| User         | Account deletion workflow  | Hard-deletes all owned live rows + sessions in one transaction, writes an anonymized audit row; backups are not claimed erased (ADR-0011) |
 
 ## Deliberately not in the MVP schema
 

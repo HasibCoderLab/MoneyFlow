@@ -16,6 +16,7 @@ import { percentTimes10 } from '../../domain/money/percentage';
 import { DEFAULT_CURRENCY_CODE } from '../../domain/money/currency';
 import { assertUuid, mapMoneyError } from '../../common/http-errors';
 import { PrismaService } from '../../prisma/prisma.service';
+import { AuditService } from '../audit/audit.service';
 import { startOfLocalDay } from '../transactions/occurrence';
 import { PreferencesService } from '../preferences/preferences.service';
 import { addLocalMonths } from '../summary/summary-periods';
@@ -58,6 +59,7 @@ export class BudgetsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly preferences: PreferencesService,
+    private readonly audit: AuditService,
   ) {}
 
   /** `GET /api/v1/budgets` — the caller's budgets with current utilization. */
@@ -190,11 +192,19 @@ export class BudgetsService {
   /** `DELETE /api/v1/budgets/:id` — hard delete; limits cascade (domain-model.md). */
   public async deleteBudget(userId: string, rawId: string): Promise<void> {
     const id = assertUuid(rawId, 'Budget');
-    const current = await this.prisma.budget.findFirst({ where: { id, userId } });
-    if (!current) {
-      throw new NotFoundException('Budget not found.');
-    }
-    await this.prisma.budget.delete({ where: { id } });
+    await this.prisma.$transaction(async (tx) => {
+      const current = await tx.budget.findFirst({ where: { id, userId } });
+      if (!current) {
+        throw new NotFoundException('Budget not found.');
+      }
+      await tx.budget.delete({ where: { id } });
+      await this.audit.recordInTransaction(tx, {
+        userId,
+        type: 'BUDGET_DELETED',
+        resourceType: 'budget',
+        resourceId: id,
+      });
+    });
   }
 
   /** `POST /api/v1/budgets/:id/archive` — any status → ARCHIVED (idempotent). */

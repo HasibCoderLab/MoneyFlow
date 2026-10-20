@@ -56,6 +56,7 @@ model User {
   goalContributions GoalContribution[]
   preference        UserPreference?
   dashboardLayout   DashboardLayout?
+  auditEvents       AuditEvent[]
 
   @@unique([email])
   @@map("user")
@@ -443,4 +444,39 @@ model DashboardLayout {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("dashboardLayout")
+}
+
+// ── Auditability (IT-12, ADR-0011, DR-16) ──────────────────────────────────
+//
+// Minimal accountability rows for destructive/security-relevant actions.
+// `userId` becomes NULL when the user deletes their account, so event rows
+// survive without retaining an actor link. Metadata must never contain
+// amounts, notes, tokens, passwords, or request bodies. There is no public
+// read surface in IT-12.
+
+enum AuditEventType {
+  TRANSACTION_DELETED
+  CATEGORY_DELETED
+  BUDGET_DELETED
+  GOAL_DELETED
+  DATA_EXPORT_REQUESTED
+  DATA_EXPORT_FAILED
+  USER_ACCOUNT_DELETED
+}
+
+model AuditEvent {
+  id           String         @id @default(uuid()) @db.Uuid
+  // Nullable after user deletion (ON DELETE SET NULL), never cascaded away.
+  userId       String?
+  type         AuditEventType
+  resourceType String?        @db.VarChar(40)
+  resourceId   String?        @db.VarChar(64)
+  // Safe, minimal JSON only — no amounts, notes, tokens, or request bodies.
+  metadata     Json?
+  createdAt    DateTime       @default(now()) @db.Timestamptz(3)
+  user         User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([type, createdAt(sort: Desc)])
+  @@map("auditEvent")
 }

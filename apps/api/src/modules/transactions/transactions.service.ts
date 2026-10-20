@@ -6,17 +6,13 @@ import type {
 } from '@moneyflow/contracts';
 
 import { assertUuid, isUniqueViolationFor, mapMoneyError } from '../../common/http-errors';
-import {
-  parseAmountToMinor,
-  parsePositiveAmountToMinor,
-  toContractString,
-} from '../../domain/money/amount';
+import { parsePositiveAmountToMinor, toContractString } from '../../domain/money/amount';
 import type {
   Account as PrismaAccount,
-  Prisma,
   Transaction as PrismaTransaction,
 } from '../../generated/prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
+import { AuditService } from '../audit/audit.service';
 import {
   parseCreateTransactionInput,
   parseIdempotencyKey,
@@ -24,14 +20,13 @@ import {
   type ParsedTransactionInput,
   type ParsedUpdateInput,
 } from './dto';
-import { addLocalDays, resolveOccurrence, resolveTimezone, startOfLocalDay } from './occurrence';
+import { resolveOccurrence } from './occurrence';
+import { buildTransactionWhere, parseListQuery } from './transaction-filters';
 
 /** Prisma delegates used here; the interactive-transaction client included. */
 type DbClient = Pick<PrismaService, 'account' | 'transaction' | 'category'>;
 
 const IDEMPOTENCY_CONFLICT_INDEX = 'transaction_userId_idempotencyKey_key';
-const DEFAULT_LIST_LIMIT = 20;
-const MAX_LIST_LIMIT = 100;
 
 export interface CreateTransactionResult {
   readonly transaction: TransactionResponse;
@@ -67,12 +62,15 @@ interface PreparedTransactionWrite {
  *   occurrence semantics and the archived-account rules (§3 rule 8, §11.3).
  * - Creates/updates/deletes run inside a database transaction (§4.1, §5.4).
  * - Deletes are hard deletes after the caller's confirmation (the UI
- *   confirms; the API deletes). `AuditEvent` rows land with IT-12 — there is
- *   no audit table yet, so deletion is recorded nowhere yet (known gap).
+ *   confirms; the API deletes) and write a `TRANSACTION_DELETED` audit event
+ *   in the same database transaction (IT-12, ADR-0011).
  */
 @Injectable()
 export class TransactionsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly audit: AuditService,
+  ) {}
 
   public async createTransaction(
     userId: string,
@@ -123,29 +121,7 @@ export class TransactionsService {
     query: Record<string, unknown>,
   ): Promise<TransactionListResponse> {
     const filters = parseListQuery(query);
-    const where: Prisma.TransactionWhereInput = { userId };
-    if (filters.type !== undefined) {
-      where.type = filters.type;
-    }
-    if (filters.categoryId !== undefined) {
-      where.categoryId = filters.categoryId;
-    }
-    if (filters.accountId !== undefined) {
-      const accountId = filters.accountId;
-      where.OR = [{ accountId }, { fromAccountId: accountId }, { toAccountId: accountId }];
-    }
-    if (filters.from !== undefined || filters.to !== undefined) {
-      where.occurredAt = {
-        ...(filters.from !== undefined ? { gte: filters.from } : {}),
-        ...(filters.to !== undefined ? { lt: filters.to } : {}),
-      };
-    }
-    if (filters.minAmount !== undefined || filters.maxAmount !== undefined) {
-      where.amountMinor = {
-        ...(filters.minAmount !== undefined ? { gte: filters.minAmount } : {}),
-        ...(filters.maxAmount !== undefined ? { lte: filters.maxAmount } : {}),
-      };
-    }
+    const where = buildTransactionWhere(userId, filters);
 
     const [total, rows] = await this.prisma.$transaction([
       this.prisma.transaction.count({ where }),
@@ -207,6 +183,12 @@ export class TransactionsService {
         throw new NotFoundException('Transaction not found.');
       }
       await tx.transaction.delete({ where: { id } });
+      await this.audit.recordInTransaction(tx, {
+        userId,
+        type: 'TRANSACTION_DELETED',
+        resourceType: 'transaction',
+        resourceId: id,
+      });
     });
   }
 
@@ -333,128 +315,6 @@ export class TransactionsService {
       throw new BadRequestException('The category type must match the transaction type.');
     }
   }
-}
-
-interface ListFilters {
-  readonly type?: TransactionType;
-  readonly accountId?: string;
-  readonly categoryId?: string;
-  readonly from?: Date;
-  readonly to?: Date;
-  readonly minAmount?: bigint;
-  readonly maxAmount?: bigint;
-  readonly limit: number;
-  readonly offset: number;
-}
-
-const LIST_TRANSACTION_TYPES: readonly string[] = ['INCOME', 'EXPENSE', 'TRANSFER', 'ADJUSTMENT'];
-
-function parseListQuery(query: Record<string, unknown>): ListFilters {
-  const result: {
-    type?: TransactionType;
-    accountId?: string;
-    categoryId?: string;
-    from?: Date;
-    to?: Date;
-    minAmount?: bigint;
-    maxAmount?: bigint;
-    limit: number;
-    offset: number;
-  } = { limit: DEFAULT_LIST_LIMIT, offset: 0 };
-
-  if (query.type !== undefined) {
-    if (typeof query.type !== 'string' || !LIST_TRANSACTION_TYPES.includes(query.type)) {
-      throw new BadRequestException(
-        '"type" must be one of: INCOME, EXPENSE, TRANSFER, ADJUSTMENT.',
-      );
-    }
-    result.type = query.type as TransactionType;
-  }
-  if (query.accountId !== undefined) {
-    result.accountId = parseUuidFilter(query.accountId, 'accountId');
-  }
-  if (query.categoryId !== undefined) {
-    result.categoryId = parseUuidFilter(query.categoryId, 'categoryId');
-  }
-
-  const timezone = query.timezone === undefined ? 'Asia/Dhaka' : resolveTimezone(query.timezone);
-  if (query.dateFrom !== undefined || query.dateTo !== undefined) {
-    const fromText = parseDateFilter(query.dateFrom, 'dateFrom');
-    const toText = parseDateFilter(query.dateTo, 'dateTo');
-    if (fromText && toText && fromText > toText) {
-      throw new BadRequestException('"dateFrom" must not be after "dateTo".');
-    }
-    if (fromText) {
-      result.from = startOfLocalDay(timezone, fromText);
-    }
-    if (toText) {
-      result.to = startOfLocalDay(timezone, addLocalDays(toText, 1));
-    }
-  } else if (query.timezone !== undefined) {
-    // Timezone alone changes nothing; validated above for explicitness.
-  }
-
-  if (query.minAmount !== undefined || query.maxAmount !== undefined) {
-    try {
-      if (query.minAmount !== undefined) {
-        result.minAmount = parseAmountToMinor(query.minAmount);
-      }
-      if (query.maxAmount !== undefined) {
-        result.maxAmount = parseAmountToMinor(query.maxAmount);
-      }
-    } catch (error) {
-      throw mapMoneyError(error);
-    }
-    if (
-      result.minAmount !== undefined &&
-      result.maxAmount !== undefined &&
-      result.minAmount > result.maxAmount
-    ) {
-      throw new BadRequestException('"minAmount" must not exceed "maxAmount".');
-    }
-  }
-
-  if (query.limit !== undefined) {
-    result.limit = parseBoundedInt(query.limit, 'limit', 1, MAX_LIST_LIMIT);
-  }
-  if (query.offset !== undefined) {
-    result.offset = parseBoundedInt(query.offset, 'offset', 0, Number.MAX_SAFE_INTEGER);
-  }
-  return result;
-}
-
-function parseUuidFilter(value: unknown, field: string): string {
-  if (typeof value !== 'string') {
-    throw new BadRequestException(`"${field}" must be a valid UUID.`);
-  }
-  try {
-    return assertUuid(value, field);
-  } catch {
-    throw new BadRequestException(`"${field}" must be a valid UUID.`);
-  }
-}
-
-function parseDateFilter(value: unknown, field: string): string | undefined {
-  if (value === undefined) {
-    return undefined;
-  }
-  if (typeof value !== 'string') {
-    throw new BadRequestException(`"${field}" must use the YYYY-MM-DD format.`);
-  }
-  try {
-    startOfLocalDay('Asia/Dhaka', value);
-  } catch {
-    throw new BadRequestException(`"${field}" must be a real calendar date (YYYY-MM-DD).`);
-  }
-  return value;
-}
-
-function parseBoundedInt(value: unknown, field: string, min: number, max: number): number {
-  const parsed = typeof value === 'string' ? Number(value) : value;
-  if (!Number.isInteger(parsed) || (parsed as number) < min || (parsed as number) > max) {
-    throw new BadRequestException(`"${field}" must be an integer from ${min} to ${max}.`);
-  }
-  return parsed as number;
 }
 
 function toTransactionResponse(row: PrismaTransaction): TransactionResponse {

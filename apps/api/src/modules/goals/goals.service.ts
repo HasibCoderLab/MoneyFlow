@@ -19,6 +19,7 @@ import { percentTimes10 } from '../../domain/money/percentage';
 import { DEFAULT_CURRENCY_CODE } from '../../domain/money/currency';
 import { assertUuid, isUniqueViolationFor } from '../../common/http-errors';
 import { PrismaService } from '../../prisma/prisma.service';
+import { AuditService } from '../audit/audit.service';
 import { DEFAULT_TIMEZONE, localDateString, startOfLocalDay } from '../transactions/occurrence';
 import {
   assertDeadlineNotBeforeStart,
@@ -56,7 +57,10 @@ import {
  */
 @Injectable()
 export class GoalsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly audit: AuditService,
+  ) {}
 
   /** `GET /api/v1/goals` — the caller's goals with derived progress. */
   public async listGoals(userId: string, query: unknown): Promise<GoalResponse[]> {
@@ -138,8 +142,19 @@ export class GoalsService {
   /** `DELETE /api/v1/goals/:id` — hard delete; ledger rows cascade. */
   public async deleteGoal(userId: string, rawId: string): Promise<void> {
     const id = assertUuid(rawId, 'Goal');
-    await this.requireGoal(userId, id);
-    await this.prisma.goal.delete({ where: { id } });
+    await this.prisma.$transaction(async (tx) => {
+      const current = await tx.goal.findFirst({ where: { id, userId } });
+      if (!current) {
+        throw new NotFoundException('Goal not found.');
+      }
+      await tx.goal.delete({ where: { id } });
+      await this.audit.recordInTransaction(tx, {
+        userId,
+        type: 'GOAL_DELETED',
+        resourceType: 'goal',
+        resourceId: id,
+      });
+    });
   }
 
   /** `POST /api/v1/goals/:id/pause` — ACTIVE → PAUSED (idempotent). */

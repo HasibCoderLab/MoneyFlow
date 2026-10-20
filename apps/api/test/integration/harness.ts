@@ -34,7 +34,7 @@ export function createTestPrismaClient(): PrismaService {
 export async function resetDatabase(prisma: PrismaService): Promise<void> {
   // Constant statement — no user input is interpolated.
   await prisma.$executeRawUnsafe(
-    'TRUNCATE TABLE "dashboardLayout", "userPreference", "goalContribution", "goal", "budgetCategoryLimit", "budget", "transaction", "category", "account", "verification", "authAccount", "session", "user" RESTART IDENTITY CASCADE',
+    'TRUNCATE TABLE "auditEvent", "dashboardLayout", "userPreference", "goalContribution", "goal", "budgetCategoryLimit", "budget", "transaction", "category", "account", "verification", "authAccount", "session", "user" RESTART IDENTITY CASCADE',
   );
 }
 

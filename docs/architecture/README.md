@@ -66,14 +66,17 @@ is approved or implemented yet.
 
 ## Current state
 
-Foundation through IT-11, plus the 2026-10-20 integration audit: the NestJS
+Foundation through IT-12, plus the 2026-10-20 integration audit: the NestJS
 API owns the Prisma/PostgreSQL schema for users, sessions, accounts,
-categories, transactions, budgets, goals/contributions, preferences, and
-dashboard layouts. The Next.js app consumes the authenticated `/api/v1`
-routes only; accounts, transactions, dashboard, reports, categories, budgets,
-goals, profile, preferences, and customization no longer render sample
-records. Auth uses HttpOnly session cookies, and every private query is
-scoped to the server-verified user. The landing-page product illustration is
-explicitly labelled sample data. Accepted decisions live in
-`docs/decisions/`; sequencing is in
+categories, transactions, budgets, goals/contributions, preferences,
+dashboard layouts, and minimal audit events. The Next.js app consumes the
+authenticated `/api/v1` routes only; accounts, transactions, dashboard,
+reports, categories, budgets, goals, profile, preferences, customization,
+and data controls no longer render sample records. Auth uses HttpOnly
+session cookies, and every private query is scoped to the server-verified
+user. CSV export streams the caller's own rows, and self-service deletion
+removes the live user data in one transaction and revokes sessions; backup
+erasure is not claimed. The landing-page product illustration is explicitly
+labelled sample data. Accepted decisions live in `docs/decisions/`;
+sequencing is in
 [`docs/product/implementation-plan.md`](../product/implementation-plan.md).

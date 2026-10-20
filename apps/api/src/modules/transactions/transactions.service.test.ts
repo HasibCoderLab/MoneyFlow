@@ -2,6 +2,7 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { describe, expect, it, vi } from 'vitest';
 
 import type { PrismaService } from '../../prisma/prisma.service';
+import type { AuditService } from '../audit/audit.service';
 import { parseIdempotencyKey, parseUpdateTransactionInput } from './dto';
 import { TransactionsService } from './transactions.service';
 
@@ -18,6 +19,14 @@ const CASH_ID = '11111111-1111-4111-8111-111111111111';
 const BANK_ID = '22222222-2222-4222-8222-222222222222';
 const CATEGORY_ID = '33333333-3333-4333-8333-333333333333';
 const TX_ID = '44444444-4444-4434-8434-444444444444';
+
+const audit = {
+  recordInTransaction: vi.fn().mockResolvedValue(undefined),
+} as unknown as AuditService;
+
+function serviceWith(prisma: PrismaService): TransactionsService {
+  return new TransactionsService(prisma, audit);
+}
 
 function accountRow(id: string, overrides: Record<string, unknown> = {}) {
   return {
@@ -115,7 +124,7 @@ describe('TransactionsService.createTransaction', () => {
   it('resolves income references and returns contract strings', async () => {
     const { prisma, tx } = mockDb();
     mockIncomeRefs(tx);
-    const service = new TransactionsService(prisma);
+    const service = serviceWith(prisma);
 
     const result = await service.createTransaction(USER_ID, INCOME_BODY, undefined);
 
@@ -137,7 +146,7 @@ describe('TransactionsService.createTransaction', () => {
     const { prisma, tx } = mockDb();
     const stored = transactionRow({ idempotencyKey: 'key-1' });
     tx.transaction.findFirst.mockResolvedValue(stored);
-    const service = new TransactionsService(prisma);
+    const service = serviceWith(prisma);
 
     const result = await service.createTransaction(USER_ID, INCOME_BODY, 'key-1');
 
@@ -149,7 +158,7 @@ describe('TransactionsService.createTransaction', () => {
   it('rejects same-account transfers', async () => {
     const { prisma, tx } = mockDb();
     tx.account.findFirst.mockResolvedValue(accountRow(CASH_ID));
-    const service = new TransactionsService(prisma);
+    const service = serviceWith(prisma);
 
     await expect(
       service.createTransaction(
@@ -174,7 +183,7 @@ describe('TransactionsService.createTransaction', () => {
     tx.account.findFirst
       .mockResolvedValueOnce(accountRow(CASH_ID))
       .mockResolvedValueOnce(accountRow(BANK_ID, { currency: 'USD' }));
-    const service = new TransactionsService(prisma);
+    const service = serviceWith(prisma);
 
     await expect(
       service.createTransaction(
@@ -195,7 +204,7 @@ describe('TransactionsService.createTransaction', () => {
   it('rejects new transactions on archived accounts', async () => {
     const { prisma, tx } = mockDb();
     tx.account.findFirst.mockResolvedValue(accountRow(CASH_ID, { status: 'ARCHIVED' }));
-    const service = new TransactionsService(prisma);
+    const service = serviceWith(prisma);
 
     await expect(service.createTransaction(USER_ID, INCOME_BODY, undefined)).rejects.toThrow(
       /archived/,
@@ -206,7 +215,7 @@ describe('TransactionsService.createTransaction', () => {
     const { prisma, tx } = mockDb();
     tx.account.findFirst.mockResolvedValue(accountRow(CASH_ID));
     tx.category.findFirst.mockResolvedValue(categoryRow('EXPENSE'));
-    const service = new TransactionsService(prisma);
+    const service = serviceWith(prisma);
 
     await expect(service.createTransaction(USER_ID, INCOME_BODY, undefined)).rejects.toThrow(
       /must match/,
@@ -225,7 +234,7 @@ describe('TransactionsService.createTransaction', () => {
     tx.transaction.create.mockImplementation((args: { data: Record<string, unknown> }) =>
       Promise.resolve(transactionRow({ ...args.data, type: 'ADJUSTMENT' })),
     );
-    const service = new TransactionsService(prisma);
+    const service = serviceWith(prisma);
 
     const result = await service.createTransaction(
       USER_ID,
@@ -261,7 +270,7 @@ describe('TransactionsService.updateTransaction', () => {
   it('rejects type changes on an existing row', async () => {
     const { prisma, tx } = mockDb();
     tx.transaction.findFirst.mockResolvedValue(transactionRow());
-    const service = new TransactionsService(prisma);
+    const service = serviceWith(prisma);
 
     await expect(
       service.updateTransaction(USER_ID, TX_ID, { ...INCOME_BODY, type: 'EXPENSE' }),
@@ -271,7 +280,7 @@ describe('TransactionsService.updateTransaction', () => {
 
   it('answers 404 for foreign rows and re-resolves edited references', async () => {
     const { prisma, tx } = mockDb();
-    const service = new TransactionsService(prisma);
+    const service = serviceWith(prisma);
     const updateBody = {
       amount: '5',
       occurredDate: INCOME_BODY.occurredDate,
@@ -301,7 +310,7 @@ describe('TransactionsService.updateTransaction', () => {
 describe('TransactionsService.deleteTransaction', () => {
   it('deletes owned rows and answers 404 otherwise', async () => {
     const { prisma, tx } = mockDb();
-    const service = new TransactionsService(prisma);
+    const service = serviceWith(prisma);
 
     tx.transaction.findFirst.mockResolvedValue(null);
     await expect(service.deleteTransaction(USER_ID, TX_ID)).rejects.toBeInstanceOf(
@@ -312,6 +321,12 @@ describe('TransactionsService.deleteTransaction', () => {
     tx.transaction.delete.mockResolvedValue(transactionRow());
     await expect(service.deleteTransaction(USER_ID, TX_ID)).resolves.toBeUndefined();
     expect(tx.transaction.delete).toHaveBeenCalledWith({ where: { id: TX_ID } });
+    expect(audit.recordInTransaction).toHaveBeenCalledWith(tx, {
+      userId: USER_ID,
+      type: 'TRANSACTION_DELETED',
+      resourceType: 'transaction',
+      resourceId: TX_ID,
+    });
   });
 });
 
@@ -323,7 +338,7 @@ describe('TransactionsService.listTransactions', () => {
       transactionRow(),
       transactionRow({ id: '55555555-5555-4555-8555-555555555555' }),
     ]);
-    const service = new TransactionsService(prisma);
+    const service = serviceWith(prisma);
 
     const page = await service.listTransactions(USER_ID, {
       type: 'INCOME',
@@ -348,7 +363,7 @@ describe('TransactionsService.listTransactions', () => {
     const { prisma, top } = mockDb();
     top.transaction.count.mockResolvedValue(0);
     top.transaction.findMany.mockResolvedValue([]);
-    const service = new TransactionsService(prisma);
+    const service = serviceWith(prisma);
 
     await service.listTransactions(USER_ID, {
       accountId: CASH_ID,
@@ -374,7 +389,7 @@ describe('TransactionsService.listTransactions', () => {
 
   it('rejects invalid list parameters before touching the database', async () => {
     const { prisma, top } = mockDb();
-    const service = new TransactionsService(prisma);
+    const service = serviceWith(prisma);
 
     const cases: Record<string, unknown>[] = [
       { limit: '0' },

@@ -6,7 +6,9 @@ import {
   createBudget,
   createTransaction,
   deleteBudget,
+  deleteMyAccount,
   deleteTransaction,
+  downloadTransactionsCsv,
   fetchAccounts,
   fetchBudgets,
   fetchCategories,
@@ -286,6 +288,96 @@ describe('profile client (IT-3/IT-11)', () => {
       expect.objectContaining({
         method: 'PATCH',
         body: JSON.stringify({ name: 'Hasib' }),
+      }),
+    );
+  });
+});
+
+describe('data controls client (IT-12)', () => {
+  function mockCsvResponse(options: {
+    ok?: boolean;
+    status?: number;
+    filename?: string;
+    text?: string;
+    errorBody?: unknown;
+  }) {
+    const blob = new Blob([options.text ?? '\uFEFF"occurred_at_utc"\r\n'], {
+      type: 'text/csv',
+    });
+    const headers = new Headers();
+    if (options.filename) {
+      headers.set('content-disposition', `attachment; filename="${options.filename}"`);
+    }
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: options.ok ?? true,
+      status: options.status ?? 200,
+      headers,
+      blob: () => Promise.resolve(blob),
+      json:
+        options.errorBody === undefined
+          ? () => Promise.reject(new Error('not json'))
+          : () => Promise.resolve(options.errorBody),
+    } as unknown as Response);
+    vi.stubGlobal('fetch', fetchMock);
+    return { fetchMock, blob };
+  }
+
+  it('downloads the CSV with the session cookie and server filename', async () => {
+    process.env.NEXT_PUBLIC_API_URL = BASE_URL;
+    const { fetchMock, blob } = mockCsvResponse({
+      filename: 'moneyflow-transactions-2026-10-20.csv',
+    });
+
+    const result = await downloadTransactionsCsv({
+      type: 'EXPENSE',
+      dateFrom: '2026-10-01',
+      timezone: 'Asia/Dhaka',
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${BASE_URL}/api/v1/transactions/export?type=EXPENSE&dateFrom=2026-10-01&timezone=Asia%2FDhaka`,
+      {
+        credentials: 'include',
+        headers: { accept: 'text/csv' },
+      },
+    );
+    expect(result.blob).toBe(blob);
+    expect(result.filename).toBe('moneyflow-transactions-2026-10-20.csv');
+  });
+
+  it('falls back to a dated filename and surfaces export errors as ApiClientError', async () => {
+    process.env.NEXT_PUBLIC_API_URL = BASE_URL;
+    mockCsvResponse({});
+    const fallback = await downloadTransactionsCsv();
+    expect(fallback.filename).toMatch(/^moneyflow-transactions-\d{4}-\d{2}-\d{2}\.csv$/);
+
+    mockCsvResponse({
+      ok: false,
+      status: 429,
+      errorBody: { message: 'Too many export requests. Try again later.' },
+    });
+    const error = await catchApiError(downloadTransactionsCsv());
+    expect(error.status).toBe(429);
+    expect(error.message).toBe('Too many export requests. Try again later.');
+  });
+
+  it('DELETEs the authenticated account with the password and phrase only', async () => {
+    process.env.NEXT_PUBLIC_API_URL = BASE_URL;
+    const fetchMock = mockFetchOnce({ ok: true, status: 204 });
+
+    await expect(
+      deleteMyAccount({ password: 'integration-pass-12', confirmation: 'DELETE' }),
+    ).resolves.toBeUndefined();
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${BASE_URL}/api/v1/me`,
+      expect.objectContaining({
+        method: 'DELETE',
+        credentials: 'include',
+        body: JSON.stringify({
+          password: 'integration-pass-12',
+          confirmation: 'DELETE',
+        }),
       }),
     );
   });

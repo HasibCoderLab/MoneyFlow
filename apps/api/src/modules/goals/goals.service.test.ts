@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { Prisma } from '../../generated/prisma/client';
 import type { PrismaService } from '../../prisma/prisma.service';
+import type { AuditService } from '../audit/audit.service';
 import { GoalsService } from './goals.service';
 
 /**
@@ -18,6 +19,14 @@ const GOAL_ID = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 const CONTRIBUTION_ID = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
 const REVERSAL_ID = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd';
 const START = new Date('2026-10-01T00:00:00.000Z');
+
+const audit = {
+  recordInTransaction: vi.fn().mockResolvedValue(undefined),
+} as unknown as AuditService;
+
+function serviceWith(prisma: PrismaService): GoalsService {
+  return new GoalsService(prisma, audit);
+}
 
 function goalRow(overrides: Record<string, unknown> = {}) {
   return {
@@ -55,6 +64,7 @@ function contributionRow(overrides: Record<string, unknown> = {}) {
 function mockDb() {
   const tx = {
     $queryRaw: vi.fn(),
+    goal: { findFirst: vi.fn(), delete: vi.fn() },
     goalContribution: { findFirst: vi.fn(), create: vi.fn() },
   };
   const top = {
@@ -82,7 +92,7 @@ describe('GoalsService', () => {
       const { prisma, top } = mockDb();
       top.goal.create.mockResolvedValue(goalRow({ type: 'GENERAL', priority: 'MEDIUM' }));
 
-      const result = await new GoalsService(prisma).createGoal(USER_ID, {
+      const result = await serviceWith(prisma).createGoal(USER_ID, {
         name: 'Laptop',
         target: '48000',
         startDate: '2026-10-05',
@@ -111,7 +121,7 @@ describe('GoalsService', () => {
     it('rejects a deadline before the start date before touching the database', async () => {
       const { prisma, top } = mockDb();
       await expect(
-        new GoalsService(prisma).createGoal(USER_ID, {
+        serviceWith(prisma).createGoal(USER_ID, {
           name: 'Goal',
           target: '100',
           startDate: '2026-10-10',
@@ -134,7 +144,7 @@ describe('GoalsService', () => {
         { goalId: 'other-goal', total: '250000' },
       ]);
 
-      const [overfunded, partial] = await new GoalsService(prisma).listGoals(USER_ID, {
+      const [overfunded, partial] = await serviceWith(prisma).listGoals(USER_ID, {
         includeArchived: 'false',
       });
 
@@ -160,7 +170,7 @@ describe('GoalsService', () => {
       top.goal.findMany.mockResolvedValue([goalRow({ status: 'ARCHIVED' })]);
       top.$queryRaw.mockResolvedValue([]);
 
-      const [goal] = await new GoalsService(prisma).listGoals(USER_ID, {
+      const [goal] = await serviceWith(prisma).listGoals(USER_ID, {
         includeArchived: 'true',
       });
 
@@ -174,7 +184,7 @@ describe('GoalsService', () => {
       top.goal.findMany.mockResolvedValue([goalRow({ targetMinor: 9_007_199_254_740_993n })]);
       top.$queryRaw.mockResolvedValue([{ goalId: GOAL_ID, total: '9007199254740993000' }]);
 
-      const [goal] = await new GoalsService(prisma).listGoals(USER_ID, {});
+      const [goal] = await serviceWith(prisma).listGoals(USER_ID, {});
 
       expect(goal?.figures.savedMinor).toBe('9007199254740993000');
       expect(goal?.figures.remainingMinor).toBe('-8998192055486252007');
@@ -187,7 +197,7 @@ describe('GoalsService', () => {
       const { prisma, top } = mockDb();
       top.goal.findFirst.mockResolvedValue(null);
 
-      await expect(new GoalsService(prisma).getGoal(USER_ID, GOAL_ID)).rejects.toBeInstanceOf(
+      await expect(serviceWith(prisma).getGoal(USER_ID, GOAL_ID)).rejects.toBeInstanceOf(
         NotFoundException,
       );
       expect(top.goal.findFirst).toHaveBeenCalledWith({ where: { id: GOAL_ID, userId: USER_ID } });
@@ -195,7 +205,7 @@ describe('GoalsService', () => {
 
     it('rejects malformed ids as not found without querying', async () => {
       const { prisma, top } = mockDb();
-      await expect(new GoalsService(prisma).getGoal(USER_ID, 'not-a-uuid')).rejects.toBeInstanceOf(
+      await expect(serviceWith(prisma).getGoal(USER_ID, 'not-a-uuid')).rejects.toBeInstanceOf(
         NotFoundException,
       );
       expect(top.goal.findFirst).not.toHaveBeenCalled();
@@ -214,7 +224,7 @@ describe('GoalsService', () => {
         contributionRow({ reversedBy: { id: REVERSAL_ID } }),
       ]);
 
-      const detail = await new GoalsService(prisma).getGoal(USER_ID, GOAL_ID);
+      const detail = await serviceWith(prisma).getGoal(USER_ID, GOAL_ID);
 
       expect(top.goalContribution.findMany.mock.calls[0]?.[0]).toMatchObject({
         where: { userId: USER_ID, goalId: GOAL_ID },
@@ -240,7 +250,7 @@ describe('GoalsService', () => {
       top.goal.findFirst.mockResolvedValue(goalRow({ startDate: START }));
 
       await expect(
-        new GoalsService(prisma).updateGoal(USER_ID, GOAL_ID, { deadline: '2026-09-30' }),
+        serviceWith(prisma).updateGoal(USER_ID, GOAL_ID, { deadline: '2026-09-30' }),
       ).rejects.toBeInstanceOf(BadRequestException);
       expect(top.goal.update).not.toHaveBeenCalled();
     });
@@ -251,7 +261,7 @@ describe('GoalsService', () => {
       top.goal.update.mockResolvedValue(goalRow({ deadline: null }));
       top.$queryRaw.mockResolvedValue([{ total: '800000' }]);
 
-      const result = await new GoalsService(prisma).updateGoal(USER_ID, GOAL_ID, {
+      const result = await serviceWith(prisma).updateGoal(USER_ID, GOAL_ID, {
         deadline: null,
       });
 
@@ -266,22 +276,22 @@ describe('GoalsService', () => {
 
   describe('deleteGoal', () => {
     it('hard-deletes only the caller’s goal (ledger rows cascade in the schema)', async () => {
-      const { prisma, top } = mockDb();
-      top.goal.findFirst.mockResolvedValue(goalRow());
+      const { prisma, tx } = mockDb();
+      tx.goal.findFirst.mockResolvedValue(goalRow());
 
-      await new GoalsService(prisma).deleteGoal(USER_ID, GOAL_ID);
+      await serviceWith(prisma).deleteGoal(USER_ID, GOAL_ID);
 
-      expect(top.goal.delete).toHaveBeenCalledWith({ where: { id: GOAL_ID } });
+      expect(tx.goal.delete).toHaveBeenCalledWith({ where: { id: GOAL_ID } });
     });
 
     it('404s for a goal the caller does not own', async () => {
-      const { prisma, top } = mockDb();
-      top.goal.findFirst.mockResolvedValue(null);
+      const { prisma, tx } = mockDb();
+      tx.goal.findFirst.mockResolvedValue(null);
 
-      await expect(new GoalsService(prisma).deleteGoal(USER_ID, GOAL_ID)).rejects.toBeInstanceOf(
+      await expect(serviceWith(prisma).deleteGoal(USER_ID, GOAL_ID)).rejects.toBeInstanceOf(
         NotFoundException,
       );
-      expect(top.goal.delete).not.toHaveBeenCalled();
+      expect(tx.goal.delete).not.toHaveBeenCalled();
     });
   });
 
@@ -292,7 +302,7 @@ describe('GoalsService', () => {
       top.goal.update.mockResolvedValue(goalRow({ status: 'PAUSED' }));
       top.$queryRaw.mockResolvedValue([{ total: '0' }]);
 
-      const result = await new GoalsService(prisma).pauseGoal(USER_ID, GOAL_ID);
+      const result = await serviceWith(prisma).pauseGoal(USER_ID, GOAL_ID);
 
       expect(top.goal.update).toHaveBeenCalledWith({
         where: { id: GOAL_ID },
@@ -306,7 +316,7 @@ describe('GoalsService', () => {
       top.goal.findFirst.mockResolvedValue(goalRow({ status: 'PAUSED' }));
       top.$queryRaw.mockResolvedValue([{ total: '0' }]);
 
-      const result = await new GoalsService(prisma).pauseGoal(USER_ID, GOAL_ID);
+      const result = await serviceWith(prisma).pauseGoal(USER_ID, GOAL_ID);
 
       expect(top.goal.update).not.toHaveBeenCalled();
       expect(result.status).toBe('PAUSED');
@@ -316,17 +326,17 @@ describe('GoalsService', () => {
       const { prisma, top } = mockDb();
       top.goal.findFirst.mockResolvedValue(goalRow({ status: 'COMPLETED' }));
 
-      await expect(new GoalsService(prisma).pauseGoal(USER_ID, GOAL_ID)).rejects.toBeInstanceOf(
+      await expect(serviceWith(prisma).pauseGoal(USER_ID, GOAL_ID)).rejects.toBeInstanceOf(
         ConflictException,
       );
 
       top.goal.findFirst.mockResolvedValue(goalRow({ status: 'ARCHIVED' }));
-      await expect(new GoalsService(prisma).completeGoal(USER_ID, GOAL_ID)).rejects.toBeInstanceOf(
+      await expect(serviceWith(prisma).completeGoal(USER_ID, GOAL_ID)).rejects.toBeInstanceOf(
         ConflictException,
       );
 
       top.goal.findFirst.mockResolvedValue(goalRow({ status: 'PAUSED' }));
-      await expect(new GoalsService(prisma).unarchiveGoal(USER_ID, GOAL_ID)).rejects.toBeInstanceOf(
+      await expect(serviceWith(prisma).unarchiveGoal(USER_ID, GOAL_ID)).rejects.toBeInstanceOf(
         ConflictException,
       );
       expect(top.goal.update).not.toHaveBeenCalled();
@@ -338,12 +348,12 @@ describe('GoalsService', () => {
       top.goal.update.mockResolvedValue(goalRow({ status: 'COMPLETED' }));
       top.$queryRaw.mockResolvedValue([{ total: '0' }]);
 
-      const completed = await new GoalsService(prisma).completeGoal(USER_ID, GOAL_ID);
+      const completed = await serviceWith(prisma).completeGoal(USER_ID, GOAL_ID);
       expect(completed.status).toBe('COMPLETED');
 
       top.goal.findFirst.mockResolvedValue(goalRow({ status: 'COMPLETED' }));
       top.goal.update.mockResolvedValue(goalRow({ status: 'ARCHIVED' }));
-      const archived = await new GoalsService(prisma).archiveGoal(USER_ID, GOAL_ID);
+      const archived = await serviceWith(prisma).archiveGoal(USER_ID, GOAL_ID);
       expect(archived.status).toBe('ARCHIVED');
     });
   });
@@ -354,7 +364,7 @@ describe('GoalsService', () => {
       top.goal.findFirst.mockResolvedValue(goalRow());
       top.goalContribution.create.mockResolvedValue(contributionRow({ note: 'leftover' }));
 
-      const result = await new GoalsService(prisma).addContribution(USER_ID, GOAL_ID, {
+      const result = await serviceWith(prisma).addContribution(USER_ID, GOAL_ID, {
         amount: '8000',
         occurredDate: '2026-10-19',
         note: 'leftover',
@@ -378,7 +388,7 @@ describe('GoalsService', () => {
       top.goal.findFirst.mockResolvedValue(goalRow({ status: 'PAUSED' }));
 
       await expect(
-        new GoalsService(prisma).addContribution(USER_ID, GOAL_ID, { amount: '100' }),
+        serviceWith(prisma).addContribution(USER_ID, GOAL_ID, { amount: '100' }),
       ).rejects.toBeInstanceOf(ConflictException);
       expect(top.goalContribution.create).not.toHaveBeenCalled();
     });
@@ -389,7 +399,7 @@ describe('GoalsService', () => {
       const farFuture = `${new Date().getUTCFullYear() + 2}-01-01`;
 
       await expect(
-        new GoalsService(prisma).addContribution(USER_ID, GOAL_ID, {
+        serviceWith(prisma).addContribution(USER_ID, GOAL_ID, {
           amount: '100',
           occurredDate: farFuture,
         }),
@@ -414,7 +424,7 @@ describe('GoalsService', () => {
         }),
       );
 
-      const result = await new GoalsService(prisma).reverseContribution(
+      const result = await serviceWith(prisma).reverseContribution(
         USER_ID,
         GOAL_ID,
         CONTRIBUTION_ID,
@@ -445,7 +455,7 @@ describe('GoalsService', () => {
       );
 
       await expect(
-        new GoalsService(prisma).reverseContribution(USER_ID, GOAL_ID, REVERSAL_ID),
+        serviceWith(prisma).reverseContribution(USER_ID, GOAL_ID, REVERSAL_ID),
       ).rejects.toBeInstanceOf(ConflictException);
       expect(tx.goalContribution.create).not.toHaveBeenCalled();
     });
@@ -459,7 +469,7 @@ describe('GoalsService', () => {
         .mockResolvedValueOnce({ id: REVERSAL_ID });
 
       await expect(
-        new GoalsService(prisma).reverseContribution(USER_ID, GOAL_ID, CONTRIBUTION_ID),
+        serviceWith(prisma).reverseContribution(USER_ID, GOAL_ID, CONTRIBUTION_ID),
       ).rejects.toBeInstanceOf(ConflictException);
       expect(tx.goalContribution.create).not.toHaveBeenCalled();
     });
@@ -483,7 +493,7 @@ describe('GoalsService', () => {
       );
 
       await expect(
-        new GoalsService(prisma).reverseContribution(USER_ID, GOAL_ID, CONTRIBUTION_ID),
+        serviceWith(prisma).reverseContribution(USER_ID, GOAL_ID, CONTRIBUTION_ID),
       ).rejects.toBeInstanceOf(ConflictException);
     });
 
@@ -494,7 +504,7 @@ describe('GoalsService', () => {
       tx.goalContribution.findFirst.mockResolvedValueOnce(null);
 
       await expect(
-        new GoalsService(prisma).reverseContribution(USER_ID, GOAL_ID, CONTRIBUTION_ID),
+        serviceWith(prisma).reverseContribution(USER_ID, GOAL_ID, CONTRIBUTION_ID),
       ).rejects.toBeInstanceOf(NotFoundException);
       expect(tx.goalContribution.create).not.toHaveBeenCalled();
     });

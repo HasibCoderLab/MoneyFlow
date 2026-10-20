@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { Prisma } from '../../generated/prisma/client';
 import type { PrismaService } from '../../prisma/prisma.service';
+import type { AuditService } from '../audit/audit.service';
 import { CategoriesService } from './categories.service';
 
 /**
@@ -16,6 +17,14 @@ import { CategoriesService } from './categories.service';
 const USER_ID = 'user-1';
 const CATEGORY_ID = '11111111-1111-4111-8111-111111111111';
 const OTHER_ID = '22222222-2222-4222-8222-222222222222';
+
+const audit = {
+  recordInTransaction: vi.fn().mockResolvedValue(undefined),
+} as unknown as AuditService;
+
+function serviceWith(prisma: PrismaService): CategoriesService {
+  return new CategoriesService(prisma, audit);
+}
 
 function categoryRow(overrides: Record<string, unknown> = {}) {
   return {
@@ -72,7 +81,7 @@ describe('CategoriesService.listCategories', () => {
     top.category.createMany.mockResolvedValue({ count: 8 });
     const row = categoryRow();
     top.category.findMany.mockResolvedValue([row]);
-    const service = new CategoriesService(prisma);
+    const service = serviceWith(prisma);
 
     const response = await service.listCategories(USER_ID, {});
 
@@ -98,7 +107,7 @@ describe('CategoriesService.listCategories', () => {
     const { prisma, top } = mockDb();
     top.category.findFirst.mockResolvedValue({ id: CATEGORY_ID });
     top.category.findMany.mockResolvedValue([categoryRow({ status: 'ARCHIVED' })]);
-    const service = new CategoriesService(prisma);
+    const service = serviceWith(prisma);
 
     await service.listCategories(USER_ID, { includeArchived: 'true' });
 
@@ -114,7 +123,7 @@ describe('CategoriesService.createCategory', () => {
   it('persists the name key and colour and returns the contract shape', async () => {
     const { prisma, tx } = mockDb();
     tx.category.create.mockResolvedValue(categoryRow({ name: 'Food', nameKey: 'food' }));
-    const service = new CategoriesService(prisma);
+    const service = serviceWith(prisma);
 
     const response = await service.createCategory(USER_ID, {
       name: ' Food ',
@@ -137,7 +146,7 @@ describe('CategoriesService.createCategory', () => {
   it('maps the case-insensitive name conflict to 409', async () => {
     const { prisma, tx } = mockDb();
     tx.category.create.mockRejectedValue(uniqueViolation('category_userId_nameKey_type_key'));
-    const service = new CategoriesService(prisma);
+    const service = serviceWith(prisma);
 
     await expect(
       service.createCategory(USER_ID, { name: 'groceries', type: 'EXPENSE' }),
@@ -146,7 +155,7 @@ describe('CategoriesService.createCategory', () => {
 
   it('rejects invalid input before touching the database', async () => {
     const { prisma, tx } = mockDb();
-    const service = new CategoriesService(prisma);
+    const service = serviceWith(prisma);
 
     await expect(
       service.createCategory(USER_ID, { name: 'X', type: 'NOPE' }),
@@ -159,7 +168,7 @@ describe('CategoriesService.updateCategory', () => {
   it('answers 404 for foreign and malformed ids without updating', async () => {
     const { prisma, tx } = mockDb();
     tx.category.findFirst.mockResolvedValue(null);
-    const service = new CategoriesService(prisma);
+    const service = serviceWith(prisma);
 
     await expect(service.updateCategory(USER_ID, OTHER_ID, { name: 'X' })).rejects.toBeInstanceOf(
       NotFoundException,
@@ -176,7 +185,7 @@ describe('CategoriesService.updateCategory', () => {
     tx.category.update.mockResolvedValue(
       categoryRow({ name: 'Food & dining', nameKey: 'food & dining', color: null }),
     );
-    const service = new CategoriesService(prisma);
+    const service = serviceWith(prisma);
 
     const response = await service.updateCategory(USER_ID, CATEGORY_ID, {
       name: ' Food & Dining ',
@@ -193,7 +202,7 @@ describe('CategoriesService.updateCategory', () => {
   it('returns the current row untouched for an empty patch', async () => {
     const { prisma, tx } = mockDb();
     tx.category.findFirst.mockResolvedValue(categoryRow());
-    const service = new CategoriesService(prisma);
+    const service = serviceWith(prisma);
 
     const response = await service.updateCategory(USER_ID, CATEGORY_ID, {});
 
@@ -205,7 +214,7 @@ describe('CategoriesService.updateCategory', () => {
     const { prisma, tx } = mockDb();
     tx.category.findFirst.mockResolvedValue(categoryRow());
     tx.category.update.mockRejectedValue(uniqueViolation('category_userId_nameKey_type_key'));
-    const service = new CategoriesService(prisma);
+    const service = serviceWith(prisma);
 
     await expect(
       service.updateCategory(USER_ID, CATEGORY_ID, { name: 'Transport' }),
@@ -218,7 +227,7 @@ describe('CategoriesService.updateCategory', () => {
     tx.category.update.mockResolvedValue(
       categoryRow({ status: 'ARCHIVED', name: 'Old hobby', nameKey: 'old hobby' }),
     );
-    const service = new CategoriesService(prisma);
+    const service = serviceWith(prisma);
 
     const response = await service.updateCategory(USER_ID, CATEGORY_ID, { name: 'Old hobby' });
     expect(response.status).toBe('ARCHIVED');
@@ -229,7 +238,7 @@ describe('CategoriesService.updateCategory', () => {
 describe('CategoriesService archive', () => {
   it('flips the status and is idempotent in both directions', async () => {
     const { prisma, tx } = mockDb();
-    const service = new CategoriesService(prisma);
+    const service = serviceWith(prisma);
 
     tx.category.findFirst.mockResolvedValue(categoryRow());
     tx.category.update.mockResolvedValue(categoryRow({ status: 'ARCHIVED' }));
@@ -251,7 +260,7 @@ describe('CategoriesService archive', () => {
   it('answers 404 for foreign ids', async () => {
     const { prisma, tx } = mockDb();
     tx.category.findFirst.mockResolvedValue(null);
-    const service = new CategoriesService(prisma);
+    const service = serviceWith(prisma);
 
     await expect(service.archiveCategory(USER_ID, OTHER_ID)).rejects.toBeInstanceOf(
       NotFoundException,
@@ -265,7 +274,7 @@ describe('CategoriesService.deleteCategory', () => {
     tx.category.findFirst.mockResolvedValue(categoryRow());
     tx.transaction.count.mockResolvedValue(0);
     tx.category.delete.mockResolvedValue(categoryRow());
-    const service = new CategoriesService(prisma);
+    const service = serviceWith(prisma);
 
     await service.deleteCategory(USER_ID, CATEGORY_ID);
 
@@ -280,7 +289,7 @@ describe('CategoriesService.deleteCategory', () => {
     tx.category.findFirst.mockResolvedValue(categoryRow());
     tx.transaction.count.mockResolvedValue(0);
     tx.budgetCategoryLimit.count.mockResolvedValue(1);
-    const service = new CategoriesService(prisma);
+    const service = serviceWith(prisma);
 
     await expect(service.deleteCategory(USER_ID, CATEGORY_ID)).rejects.toThrow(ConflictException);
     expect(tx.category.delete).not.toHaveBeenCalled();
@@ -290,7 +299,7 @@ describe('CategoriesService.deleteCategory', () => {
     const { prisma, tx } = mockDb();
     tx.category.findFirst.mockResolvedValue(categoryRow());
     tx.transaction.count.mockResolvedValue(1);
-    const service = new CategoriesService(prisma);
+    const service = serviceWith(prisma);
 
     await expect(service.deleteCategory(USER_ID, CATEGORY_ID)).rejects.toThrow(/Archive it/);
     expect(tx.category.delete).not.toHaveBeenCalled();
@@ -301,7 +310,7 @@ describe('CategoriesService.deleteCategory', () => {
     tx.category.findFirst.mockResolvedValue(categoryRow());
     tx.transaction.count.mockResolvedValue(0);
     tx.category.delete.mockRejectedValue(foreignKeyViolation());
-    const service = new CategoriesService(prisma);
+    const service = serviceWith(prisma);
 
     await expect(service.deleteCategory(USER_ID, CATEGORY_ID)).rejects.toBeInstanceOf(
       ConflictException,
@@ -311,7 +320,7 @@ describe('CategoriesService.deleteCategory', () => {
   it('answers 404 for foreign and malformed ids', async () => {
     const { prisma, tx } = mockDb();
     tx.category.findFirst.mockResolvedValue(null);
-    const service = new CategoriesService(prisma);
+    const service = serviceWith(prisma);
 
     await expect(service.deleteCategory(USER_ID, OTHER_ID)).rejects.toBeInstanceOf(
       NotFoundException,

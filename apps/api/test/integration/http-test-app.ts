@@ -1,5 +1,5 @@
 import type { INestApplication } from '@nestjs/common';
-import type { AddressInfo } from 'node:net';
+import { createServer, type AddressInfo } from 'node:net';
 
 import { createApiApp } from '../../src/bootstrap';
 import { getTestDatabaseUrl } from './harness';
@@ -24,6 +24,33 @@ export interface TestApp {
   baseUrl: string;
 }
 
+/**
+ * Ephemeral ports from `listen(0)` can land on a port Node's fetch client
+ * refuses ("bad port", e.g. 6000), which made unrelated suites fail
+ * intermittently. Pick an unused port from a range that contains none of the
+ * blocked ports instead.
+ */
+async function findSafePort(): Promise<number> {
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    const port = 40_000 + Math.floor(Math.random() * 10_000);
+    if (await isPortFree(port)) {
+      return port;
+    }
+  }
+  throw new Error('Could not find a free test port after 20 attempts.');
+}
+
+function isPortFree(port: number): Promise<boolean> {
+  return new Promise((resolve) => {
+    const probe = createServer();
+    probe.unref();
+    probe.once('error', () => resolve(false));
+    probe.listen(port, '127.0.0.1', () => {
+      probe.close(() => resolve(true));
+    });
+  });
+}
+
 export async function startTestApp(): Promise<TestApp> {
   // Point every part of the app (PrismaService, Better Auth) at the guarded
   // test database before the Nest container is built. Values deliberately
@@ -34,7 +61,7 @@ export async function startTestApp(): Promise<TestApp> {
   process.env.CORS_ORIGINS = TEST_WEB_ORIGIN;
 
   const app = await createApiApp();
-  await app.listen(0);
+  await app.listen(await findSafePort(), '127.0.0.1');
   const address = app.getHttpServer().address() as AddressInfo;
   return { app, baseUrl: `http://127.0.0.1:${address.port}` };
 }

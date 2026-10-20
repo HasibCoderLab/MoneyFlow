@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 
 import { PrismaModule } from '../../prisma/prisma.module';
+import { AuditModule } from '../audit/audit.module';
 import { PreferencesModule } from '../preferences/preferences.module';
 import { BudgetsController } from './budgets.controller';
 import { BudgetsService } from './budgets.service';
@@ -12,7 +13,7 @@ import { BudgetsService } from './budgets.service';
  * pause/resume/archive/unarchive transitions.
  */
 @Module({
-  imports: [PrismaModule, PreferencesModule],
+  imports: [PrismaModule, PreferencesModule, AuditModule],
   controllers: [BudgetsController],
   providers: [BudgetsService],
 })
