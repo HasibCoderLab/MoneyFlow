@@ -121,6 +121,19 @@ not the transfer.
 No migrations were added or changed by this audit. No database data in the
 shared Neon database was read, changed, or used for the E2E run.
 
+## Commit and CI
+
+- Code commit: `5dfe1b57d38b29fad60a920f8e06904b0c62342c`
+  (`fix(web): connect remaining screens to persisted data`), pushed to
+  `origin/main`.
+- CI run
+  [`39394282726`](https://github.com/HasibCoderLab/MoneyFlow/actions/runs/39394282726):
+  **success** for that exact commit.
+  - “Checks (format, lint, typecheck, unit tests, build)”: success.
+  - “Integration tests (PostgreSQL 16)”: success.
+- This report is included in a docs-only follow-up commit; it does not alter
+  the verified code behaviour.
+
 ## Files changed
 
 - Browser URL loading: `apps/web/next.config.ts`, `apps/web/package.json`,
@@ -151,7 +164,4 @@ shared Neon database was read, changed, or used for the E2E run.
   recovery are still not built and are labelled as such.
 - Mobile-width visual acceptance was not repeated in this browser run; the
   existing responsive CSS and unit coverage remain.
-- The verification above ran from the working tree; the commit, push, and CI
-  result for that exact commit are reported in the handoff that accompanies
-  this report. IT-12 should wait until the owner reviews this integration
-  result.
+- IT-12 should wait until the owner reviews this integration result.
