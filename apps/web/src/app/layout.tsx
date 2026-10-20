@@ -21,7 +21,11 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
     // suppressHydrationWarning: the pre-paint script below may add data-theme
     // before React hydrates; the attribute is cosmetic and safe to ignore.
     <html lang="en" suppressHydrationWarning>
-      <body>
+      {/* Grammar/spellchecker browser extensions inject attributes such as
+          data-gr-ext-installed onto <body> before React hydrates. Suppress only
+          this element's attribute mismatch so their markup is not treated as
+          an application hydration bug. */}
+      <body suppressHydrationWarning>
         {/* Applies the stored Light/Dark/System choice before first paint (no
             flash). Light is the default when nothing valid is stored; System
             resolves through the OS preference (IT-11). */}
