@@ -7,10 +7,17 @@ import {
   fetchBudgets,
   fetchCategories,
   fetchDashboard,
+  fetchDashboardLayout,
+  fetchMe,
+  fetchPreferences,
   fetchReportCategories,
   fetchReportSummary,
   moveBudget,
+  resetDashboardLayout,
+  saveDashboardLayout,
   updateBudget,
+  updateMe,
+  updatePreferences,
 } from './api-client';
 
 const BASE_URL = 'http://localhost:4000';
@@ -243,5 +250,84 @@ describe('budget client (IT-9)', () => {
 
     expect(error.status).toBe(409);
     expect(error.message).toContain('already limits');
+  });
+});
+
+describe('profile client (IT-3/IT-11)', () => {
+  it('loads the caller profile with the session cookie', async () => {
+    process.env.NEXT_PUBLIC_API_URL = BASE_URL;
+    const fetchMock = mockFetchOnce({ body: { id: 'u1' } });
+
+    const profile = await fetchMe();
+
+    expect(fetchMock).toHaveBeenCalledWith(`${BASE_URL}/api/v1/me`, {
+      credentials: 'include',
+      headers: { accept: 'application/json' },
+    });
+    expect(profile).toEqual({ id: 'u1' });
+  });
+
+  it('PATCHes only the display name', async () => {
+    process.env.NEXT_PUBLIC_API_URL = BASE_URL;
+    const fetchMock = mockFetchOnce({ body: { name: 'Hasib' } });
+
+    await updateMe({ name: 'Hasib' });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${BASE_URL}/api/v1/me`,
+      expect.objectContaining({
+        method: 'PATCH',
+        body: JSON.stringify({ name: 'Hasib' }),
+      }),
+    );
+  });
+});
+
+describe('preferences and layout client (IT-11)', () => {
+  it('GETs preferences and PATCHes partial updates', async () => {
+    process.env.NEXT_PUBLIC_API_URL = BASE_URL;
+    const fetchMock = mockFetchOnce({ body: { locale: 'en' } });
+
+    await fetchPreferences();
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      `${BASE_URL}/api/v1/preferences`,
+      expect.objectContaining({ credentials: 'include' }),
+    );
+
+    await updatePreferences({ theme: 'DARK' });
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      `${BASE_URL}/api/v1/preferences`,
+      expect.objectContaining({
+        method: 'PATCH',
+        body: JSON.stringify({ theme: 'DARK' }),
+      }),
+    );
+  });
+
+  it('GETs, PUTs, and resets the dashboard layout with the right verbs', async () => {
+    process.env.NEXT_PUBLIC_API_URL = BASE_URL;
+    const fetchMock = mockFetchOnce({ body: { widgets: [] } });
+
+    await fetchDashboardLayout();
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      `${BASE_URL}/api/v1/dashboard/layout`,
+      expect.objectContaining({ credentials: 'include' }),
+    );
+
+    const body = { widgets: [{ id: 'income' as const, visible: true }] };
+    await saveDashboardLayout(body);
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      `${BASE_URL}/api/v1/dashboard/layout`,
+      expect.objectContaining({
+        method: 'PUT',
+        body: JSON.stringify(body),
+      }),
+    );
+
+    await resetDashboardLayout();
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      `${BASE_URL}/api/v1/dashboard/layout/reset`,
+      expect.objectContaining({ method: 'POST' }),
+    );
   });
 });

@@ -4,13 +4,24 @@ import type {
   SummaryPeriod,
 } from '@moneyflow/contracts';
 
+import {
+  DEFAULT_DISPLAY_FORMAT,
+  formatCalendarDate,
+  formatDayOnly,
+  formatMonthYear,
+  localDateToUtc,
+  resolveDateLocale,
+  type DisplayFormatOptions,
+} from './display-format';
 import { formatBdtMinor, formatPercentTimes10 } from './money-format';
 
 /**
  * Display models and label formatting for the wired dashboard/report widgets
- * (IT-8). All money text arrives pre-formatted from `money-format.ts`; this
- * module only composes human-readable labels and never does money math
- * (requirements.md §11.1).
+ * (IT-8, preferences in IT-11). All money text arrives pre-formatted from
+ * `money-format.ts`; this module only composes human-readable labels and
+ * never does money math (requirements.md §11.1). Date order and numerals
+ * follow the user's saved preferences; the defaults preserve the IT-8
+ * output exactly.
  */
 
 export type TransactionDirection = 'income' | 'expense' | 'transfer' | 'adjustment';
@@ -42,33 +53,12 @@ export interface CategoryBarDatum {
   readonly sharePercent: number;
 }
 
-const DATE_FORMATTER = new Intl.DateTimeFormat('en-GB', {
-  day: 'numeric',
-  month: 'short',
-  year: 'numeric',
-  timeZone: 'UTC',
-});
-const MONTH_FORMATTER = new Intl.DateTimeFormat('en-GB', {
-  month: 'long',
-  year: 'numeric',
-  timeZone: 'UTC',
-});
-
-/**
- * Parses a validated `YYYY-MM-DD` local date into a UTC-anchored Date so
- * calendar formatting can never drift by the viewer's timezone.
- */
-function localDateToUtc(localDate: string): Date {
-  const probe = new Date(`${localDate}T00:00:00.000Z`);
-  if (Number.isNaN(probe.getTime())) {
-    throw new Error(`Expected a YYYY-MM-DD local date, got "${localDate}".`);
-  }
-  return probe;
-}
-
-/** `2026-02-05` → `5 Feb 2026`. */
-export function formatLocalDate(localDate: string): string {
-  return DATE_FORMATTER.format(localDateToUtc(localDate));
+/** `2026-02-05` → `5 Feb 2026` (or the saved DMY/MDY/YMD order). */
+export function formatLocalDate(
+  localDate: string,
+  options: DisplayFormatOptions = DEFAULT_DISPLAY_FORMAT,
+): string {
+  return formatCalendarDate(localDateToUtc(localDate), options);
 }
 
 /** True when the range covers exactly one calendar month. */
@@ -82,10 +72,23 @@ export function isWholeMonth(dateFrom: string, dateTo: string): boolean {
   return end.getTime() === lastDay.getTime();
 }
 
+function rangeParts(date: Date, options: DisplayFormatOptions) {
+  const locale = resolveDateLocale(options);
+  return {
+    year: new Intl.DateTimeFormat(locale, { year: 'numeric', timeZone: 'UTC' }).format(date),
+    month: new Intl.DateTimeFormat(locale, { month: 'short', timeZone: 'UTC' }).format(date),
+    day: formatDayOnly(date, options),
+  };
+}
+
 /** `1 Feb 2026 – 6 Feb 2026`, `1–6 Feb 2026` within one month, or one date. */
-export function formatRangeLabel(startDate: string, endDate: string): string {
+export function formatRangeLabel(
+  startDate: string,
+  endDate: string,
+  options: DisplayFormatOptions = DEFAULT_DISPLAY_FORMAT,
+): string {
   if (startDate === endDate) {
-    return formatLocalDate(startDate);
+    return formatLocalDate(startDate, options);
   }
   const start = localDateToUtc(startDate);
   const end = localDateToUtc(endDate);
@@ -93,27 +96,37 @@ export function formatRangeLabel(startDate: string, endDate: string): string {
     start.getUTCFullYear() === end.getUTCFullYear() &&
     start.getUTCMonth() === end.getUTCMonth()
   ) {
-    return `${start.getUTCDate()}–${DATE_FORMATTER.format(end)}`;
+    const parts = rangeParts(start, options);
+    switch (options.dateFormat) {
+      case 'MDY':
+        return `${parts.month} ${parts.day}–${formatDayOnly(end, options)}, ${parts.year}`;
+      case 'YMD':
+        return `${parts.year} ${parts.month} ${parts.day}–${formatDayOnly(end, options)}`;
+      case 'DMY':
+        return `${parts.day}–${formatDayOnly(end, options)} ${parts.month} ${parts.year}`;
+    }
   }
-  return `${DATE_FORMATTER.format(start)} – ${DATE_FORMATTER.format(end)}`;
+  return `${formatLocalDate(startDate, options)} – ${formatLocalDate(endDate, options)}`;
 }
 
 /** Period chip label: `February 2026` for whole months, a range otherwise. */
-export function formatPeriodLabel(period: Pick<SummaryPeriod, 'dateFrom' | 'dateTo'>): string {
+export function formatPeriodLabel(
+  period: Pick<SummaryPeriod, 'dateFrom' | 'dateTo'>,
+  options: DisplayFormatOptions = DEFAULT_DISPLAY_FORMAT,
+): string {
   if (isWholeMonth(period.dateFrom, period.dateTo)) {
-    return MONTH_FORMATTER.format(localDateToUtc(period.dateFrom));
+    return formatMonthYear(localDateToUtc(period.dateFrom), options);
   }
-  return formatRangeLabel(period.dateFrom, period.dateTo);
+  return formatRangeLabel(period.dateFrom, period.dateTo, options);
 }
 
 /** Date label in the user's reporting timezone (e.g. a UTC instant near midnight). */
-export function formatOccurredAt(iso: string, timezone: string): string {
-  return new Intl.DateTimeFormat('en-GB', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-    timeZone: timezone,
-  }).format(new Date(iso));
+export function formatOccurredAt(
+  iso: string,
+  timezone: string,
+  options: DisplayFormatOptions = DEFAULT_DISPLAY_FORMAT,
+): string {
+  return formatCalendarDate(new Date(iso), options, timezone);
 }
 
 function directionOf(row: RecentSummaryTransaction): TransactionDirection {
@@ -154,14 +167,15 @@ function signOf(row: RecentSummaryTransaction): '+' | '\u2212' | '' {
 export function recentTransactionRows(
   recent: readonly RecentSummaryTransaction[],
   timezone: string,
+  options: DisplayFormatOptions = DEFAULT_DISPLAY_FORMAT,
 ): TransactionRow[] {
   return recent.map((row) => ({
     id: row.id,
     direction: directionOf(row),
     description: describe(row),
     category: row.categoryName,
-    dateLabel: formatOccurredAt(row.occurredAt, timezone),
-    amountText: `${signOf(row)}${formatBdtMinor(row.amountMinor)}`,
+    dateLabel: formatOccurredAt(row.occurredAt, timezone, options),
+    amountText: `${signOf(row)}${formatBdtMinor(row.amountMinor, options)}`,
   }));
 }
 
@@ -170,15 +184,18 @@ export function recentTransactionRows(
  * rows (largest first) and computes half-up percentages, so nothing is
  * recalculated here — only formatted for display (AGENTS.md rule 8).
  */
-export function categoryBarData(categories: readonly CategorySpendSummary[]): CategoryBarDatum[] {
+export function categoryBarData(
+  categories: readonly CategorySpendSummary[],
+  options: DisplayFormatOptions = DEFAULT_DISPLAY_FORMAT,
+): CategoryBarDatum[] {
   return categories.map((category) => ({
     categoryId: category.categoryId,
     name: category.name,
-    amountText: formatBdtMinor(category.expenseMinor),
+    amountText: formatBdtMinor(category.expenseMinor, options),
     // The API returns a null percentage only when nothing was spent, in
     // which case no rows are returned at all; the dash is an unreachable
     // defensive fallback, not a claim about the data.
-    percentText: formatPercentTimes10(category.percentTimes10) ?? '\u2014',
+    percentText: formatPercentTimes10(category.percentTimes10, options) ?? '\u2014',
     sharePercent: category.percentTimes10 === null ? 0 : Number(category.percentTimes10) / 10,
   }));
 }

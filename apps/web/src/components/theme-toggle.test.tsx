@@ -1,5 +1,16 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
+vi.mock('@/lib/api-client', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/api-client')>();
+  return {
+    ...actual,
+    fetchPreferences: vi.fn().mockRejectedValue(new actual.ApiClientError('Unauthorized', 401)),
+    updatePreferences: vi.fn(),
+  };
+});
+
+import { LocaleProvider } from '@/lib/i18n/locale-context';
 
 import { ThemeToggle } from './theme-toggle';
 
@@ -8,15 +19,23 @@ afterEach(() => {
   document.documentElement.removeAttribute('data-theme');
 });
 
+function renderToggle() {
+  return render(
+    <LocaleProvider>
+      <ThemeToggle />
+    </LocaleProvider>,
+  );
+}
+
 describe('theme toggle', () => {
   it('starts at Light with an explicit theme (SSR-safe)', () => {
-    render(<ThemeToggle />);
+    renderToggle();
     expect(screen.getByRole('button', { name: /theme: light/i })).toBeTruthy();
     expect(document.documentElement.getAttribute('data-theme')).toBe('light');
   });
 
-  it('toggles Light ↔ Dark and persists each choice', () => {
-    render(<ThemeToggle />);
+  it('cycles Light → Dark → System and persists each choice', () => {
+    renderToggle();
     const button = screen.getByRole('button', { name: /theme:/i });
 
     fireEvent.click(button);
@@ -25,29 +44,35 @@ describe('theme toggle', () => {
     expect(window.localStorage.getItem('mf-theme')).toBe('dark');
 
     fireEvent.click(button);
+    expect(screen.getByRole('button', { name: /theme: system/i })).toBeTruthy();
+    // jsdom has no matchMedia; System resolves to Light, but the choice stays
+    // explicit in storage so the pre-paint script can honour the OS later.
+    expect(document.documentElement.getAttribute('data-theme')).toBe('light');
+    expect(window.localStorage.getItem('mf-theme')).toBe('system');
+
+    fireEvent.click(button);
     expect(screen.getByRole('button', { name: /theme: light/i })).toBeTruthy();
     expect(document.documentElement.getAttribute('data-theme')).toBe('light');
     expect(window.localStorage.getItem('mf-theme')).toBe('light');
   });
 
-  it('restores a stored choice on mount', () => {
+  it('restores a stored Dark choice on mount', () => {
     window.localStorage.setItem('mf-theme', 'dark');
-    render(<ThemeToggle />);
+    renderToggle();
     expect(screen.getByRole('button', { name: /theme: dark/i })).toBeTruthy();
     expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
   });
 
   it('ignores a corrupt stored value and falls back to Light', () => {
     window.localStorage.setItem('mf-theme', 'neon');
-    render(<ThemeToggle />);
+    renderToggle();
     expect(screen.getByRole('button', { name: /theme: light/i })).toBeTruthy();
     expect(document.documentElement.getAttribute('data-theme')).toBe('light');
   });
 
-  it('treats a legacy System value as Light', () => {
+  it('recognizes the System choice instead of treating it as corrupt', () => {
     window.localStorage.setItem('mf-theme', 'system');
-    render(<ThemeToggle />);
-    expect(screen.getByRole('button', { name: /theme: light/i })).toBeTruthy();
-    expect(document.documentElement.getAttribute('data-theme')).toBe('light');
+    renderToggle();
+    expect(screen.getByRole('button', { name: /theme: system/i })).toBeTruthy();
   });
 });

@@ -1,7 +1,9 @@
 import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
+import { DEFAULT_USER_PREFERENCES } from '@moneyflow/contracts';
 import { describe, expect, it, vi } from 'vitest';
 
 import type { PrismaService } from '../../prisma/prisma.service';
+import type { PreferencesService } from '../preferences/preferences.service';
 import { BudgetsService } from './budgets.service';
 
 /**
@@ -79,7 +81,15 @@ function mockDb() {
 }
 
 function serviceWith(top: ReturnType<typeof mockDb>['top']): BudgetsService {
-  return new BudgetsService(top as unknown as PrismaService);
+  const preferences = {
+    getEffectivePreferences: vi
+      .fn()
+      .mockResolvedValue({ ...DEFAULT_USER_PREFERENCES, updatedAt: null }),
+  };
+  return new BudgetsService(
+    top as unknown as PrismaService,
+    preferences as unknown as PreferencesService,
+  );
 }
 
 describe('BudgetsService.listBudgets', () => {

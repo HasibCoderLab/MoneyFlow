@@ -72,7 +72,8 @@ describe('goals route (wired to the IT-10 goal endpoints)', () => {
     expect(screen.getByText('BDT 8,000 of BDT 30,000 tracked')).toBeTruthy();
     expect(screen.getByText('26.7% of target')).toBeTruthy();
     expect(screen.getByText('BDT 22,000 remaining')).toBeTruthy();
-    expect(screen.getByText('Deadline Mar 31, 2027')).toBeTruthy();
+    // Default display preference is DMY (IT-11).
+    expect(screen.getByText('Deadline 31 Mar 2027')).toBeTruthy();
     expect(screen.getByRole('link', { name: 'View details' }).getAttribute('href')).toBe(
       '/app/goals/goal-1',
     );

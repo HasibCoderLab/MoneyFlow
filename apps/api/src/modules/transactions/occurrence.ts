@@ -44,11 +44,19 @@ export interface ResolvedOccurrence {
   readonly timezone: string;
 }
 
+/**
+ * `Intl.supportedValuesOf('timeZone')` lists canonical regional zones but
+ * omits the UTC aliases, which are still valid IANA timezone names and a
+ * meaningful reporting choice (IT-11). Add them explicitly rather than
+ * accepting arbitrary strings that `Intl.DateTimeFormat` may reject later.
+ */
+const UTC_ALIASES = ['UTC', 'Etc/UTC'] as const;
+
 let supportedTimeZones: ReadonlySet<string> | null = null;
 
 function getSupportedTimeZones(): ReadonlySet<string> {
   if (!supportedTimeZones) {
-    supportedTimeZones = new Set(Intl.supportedValuesOf('timeZone'));
+    supportedTimeZones = new Set([...Intl.supportedValuesOf('timeZone'), ...UTC_ALIASES]);
   }
   return supportedTimeZones;
 }

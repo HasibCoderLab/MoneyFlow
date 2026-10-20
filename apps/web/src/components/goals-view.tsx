@@ -69,7 +69,7 @@ function GoalCard({
   readonly onDelete: () => void;
   readonly onMove: (action: GoalStatusAction) => void;
 }) {
-  const { t, locale } = useLocale();
+  const { t, preferences } = useLocale();
   const statusLabel = useStatusLabel();
   const paused = goal.status === 'PAUSED';
   const archived = goal.status === 'ARCHIVED';
@@ -86,7 +86,7 @@ function GoalCard({
       <p className="mf-goal-row__meta">
         {goal.deadline === null
           ? t('goals.noDeadline')
-          : t('goals.deadline', { date: formatGoalDate(locale, goal.deadline) })}
+          : t('goals.deadline', { date: formatGoalDate(goal.deadline, preferences) })}
       </p>
 
       <GoalProgress goal={goal} />

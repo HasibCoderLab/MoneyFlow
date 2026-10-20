@@ -186,31 +186,39 @@ possible but judged overkill for MVP — record as an implementation note.
 
 ### `UserPreference`
 
-| Field                   | Type        | Rules                                      |
-| ----------------------- | ----------- | ------------------------------------------ |
-| `userId`                | string      | PK/FK → `User.id`, 1:1                     |
-| `locale`                | string      | `bn-BD` or `en-BD` (MVP)                   |
-| `timezone`              | string      | IANA name, validated against a static list |
-| `theme`                 | `Theme`     | `LIGHT`, `DARK`, `SYSTEM`                  |
-| `baseCurrency`          | string(3)   | `BDT` in MVP                               |
-| `weekStartsOn`          | smallint    | 0–6; default proposed Saturday (DR-11)     |
-| `reducedMotion`         | boolean     | Default `false`                            |
-| `createdAt`/`updatedAt` | timestamptz |                                            |
+| Field                   | Type        | Rules                                                  |
+| ----------------------- | ----------- | ------------------------------------------------------ |
+| `id`                    | uuid        | PK                                                     |
+| `userId`                | string      | FK → `User.id`, unique (1:1), cascade delete           |
+| `locale`                | enum        | `EN` or `BN`; default `EN`                             |
+| `timezone`              | varchar(64) | IANA name, validated server-side; default `Asia/Dhaka` |
+| `currency`              | varchar(3)  | `BDT` in MVP (ADR-0003); default `BDT`                 |
+| `theme`                 | enum        | `LIGHT`, `DARK`, `SYSTEM`; default `LIGHT`             |
+| `weekStartsOn`          | enum        | `SUNDAY`…`SATURDAY`; default `SATURDAY` (DR-11)        |
+| `dateFormat`            | enum        | `DMY`, `MDY`, `YMD`; default `DMY`                     |
+| `numberFormat`          | enum        | `LOCALE`, `LATIN`, `BENGALI`; default `LOCALE`         |
+| `reducedMotion`         | enum        | `SYSTEM`, `REDUCE`; default `SYSTEM`                   |
+| `createdAt`/`updatedAt` | timestamptz |                                                        |
 
+A missing row is valid and yields documented defaults. Preferences are
+display/reporting settings only; they never alter recorded financial data.
 Notification preferences are added with V1 notifications.
 
 ### `DashboardLayout`
 
-| Field                   | Type        | Rules                                         |
-| ----------------------- | ----------- | --------------------------------------------- |
-| `id`                    | uuid        | PK                                            |
-| `userId`                | string      | FK → `User.id`, unique in MVP (single layout) |
-| `widgets`               | jsonb       | Validated widget-schema object with `version` |
-| `createdAt`/`updatedAt` | timestamptz |                                               |
+| Field                   | Type        | Rules                                                           |
+| ----------------------- | ----------- | --------------------------------------------------------------- |
+| `id`                    | uuid        | PK                                                              |
+| `userId`                | string      | FK → `User.id`, unique in MVP (single layout), cascade          |
+| `layout`                | jsonb       | `{ version: 1, widgets: [{ id, visible }] }`, service-validated |
+| `createdAt`/`updatedAt` | timestamptz |                                                                 |
 
-Stored layout is **validated structured data** (ordered widget IDs, visibility,
-supported sizes), never executable JSON/CSS (§5.7). Unknown widget IDs are
-dropped safely on read; a "reset to default" restores the default layout.
+Stored layout is **validated structured data** (ordered supported widget IDs
+and visibility), never executable JSON/CSS (§5.7). Writes must name every
+supported widget exactly once; unknown/duplicate/stale entries are dropped
+safely on read and missing widgets are appended. A "reset to default" deletes
+the saved row and restores the documented default layout. Multiple named
+layouts remain DR-12 (V1).
 
 ### `AuditEvent`
 

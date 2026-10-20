@@ -1,14 +1,18 @@
 /**
- * Display helpers for the goals UI (IT-10, ADR-0005).
+ * Display helpers for the goals UI (IT-10, ADR-0005; preferences in IT-11).
  *
  * Everything here is presentation only: progress arrives from the API as an
  * exact minor-unit/percentage string and is never recomputed from other
  * numbers in the browser (requirements.md §5.6/§9.4, AGENTS.md rule 8).
+ * Date order and numerals follow the saved display preferences.
  */
 
-import type { Locale } from './i18n/translations';
-
-const INTL_LOCALE: Record<Locale, string> = { en: 'en-US', bn: 'bn-BD' };
+import {
+  DEFAULT_DISPLAY_FORMAT,
+  formatCalendarDate,
+  localDateToUtc,
+  type DisplayFormatOptions,
+} from './display-format';
 
 /** Visual cap for progress bars; the exact value always appears as text (§7). */
 const BAR_CAP = 100;
@@ -59,25 +63,23 @@ export function todayLocalDate(): string {
 }
 
 /** "31 Mar 2027" / localized equivalent from a stored `YYYY-MM-DD` date. */
-export function formatGoalDate(locale: Locale, dateText: string): string {
-  return new Intl.DateTimeFormat(INTL_LOCALE[locale], {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  }).format(new Date(`${dateText}T00:00:00.000Z`));
+export function formatGoalDate(
+  dateText: string,
+  options: DisplayFormatOptions = DEFAULT_DISPLAY_FORMAT,
+): string {
+  return formatCalendarDate(localDateToUtc(dateText), options);
 }
 
 /**
- * Localized calendar date of a recorded ledger instant. Rendered in
- * `Asia/Dhaka` — the MVP default timezone that anchors date-only
- * contributions — until the IT-11 preferences exist, so the displayed date
- * matches the date the server recorded rather than the viewer's device timezone.
+ * Localized calendar date of a recorded ledger instant, rendered in the
+ * user's saved reporting timezone (defaults to Asia/Dhaka until IT-11 data
+ * exists), so the date matches the server's recorded local day rather than
+ * the viewer's device timezone.
  */
-export function formatInstantDate(locale: Locale, instantText: string): string {
-  return new Intl.DateTimeFormat(INTL_LOCALE[locale], {
-    timeZone: 'Asia/Dhaka',
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  }).format(new Date(instantText));
+export function formatInstantDate(
+  instantText: string,
+  timeZone: string,
+  options: DisplayFormatOptions = DEFAULT_DISPLAY_FORMAT,
+): string {
+  return formatCalendarDate(new Date(instantText), options, timeZone);
 }

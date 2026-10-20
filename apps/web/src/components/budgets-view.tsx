@@ -17,8 +17,8 @@ import {
   moveBudget,
   updateBudget,
 } from '@/lib/api-client';
+import { formatMonthYear } from '@/lib/display-format';
 import { useLocale } from '@/lib/i18n/locale-context';
-import type { Locale } from '@/lib/i18n/translations';
 import { formatBdtMinor, formatPercentTimes10 } from '@/lib/money-format';
 import { useAsyncData } from '@/lib/use-async-data';
 
@@ -32,19 +32,16 @@ import { useAsyncData } from '@/lib/use-async-data';
  * clamped, never shaming (§5.9).
  */
 
-const INTL_LOCALE: Record<Locale, string> = { en: 'en-US', bn: 'bn-BD' };
 /** The visual cap for the bar; the text always carries the exact value (§7). */
 const BAR_CAP = 100;
 
 /** "October 2026" / "অক্টোবর ২০২৬" from a stored month anchor. */
 function useMonthLabel() {
-  const { locale } = useLocale();
+  const { preferences } = useLocale();
   return useCallback(
     (startDate: string): string =>
-      new Intl.DateTimeFormat(INTL_LOCALE[locale], { month: 'long', year: 'numeric' }).format(
-        new Date(`${startDate}T00:00:00.000Z`),
-      ),
-    [locale],
+      formatMonthYear(new Date(`${startDate}T00:00:00.000Z`), preferences),
+    [preferences],
   );
 }
 
@@ -59,31 +56,35 @@ function cappedPercent(percentTimes10: string | null): number {
 
 /** Exact percentage text ("26.7% used" / "120% used"). */
 function usePercentText() {
-  const { t } = useLocale();
+  const { t, preferences } = useLocale();
   return useCallback(
     (percentTimes10: string | null): string =>
-      t('budgets.percentUsed', { percent: formatPercentTimes10(percentTimes10) ?? '0' }),
-    [t],
+      t('budgets.percentUsed', {
+        percent: formatPercentTimes10(percentTimes10, preferences) ?? '0',
+      }),
+    [t, preferences],
   );
 }
 
 /** One limit's display line: spent-of-limit plus neutral remainder copy. */
 function useFigureText() {
-  const { t } = useLocale();
+  const { t, preferences } = useLocale();
   return useCallback(
     (figures: BudgetFigures): { valueText: string; remainderText: string } => ({
       valueText: t('budgets.spentOf', {
-        spent: formatBdtMinor(figures.spentMinor),
-        limit: formatBdtMinor(figures.limitMinor),
+        spent: formatBdtMinor(figures.spentMinor, preferences),
+        limit: formatBdtMinor(figures.limitMinor, preferences),
       }),
       remainderText: figures.remainingMinor.startsWith('-')
         ? t('budgets.overBy', {
             // Magnitude of the negative remainder — the sign lives in the copy.
-            amount: formatBdtMinor(figures.remainingMinor.slice(1)),
+            amount: formatBdtMinor(figures.remainingMinor.slice(1), preferences),
           })
-        : t('budgets.remaining', { amount: formatBdtMinor(figures.remainingMinor) }),
+        : t('budgets.remaining', {
+            amount: formatBdtMinor(figures.remainingMinor, preferences),
+          }),
     }),
-    [t],
+    [t, preferences],
   );
 }
 

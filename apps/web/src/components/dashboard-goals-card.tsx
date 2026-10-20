@@ -23,7 +23,7 @@ const DASHBOARD_GOAL_LIMIT = 3;
  * fabricated goal.
  */
 export function DashboardGoalsCard() {
-  const { t } = useLocale();
+  const { t, preferences } = useLocale();
   const load = useCallback(() => fetchGoals(false), []);
   const { state, retry } = useAsyncData(load);
 
@@ -86,7 +86,7 @@ export function DashboardGoalsCard() {
       ) : (
         <>
           {goals.map((goal) => {
-            const percent = formatPercentTimes10(goal.figures.percentTimes10);
+            const percent = formatPercentTimes10(goal.figures.percentTimes10, preferences);
             return (
               <div key={goal.id} className="mf-goal">
                 <ProgressBar
@@ -96,8 +96,8 @@ export function DashboardGoalsCard() {
                     percent === null ? undefined : t('goals.percentOfTarget', { percent })
                   }
                   valueText={t('goals.savedOf', {
-                    saved: formatBdtMinor(goal.figures.savedMinor),
-                    target: formatBdtMinor(goal.targetMinor),
+                    saved: formatBdtMinor(goal.figures.savedMinor, preferences),
+                    target: formatBdtMinor(goal.targetMinor, preferences),
                   })}
                   emphasis={goal.figures.overfunded ? 'attention' : 'normal'}
                 />

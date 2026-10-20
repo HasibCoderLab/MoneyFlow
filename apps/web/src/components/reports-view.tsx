@@ -26,7 +26,7 @@ const GRANULARITIES: readonly ReportGranularity[] = ['daily', 'weekly', 'monthly
  * beyond display formatting.
  */
 export function ReportsView() {
-  const { t } = useLocale();
+  const { t, preferences } = useLocale();
   const granularityLabelId = useId();
   const [granularity, setGranularity] = useState<ReportGranularity>('daily');
 
@@ -43,7 +43,7 @@ export function ReportsView() {
       : categories.state.status === 'ready'
         ? categories.state.data.period
         : null;
-  const chipLabel = chipPeriod ? formatPeriodLabel(chipPeriod) : null;
+  const chipLabel = chipPeriod ? formatPeriodLabel(chipPeriod, preferences) : null;
 
   if (summary.state.status === 'signedOut') {
     return <SummarySignedOut />;
@@ -93,7 +93,7 @@ export function ReportsView() {
   }
 
   const data = summary.state.data;
-  const periodLabel = formatPeriodLabel(data.period);
+  const periodLabel = formatPeriodLabel(data.period, preferences);
   const activeGranularity = t(`reports.granularity.${data.granularity}`);
 
   return (
@@ -103,14 +103,14 @@ export function ReportsView() {
       <div className="mf-dashboard-hero">
         <StatCard
           label={t('dashboard.incomeThisMonth')}
-          amountText={formatBdtMinor(data.totals.incomeMinor)}
+          amountText={formatBdtMinor(data.totals.incomeMinor, preferences)}
           context={periodLabel}
           icon={<IncomeIcon />}
           tone="income"
         />
         <StatCard
           label={t('dashboard.spentThisMonth')}
-          amountText={formatBdtMinor(data.totals.expenseMinor)}
+          amountText={formatBdtMinor(data.totals.expenseMinor, preferences)}
           context={periodLabel}
           icon={<ExpenseIcon />}
           tone="expense"
@@ -143,17 +143,19 @@ export function ReportsView() {
               <tbody>
                 {data.series.map((bucket) => (
                   <tr key={bucket.startDate}>
-                    <th scope="row">{formatRangeLabel(bucket.startDate, bucket.endDate)}</th>
-                    <td>{formatBdtMinor(bucket.incomeMinor)}</td>
-                    <td>{formatBdtMinor(bucket.expenseMinor)}</td>
+                    <th scope="row">
+                      {formatRangeLabel(bucket.startDate, bucket.endDate, preferences)}
+                    </th>
+                    <td>{formatBdtMinor(bucket.incomeMinor, preferences)}</td>
+                    <td>{formatBdtMinor(bucket.expenseMinor, preferences)}</td>
                   </tr>
                 ))}
               </tbody>
               <tfoot>
                 <tr>
                   <th scope="row">{t('reports.colTotal')}</th>
-                  <td>{formatBdtMinor(data.totals.incomeMinor)}</td>
-                  <td>{formatBdtMinor(data.totals.expenseMinor)}</td>
+                  <td>{formatBdtMinor(data.totals.incomeMinor, preferences)}</td>
+                  <td>{formatBdtMinor(data.totals.expenseMinor, preferences)}</td>
                 </tr>
               </tfoot>
             </table>
@@ -186,9 +188,9 @@ export function ReportsView() {
           <SummaryError onRetry={categories.retry} />
         ) : categories.state.data.categories.length > 0 ? (
           <CategoryBars
-            categories={categoryBarData(categories.state.data.categories)}
+            categories={categoryBarData(categories.state.data.categories, preferences)}
             periodLabel={periodLabel}
-            totalText={formatBdtMinor(categories.state.data.totalExpenseMinor)}
+            totalText={formatBdtMinor(categories.state.data.totalExpenseMinor, preferences)}
           />
         ) : (
           <div className="mf-empty">

@@ -14,21 +14,23 @@ describe('settings index', () => {
     const hrefs = screen
       .getAllByRole('link')
       .map((link) => link.getAttribute('href'))
-      .filter((href) => href?.startsWith('/app/settings/'));
+      .filter((href) => href?.startsWith('/app/settings/') || href === '/app/customize');
     expect(hrefs).toEqual([
       '/app/settings/profile',
       '/app/settings/preferences',
+      '/app/customize',
       '/app/settings/security',
       '/app/settings/data',
     ]);
   });
 
-  it('links only to routes that exist and promises no stored settings', () => {
+  it('describes what is saved today and marks security/data as previews', () => {
     render(<SettingsPage />);
-    for (const label of ['Profile', 'Preferences', 'Security', 'Data']) {
+    for (const label of ['Profile', 'Preferences', 'Dashboard layout', 'Security', 'Data']) {
       expect(screen.getByRole('link', { name: label })).toBeTruthy();
     }
-    expect(screen.getByText(/nothing here is stored\s+yet/i)).toBeTruthy();
+    expect(screen.getByText(/saved per user/i)).toBeTruthy();
+    expect(screen.getByText(/remain previews until their assigned tasks/i)).toBeTruthy();
     expect(screen.queryByRole('link', { name: /forgot|reset|billing|subscription/i })).toBeNull();
   });
 

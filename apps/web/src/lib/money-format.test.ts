@@ -59,3 +59,55 @@ describe('formatPercentTimes10', () => {
     expect(() => formatPercentTimes10('')).toThrow();
   });
 });
+
+describe('IT-11 numeral preferences', () => {
+  it('keeps Latin digits for English LOCALE and explicit LATIN', () => {
+    expect(
+      formatBdtMinor('123456789', {
+        locale: 'en',
+        dateFormat: 'DMY',
+        numberFormat: 'LOCALE',
+      }),
+    ).toBe('BDT 1,234,567.89');
+    expect(
+      formatBdtMinor('123456789', {
+        locale: 'bn',
+        dateFormat: 'DMY',
+        numberFormat: 'LATIN',
+      }),
+    ).toBe('BDT 1,234,567.89');
+  });
+
+  it('renders Bengali digits and grouping when requested', () => {
+    expect(
+      formatBdtMinor('123456789', {
+        locale: 'en',
+        dateFormat: 'DMY',
+        numberFormat: 'BENGALI',
+      }),
+    ).toBe('BDT ১২,৩৪,৫৬৭.৮৯');
+    expect(
+      formatPercentTimes10('123', {
+        locale: 'bn',
+        dateFormat: 'DMY',
+        numberFormat: 'LOCALE',
+      }),
+    ).toBe('১২.৩%');
+  });
+
+  it('never changes the exact amount while changing glyphs', () => {
+    const latin = formatBdtMinor('9007199254740993', {
+      locale: 'en',
+      dateFormat: 'DMY',
+      numberFormat: 'LATIN',
+    });
+    const bengali = formatBdtMinor('9007199254740993', {
+      locale: 'en',
+      dateFormat: 'DMY',
+      numberFormat: 'BENGALI',
+    });
+    expect(latin).toBe('BDT 90,071,992,547,409.93');
+    expect(bengali).not.toBe(latin);
+    expect(bengali).toContain('BDT');
+  });
+});

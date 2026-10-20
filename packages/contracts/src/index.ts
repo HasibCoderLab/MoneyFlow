@@ -230,8 +230,12 @@ export interface CategoryResponse {
 /** Aggregation granularity for report series (implementation-plan.md IT-8). */
 export type ReportGranularity = 'daily' | 'weekly' | 'monthly';
 
-/** Supported week starts; Saturday is the `bn-BD` default (DR-11). */
-export type WeekStartsOn = 'SATURDAY';
+/**
+ * Supported week starts (IT-11 preference). Saturday is the default
+ * (DR-11, accepted 2026-10-17); users may choose any day of the week.
+ */
+export type WeekStartsOn =
+  'SUNDAY' | 'MONDAY' | 'TUESDAY' | 'WEDNESDAY' | 'THURSDAY' | 'FRIDAY' | 'SATURDAY';
 
 /** The reporting period every summary figure is computed for. */
 export interface SummaryPeriod {
@@ -559,4 +563,125 @@ export interface CreateGoalContributionRequest {
   occurredDate?: string;
   /** Optional note, ≤500 characters. */
   note?: string;
+}
+
+// ── IT-11: profile, preferences, and dashboard customization ──────────────
+// Display preferences are presentation-only: they never change persisted
+// financial records, balances, or totals. Currency is stored explicitly but
+// the MVP accepts BDT only (DR-08/ADR-0003); no conversion exists. Date,
+// number, locale, theme, week-start, and reduced-motion choices are validated
+// server-side and scoped to the authenticated user. Unknown fields are
+// rejected, exactly like the other mutation DTOs.
+
+/** UI languages with reviewed strings (requirements.md §7.4, ADR-0009). */
+export type UiLocale = 'en' | 'bn';
+
+/** Theme preference; `SYSTEM` follows the operating-system setting. */
+export type ThemePreference = 'LIGHT' | 'DARK' | 'SYSTEM';
+
+/** Display order for numeric dates; presentation only. */
+export type DateFormatPreference = 'DMY' | 'MDY' | 'YMD';
+
+/**
+ * Numeral preference. `LOCALE` follows the selected UI language
+ * (English → Latin, Bangla → Bengali); the explicit options let a user
+ * choose either numeral set independently of the label language.
+ */
+export type NumberFormatPreference = 'LOCALE' | 'LATIN' | 'BENGALI';
+
+/**
+ * Reduced-motion preference. `SYSTEM` respects the OS setting (default);
+ * `REDUCE` requests reduced motion even when the OS does not.
+ */
+export type ReducedMotionPreference = 'SYSTEM' | 'REDUCE';
+
+/** The authenticated user's persisted display preferences. */
+export interface UserPreferencesResponse {
+  locale: UiLocale;
+  /** Validated IANA timezone used for reporting/budget periods. */
+  timezone: string;
+  /** Stored explicitly; `BDT` is the only MVP value. Never converted. */
+  currency: string;
+  theme: ThemePreference;
+  weekStartsOn: WeekStartsOn;
+  dateFormat: DateFormatPreference;
+  numberFormat: NumberFormatPreference;
+  reducedMotion: ReducedMotionPreference;
+  /** Null until the user saves a preference; defaults are still returned. */
+  updatedAt: string | null;
+}
+
+/**
+ * Documented defaults returned for users with no saved preference row
+ * (IT-11, ADR-0010). Shared so the API and web client cannot drift.
+ */
+export const DEFAULT_USER_PREFERENCES = {
+  locale: 'en',
+  timezone: 'Asia/Dhaka',
+  currency: 'BDT',
+  theme: 'LIGHT',
+  weekStartsOn: 'SATURDAY',
+  dateFormat: 'DMY',
+  numberFormat: 'LOCALE',
+  reducedMotion: 'SYSTEM',
+} as const satisfies Omit<UserPreferencesResponse, 'updatedAt'>;
+
+/**
+ * `PATCH /api/v1/preferences` body. Every field is optional; omitted fields
+ * keep their persisted value (or the documented default when no row exists).
+ */
+export interface UpdateUserPreferencesRequest {
+  locale?: UiLocale;
+  timezone?: string;
+  /** Only `BDT` is accepted until multi-currency is approved (DR-08). */
+  currency?: string;
+  theme?: ThemePreference;
+  weekStartsOn?: WeekStartsOn;
+  dateFormat?: DateFormatPreference;
+  numberFormat?: NumberFormatPreference;
+  reducedMotion?: ReducedMotionPreference;
+}
+
+/**
+ * Supported dashboard widgets, in the documented default order
+ * (requirements.md §5.6/§5.7). Removing or renaming an id is a migration
+ * concern; stale ids in saved layouts are dropped safely on read.
+ */
+export const DASHBOARD_WIDGET_IDS = [
+  'totalBalance',
+  'income',
+  'expense',
+  'recentTransactions',
+  'spendingByCategory',
+  'goals',
+  'budgets',
+] as const;
+
+export type DashboardWidgetId = (typeof DASHBOARD_WIDGET_IDS)[number];
+
+/** One widget's visibility in the user's single saved layout. */
+export interface DashboardWidgetPreference {
+  id: DashboardWidgetId;
+  visible: boolean;
+}
+
+/** `GET/PUT /api/v1/dashboard/layout` and `POST …/reset` response. */
+export interface DashboardLayoutResponse {
+  /**
+   * Every supported widget exactly once, in display order. Hidden widgets
+   * stay in the list so the customize screen can turn them back on.
+   */
+  widgets: DashboardWidgetPreference[];
+  /** True when no saved layout exists (the documented default is returned). */
+  isDefault: boolean;
+  /** Null when no layout has been saved. */
+  updatedAt: string | null;
+}
+
+/**
+ * `PUT /api/v1/dashboard/layout` body. Must contain every supported widget
+ * exactly once; duplicates, unknown ids, and missing widgets are rejected.
+ */
+export interface UpdateDashboardLayoutRequest {
+  widgets: DashboardWidgetPreference[];
 }

@@ -15,15 +15,15 @@ import {
  * Boundaries are half-open in the user's IANA timezone:
  * `fromInstant <= occurredAt < toInstant`, where `fromInstant` is local
  * midnight of `dateFrom` and `toInstant` is local midnight of the day after
- * `dateTo`. The default period is the current local month. Weeks start on
- * Saturday (DR-11, owner-confirmed 2026-10-17) until the IT-11 preference
- * exists.
+ * `dateTo`. The default period is the current local month. Weekly buckets use
+ * the user's IT-11 week-start preference; Saturday remains the documented
+ * default (DR-11, owner-confirmed 2026-10-17).
  *
  * Everything here is pure apart from the `now` parameter so the period,
  * boundary, and bucket rules are unit-testable without a database.
  */
 
-/** Week start used for weekly buckets until IT-11 preferences exist. */
+/** Documented default week start (DR-11); users may override it (IT-11). */
 export const SUMMARY_WEEK_STARTS_ON: WeekStartsOn = 'SATURDAY';
 
 /**
@@ -35,6 +35,17 @@ export const MAX_SUMMARY_RANGE_DAYS = 366;
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const MONTH_PATTERN = /^\d{4}-\d{2}$/;
+
+/** JavaScript `getUTCDay()` indices for the supported week starts. */
+const WEEK_START_INDEX: Readonly<Record<WeekStartsOn, number>> = {
+  SUNDAY: 0,
+  MONDAY: 1,
+  TUESDAY: 2,
+  WEDNESDAY: 3,
+  THURSDAY: 4,
+  FRIDAY: 5,
+  SATURDAY: 6,
+};
 
 export interface SummaryPeriodInput {
   readonly dateFrom?: unknown;
@@ -146,7 +157,8 @@ export function weekStartOf(day: string, weekStartsOn: WeekStartsOn): string {
   const month = Number(day.slice(5, 7));
   const date = Number(day.slice(8, 10));
   const dayOfWeek = new Date(Date.UTC(year, month - 1, date)).getUTCDay(); // 0 Sun … 6 Sat
-  const daysSinceStart = weekStartsOn === 'SATURDAY' ? (dayOfWeek + 1) % 7 : 0;
+  const startIndex = WEEK_START_INDEX[weekStartsOn];
+  const daysSinceStart = (dayOfWeek - startIndex + 7) % 7;
   return addLocalDays(day, -daysSinceStart);
 }
 
@@ -214,6 +226,7 @@ export function bucketDayTotals(
   days: readonly DayTotals[],
   granularity: ReportGranularity,
   period: SummaryPeriodBounds,
+  weekStartsOn: WeekStartsOn = SUMMARY_WEEK_STARTS_ON,
 ): SeriesBucket[] {
   const buckets = new Map<
     string,
@@ -227,7 +240,7 @@ export function bucketDayTotals(
       keyStart = entry.day;
       keyEnd = entry.day;
     } else if (granularity === 'weekly') {
-      keyStart = weekStartOf(entry.day, SUMMARY_WEEK_STARTS_ON);
+      keyStart = weekStartOf(entry.day, weekStartsOn);
       keyEnd = addLocalDays(keyStart, 6);
     } else {
       keyStart = monthStartOf(entry.day);

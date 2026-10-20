@@ -5,14 +5,14 @@ import { AppShell } from '@/components/app-shell';
 import { Card } from '@/components/card';
 
 export const metadata: Metadata = {
-  title: 'Settings — MoneyFlow UI preview',
+  title: 'Settings — MoneyFlow',
 };
 
 /** One settings section from the information architecture (requirements.md §4.3). */
 type SettingsSection = {
   readonly label: string;
   readonly href: string;
-  /** What the section actually shows today — never a promise of saved data. */
+  /** What the section actually does today — never a promise of saved data. */
   readonly description: string;
 };
 
@@ -20,12 +20,18 @@ const SECTIONS: readonly SettingsSection[] = [
   {
     label: 'Profile',
     href: '/app/settings/profile',
-    description: 'Display name preview with local validation — saving is not connected.',
+    description: 'Display name, loaded from and saved to your account.',
   },
   {
     label: 'Preferences',
     href: '/app/settings/preferences',
-    description: 'Theme works in this browser; locale, currency, and formats await decisions.',
+    description:
+      'Theme, language, timezone, week start, date/number formats, and reduced motion — saved per user.',
+  },
+  {
+    label: 'Dashboard layout',
+    href: '/app/customize',
+    description: 'Show, hide, reorder, or reset the dashboard widgets saved to your account.',
   },
   {
     label: 'Security',
@@ -40,10 +46,9 @@ const SECTIONS: readonly SettingsSection[] = [
 ];
 
 /**
- * Settings index (requirements.md §4.3). Every section in the information
- * architecture is linked to a real preview route; each preview states plainly
- * what it does and does not do. Nothing on these pages is saved, because there
- * is no signed-in user or preferences API yet (IT-11/IT-12/IT-13).
+ * Settings index (requirements.md §4.3). Profile, preferences, and the
+ * dashboard layout are wired to authenticated APIs (IT-3/IT-11); security and
+ * data remain honest previews for IT-12/IT-13.
  */
 export default function SettingsPage() {
   return (
@@ -52,12 +57,12 @@ export default function SettingsPage() {
         <div>
           <h1>Settings</h1>
           <p className="mf-page-header__subtitle">
-            Profile, preferences, security, and your data — what exists so far.
+            Profile, preferences, and customization saved to your account.
           </p>
         </div>
       </header>
 
-      <Card title="Sections" subtitle="Four previews, no saved settings yet">
+      <Card title="Sections" subtitle="What each section does today">
         <ul className="mf-report-list">
           {SECTIONS.map((section) => (
             <li key={section.href}>
@@ -69,8 +74,8 @@ export default function SettingsPage() {
           ))}
         </ul>
         <p className="mf-chart-note">
-          Settings are saved server-side per user once authentication lands. Nothing here is stored
-          yet, and no section claims otherwise.
+          Security and data controls remain previews until their assigned tasks. They are never
+          presented as operational before then.
         </p>
       </Card>
     </AppShell>

@@ -54,6 +54,8 @@ model User {
   budgets           Budget[]
   goals             Goal[]
   goalContributions GoalContribution[]
+  preference        UserPreference?
+  dashboardLayout   DashboardLayout?
 
   @@unique([email])
   @@map("user")
@@ -359,4 +361,86 @@ model GoalContribution {
   @@index([userId, occurredAt(sort: Desc)])
   @@index([goalId, occurredAt(sort: Desc)])
   @@map("goalContribution")
+}
+
+// ── Preferences and dashboard customization (IT-11, requirements.md §5.2/§5.7)
+//
+// One row per user. Missing rows are normal (existing users and fresh
+// sign-ups): the service returns documented defaults without writing anything
+// until the user saves. Preferences are display-only and never participate in
+// financial calculations. `timezone` is an IANA name validated server-side;
+// `currency` is stored explicitly but the MVP accepts BDT only (DR-08).
+// `DashboardLayout.layout` is validated JSON of the documented widget shape —
+// never executable JSON/CSS/HTML — and stale/unknown widget ids are dropped
+// safely on read. Multiple named layouts remain deferred (DR-12).
+
+enum UserLocale {
+  EN
+  BN
+}
+
+enum ThemePreference {
+  LIGHT
+  DARK
+  SYSTEM
+}
+
+enum WeekStartDay {
+  SUNDAY
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+}
+
+enum DateFormatPreference {
+  DMY
+  MDY
+  YMD
+}
+
+enum NumberFormatPreference {
+  LOCALE
+  LATIN
+  BENGALI
+}
+
+enum ReducedMotionPreference {
+  SYSTEM
+  REDUCE
+}
+
+model UserPreference {
+  id            String                  @id @default(uuid()) @db.Uuid
+  userId        String                  @unique
+  locale        UserLocale              @default(EN)
+  // IANA timezone; defaults to the initial locale's zone (DR-11).
+  timezone      String                  @default("Asia/Dhaka") @db.VarChar(64)
+  // ISO 4217; BDT only in MVP, stored explicitly (ADR-0003/DR-08).
+  currency      String                  @default("BDT") @db.VarChar(3)
+  theme         ThemePreference         @default(LIGHT)
+  weekStartsOn  WeekStartDay            @default(SATURDAY)
+  dateFormat    DateFormatPreference    @default(DMY)
+  numberFormat  NumberFormatPreference  @default(LOCALE)
+  reducedMotion ReducedMotionPreference @default(SYSTEM)
+  createdAt     DateTime                @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime                @updatedAt @db.Timestamptz(3)
+  user          User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("userPreference")
+}
+
+model DashboardLayout {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @unique
+  // Exactly `{ version: 1, widgets: [{ id, visible }] }`, validated by the
+  // service before every write; never arbitrary executable JSON.
+  layout    Json
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("dashboardLayout")
 }

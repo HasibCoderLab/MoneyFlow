@@ -74,6 +74,37 @@ describe('formatPeriodLabel', () => {
   });
 });
 
+describe('IT-11 date preferences', () => {
+  it('orders dates by DMY/MDY/YMD without changing the day', () => {
+    const base = { locale: 'en' as const, numberFormat: 'LOCALE' as const };
+    expect(formatLocalDate('2026-10-20', { ...base, dateFormat: 'DMY' })).toBe('20 Oct 2026');
+    expect(formatLocalDate('2026-10-20', { ...base, dateFormat: 'MDY' })).toBe('Oct 20, 2026');
+    expect(formatLocalDate('2026-10-20', { ...base, dateFormat: 'YMD' })).toBe('2026 Oct 20');
+  });
+
+  it('formats same-month range labels in each order', () => {
+    const base = { locale: 'en' as const, numberFormat: 'LOCALE' as const };
+    expect(formatRangeLabel('2026-10-01', '2026-10-06', { ...base, dateFormat: 'DMY' })).toBe(
+      '1\u20136 Oct 2026',
+    );
+    expect(formatRangeLabel('2026-10-01', '2026-10-06', { ...base, dateFormat: 'MDY' })).toBe(
+      'Oct 1\u20136, 2026',
+    );
+    expect(formatRangeLabel('2026-10-01', '2026-10-06', { ...base, dateFormat: 'YMD' })).toBe(
+      '2026 Oct 1\u20136',
+    );
+  });
+
+  it('uses Bangla month names and Bengali numerals for a Bangla locale', () => {
+    expect(
+      formatPeriodLabel(
+        { dateFrom: '2026-10-01', dateTo: '2026-10-31' },
+        { locale: 'bn', dateFormat: 'DMY', numberFormat: 'LOCALE' },
+      ),
+    ).toBe('\u0985\u0995\u09cd\u099f\u09cb\u09ac\u09b0 \u09e8\u09e6\u09e8\u09ec');
+  });
+});
+
 describe('formatOccurredAt', () => {
   it('renders the instant in the reporting timezone', () => {
     // 18:30Z is already the next local day in Asia/Dhaka (UTC+6).

@@ -52,6 +52,15 @@ the default stays English until the owner confirms those.
 by an open decision. Acceptance covers the savings-goal method only; it does
 not approve IT-11 (DR-11/DR-12) or any other open item in this register.
 
+**Updated 2026-10-20 (IT-11):** IT-11 is implemented and awaiting owner
+review. ADR-0010 records the persisted preferences, their defaults, dashboard
+layout validation/normalization, and the guest-cache/server reconciliation
+rules. This uses the accepted DR-11 Saturday default and the conservative
+single-layout option; **DR-12 remains Proposed and open**, so multiple named
+layouts are neither implemented nor promised. BDT stays the only currency
+(DR-08 remains a launch-geography confirmation, not a multi-currency
+feature).
+
 ---
 
 ## DR-01 — Money representation (P0, Accepted)
@@ -311,6 +320,11 @@ weekly report buckets can ship; IT-8 uses `weekStartsOn = Saturday` for the
 weekly aggregation until the IT-11 preference exists (owner ruling recorded
 with the IT-8 plan).
 
+**Status update (2026-10-20):** IT-11 stores `weekStartsOn` per user with
+`SATURDAY` as the default and uses it for weekly report buckets; all seven
+weekdays are accepted. Users can change it without affecting stored financial
+records (ADR-0010).
+
 ## DR-12 — Multiple dashboard layouts (P3, Proposed)
 
 **Context:** §18.7.
@@ -320,6 +334,12 @@ reorder, reset); multiple named layouts deferred to V1 pending user
 validation (§3.2).
 
 **Approval required: confirm (low impact).**
+
+**Status update (2026-10-20):** IT-11 implements the recommended
+single-layout behavior (validated order/visibility, default fallback, reset)
+without resolving this decision. Multiple named layouts remain unavailable
+and are not promised in the UI; adding them later would be additive and
+requires owner confirmation here first.
 
 ## DR-13 — AI timing (P2, Proposed)
 

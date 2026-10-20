@@ -86,6 +86,43 @@ describe('weekStartOf (Saturday start, DR-11)', () => {
   });
 });
 
+describe('weekStartOf (user-selected week start)', () => {
+  it('maps every day to the requested start day', () => {
+    // 2026-10-20 is a Tuesday.
+    expect(weekStartOf('2026-10-20', 'MONDAY')).toBe('2026-10-19');
+    expect(weekStartOf('2026-10-20', 'SUNDAY')).toBe('2026-10-18');
+    expect(weekStartOf('2026-10-20', 'TUESDAY')).toBe('2026-10-20');
+    expect(weekStartOf('2026-10-20', 'FRIDAY')).toBe('2026-10-16');
+    expect(weekStartOf('2026-10-20', 'SATURDAY')).toBe('2026-10-17');
+  });
+
+  it('uses Monday buckets in the report series when selected', () => {
+    const buckets = bucketDayTotals(
+      [
+        { day: '2026-10-18', incomeMinor: 1n, expenseMinor: 0n }, // Sunday
+        { day: '2026-10-19', incomeMinor: 2n, expenseMinor: 0n }, // Monday
+      ],
+      'weekly',
+      { dateFrom: '2026-10-01', dateTo: '2026-10-31' },
+      'MONDAY',
+    );
+    expect(buckets).toEqual([
+      {
+        startDate: '2026-10-12',
+        endDate: '2026-10-18',
+        incomeMinor: 1n,
+        expenseMinor: 0n,
+      },
+      {
+        startDate: '2026-10-19',
+        endDate: '2026-10-25',
+        incomeMinor: 2n,
+        expenseMinor: 0n,
+      },
+    ]);
+  });
+});
+
 describe('resolveSummaryPeriod', () => {
   it('defaults to the current local month in the timezone', () => {
     // 10:00Z on 17 Oct 2026 is 16:00 in Dhaka (+06:00) — same calendar day.

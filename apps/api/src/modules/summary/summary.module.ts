@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 
 import { PrismaModule } from '../../prisma/prisma.module';
+import { PreferencesModule } from '../preferences/preferences.module';
 import { DashboardController } from './dashboard.controller';
 import { ReportsController } from './reports.controller';
 import { SummaryService } from './summary.service';
@@ -11,7 +12,7 @@ import { SummaryService } from './summary.service';
  * dashboard and reports can never disagree about the same period.
  */
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, PreferencesModule],
   controllers: [DashboardController, ReportsController],
   providers: [SummaryService],
 })

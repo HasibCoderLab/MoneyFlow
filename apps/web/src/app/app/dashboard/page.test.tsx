@@ -1,4 +1,9 @@
-import type { DashboardResponse, GoalResponse } from '@moneyflow/contracts';
+import {
+  DASHBOARD_WIDGET_IDS,
+  type DashboardLayoutResponse,
+  type DashboardResponse,
+  type GoalResponse,
+} from '@moneyflow/contracts';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -11,13 +16,19 @@ vi.mock('next/navigation', () => ({
 // 401 → signed-out mapping under test is the production one.
 vi.mock('@/lib/api-client', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/lib/api-client')>();
-  return { ...actual, fetchDashboard: vi.fn(), fetchGoals: vi.fn() };
+  return {
+    ...actual,
+    fetchDashboard: vi.fn(),
+    fetchDashboardLayout: vi.fn(),
+    fetchGoals: vi.fn(),
+  };
 });
 
-import { ApiClientError, fetchDashboard, fetchGoals } from '@/lib/api-client';
+import { ApiClientError, fetchDashboard, fetchDashboardLayout, fetchGoals } from '@/lib/api-client';
 import DashboardPage from './page';
 
 const mockedFetchDashboard = vi.mocked(fetchDashboard);
+const mockedFetchLayout = vi.mocked(fetchDashboardLayout);
 const mockedFetchGoals = vi.mocked(fetchGoals);
 
 /** One goal as the IT-10 API returns it; the dashboard shows real progress. */
@@ -42,6 +53,12 @@ function goalFixture(overrides: Partial<GoalResponse> = {}): GoalResponse {
     updatedAt: '2026-10-01T00:00:00.000Z',
     ...overrides,
   };
+}
+
+function layoutFixture(
+  widgets = DASHBOARD_WIDGET_IDS.map((id) => ({ id, visible: true })),
+): DashboardLayoutResponse {
+  return { widgets, isDefault: true, updatedAt: null };
 }
 
 function dashboardFixture(overrides: Partial<DashboardResponse> = {}): DashboardResponse {
@@ -96,7 +113,9 @@ function dashboardFixture(overrides: Partial<DashboardResponse> = {}): Dashboard
 describe('dashboard route (wired to GET /api/v1/dashboard)', () => {
   beforeEach(() => {
     mockedFetchDashboard.mockReset();
+    mockedFetchLayout.mockReset();
     mockedFetchGoals.mockReset();
+    mockedFetchLayout.mockResolvedValue(layoutFixture());
     mockedFetchGoals.mockResolvedValue([]);
   });
 
@@ -222,5 +241,67 @@ describe('dashboard route (wired to GET /api/v1/dashboard)', () => {
     await screen.findByText('BDT 63,500');
 
     expect(screen.queryByRole('note', { name: /preview data notice/i })).toBeNull();
+  });
+
+  it('renders widgets in the saved order from the layout API', async () => {
+    mockedFetchDashboard.mockResolvedValue(dashboardFixture());
+    mockedFetchLayout.mockResolvedValue(
+      layoutFixture([
+        { id: 'recentTransactions', visible: true },
+        { id: 'totalBalance', visible: true },
+        { id: 'income', visible: true },
+        { id: 'expense', visible: true },
+        { id: 'spendingByCategory', visible: true },
+        { id: 'goals', visible: true },
+        { id: 'budgets', visible: true },
+      ]),
+    );
+    const { container } = render(<DashboardPage />);
+    await screen.findByText('BDT 63,500');
+
+    const order = Array.from(container.querySelectorAll('[data-widget]')).map((node) =>
+      node.getAttribute('data-widget'),
+    );
+    expect(order).toEqual([
+      'recentTransactions',
+      'totalBalance',
+      'income',
+      'expense',
+      'spendingByCategory',
+      'goals',
+      'budgets',
+    ]);
+  });
+
+  it('hides widgets saved as not visible', async () => {
+    mockedFetchDashboard.mockResolvedValue(dashboardFixture());
+    mockedFetchLayout.mockResolvedValue(
+      layoutFixture(
+        DASHBOARD_WIDGET_IDS.map((id) => ({
+          id,
+          visible: id !== 'totalBalance' && id !== 'spendingByCategory',
+        })),
+      ),
+    );
+    const { container } = render(<DashboardPage />);
+
+    expect(await screen.findByText('BDT 18,000')).toBeTruthy();
+    expect(screen.queryByText('BDT 63,500')).toBeNull();
+    expect(container.querySelector('[data-widget="totalBalance"]')).toBeNull();
+    expect(container.querySelector('[data-widget="spendingByCategory"]')).toBeNull();
+  });
+
+  it('offers a way back when every widget is hidden', async () => {
+    mockedFetchDashboard.mockResolvedValue(dashboardFixture());
+    mockedFetchLayout.mockResolvedValue(
+      layoutFixture(DASHBOARD_WIDGET_IDS.map((id) => ({ id, visible: false }))),
+    );
+    const { container } = render(<DashboardPage />);
+
+    expect(await screen.findByText('All dashboard widgets are hidden.')).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'Customize dashboard' }).getAttribute('href')).toBe(
+      '/app/customize',
+    );
+    expect(container.querySelector('[data-widget]')).toBeNull();
   });
 });

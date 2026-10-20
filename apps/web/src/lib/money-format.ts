@@ -1,5 +1,12 @@
+import {
+  DEFAULT_DISPLAY_FORMAT,
+  localizeDigits,
+  resolveNumberLocale,
+  type DisplayFormatOptions,
+} from './display-format';
+
 /**
- * Display formatting for minor-unit money strings (IT-8).
+ * Display formatting for minor-unit money strings (IT-8, extended by IT-11).
  *
  * The API returns every money figure as an exact minor-unit integer string
  * (ADR-0003, requirements.md §11.1: "no `Number` touches money"). This
@@ -9,9 +16,9 @@
  * the fraction only when it is non-zero, so "350000" renders as
  * "BDT 3,500" and "350050" as "BDT 3,500.50".
  *
- * BDT is the only registered MVP currency (ADR-0003 §2); its exponent 2 is
- * the only local assumption here and multi-currency display arrives with
- * the preferences work (IT-11).
+ * IT-11 adds the user's numeral preference. The currency prefix and exponent
+ * are unchanged (BDT is the only registered MVP currency, ADR-0003 §2);
+ * selecting Bengali numerals changes digit glyphs, never the value.
  */
 
 const BDT_PREFIX = 'BDT ';
@@ -22,8 +29,18 @@ const INTEGER_PATTERN = /^-?\d+$/;
 // themselves are exact and universally supported by the target browsers.
 const ZERO = BigInt(0);
 
+function groupedInteger(digits: string, options: DisplayFormatOptions): string {
+  return new Intl.NumberFormat(resolveNumberLocale(options), {
+    useGrouping: true,
+    maximumFractionDigits: 0,
+  }).format(BigInt(digits));
+}
+
 /** Formats a minor-unit integer string as a BDT amount (negative → "−BDT …"). */
-export function formatBdtMinor(minorText: string): string {
+export function formatBdtMinor(
+  minorText: string,
+  options: DisplayFormatOptions = DEFAULT_DISPLAY_FORMAT,
+): string {
   if (!INTEGER_PATTERN.test(minorText)) {
     throw new Error(`Expected a minor-unit integer string, got "${minorText}".`);
   }
@@ -33,8 +50,11 @@ export function formatBdtMinor(minorText: string): string {
   const digits = magnitude.toString().padStart(BDT_EXPONENT + 1, '0');
   const integerDigits = digits.slice(0, -BDT_EXPONENT);
   const fractionDigits = digits.slice(-BDT_EXPONENT);
-  const grouped = new Intl.NumberFormat('en-US').format(BigInt(integerDigits));
-  const fraction = fractionDigits === '0'.repeat(BDT_EXPONENT) ? '' : `.${fractionDigits}`;
+  const grouped = groupedInteger(integerDigits, options);
+  const fraction =
+    fractionDigits === '0'.repeat(BDT_EXPONENT)
+      ? ''
+      : `.${localizeDigits(fractionDigits, options)}`;
   return `${negative ? '\u2212' : ''}${BDT_PREFIX}${grouped}${fraction}`;
 }
 
@@ -43,7 +63,10 @@ export function formatBdtMinor(minorText: string): string {
  * trailing `.0` trimmed (`"270"` → `"27%"`). `null` (no denominator) stays
  * `null` so the caller can render its own localized "not set" copy.
  */
-export function formatPercentTimes10(percentTimes10: string | null): string | null {
+export function formatPercentTimes10(
+  percentTimes10: string | null,
+  options: DisplayFormatOptions = DEFAULT_DISPLAY_FORMAT,
+): string | null {
   if (percentTimes10 === null) {
     return null;
   }
@@ -56,7 +79,7 @@ export function formatPercentTimes10(percentTimes10: string | null): string | nu
   const digits = magnitude.toString().padStart(2, '0');
   const whole = digits.slice(0, -1);
   const tenth = digits.slice(-1);
-  const grouped = new Intl.NumberFormat('en-US').format(BigInt(whole));
-  const fraction = tenth === '0' ? '' : `.${tenth}`;
+  const grouped = groupedInteger(whole, options);
+  const fraction = tenth === '0' ? '' : `.${localizeDigits(tenth, options)}`;
   return `${negative ? '\u2212' : ''}${grouped}${fraction}%`;
 }

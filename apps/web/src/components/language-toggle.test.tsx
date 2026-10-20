@@ -1,5 +1,14 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
+vi.mock('@/lib/api-client', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/api-client')>();
+  return {
+    ...actual,
+    fetchPreferences: vi.fn().mockRejectedValue(new actual.ApiClientError('Unauthorized', 401)),
+    updatePreferences: vi.fn(),
+  };
+});
 
 import { LocaleProvider, useLocale } from '@/lib/i18n/locale-context';
 

@@ -15,12 +15,14 @@ import { formatBdtMinor, formatPercentTimes10 } from '@/lib/money-format';
  * truthfully ("BDT 6,000 over target", "120% of target").
  */
 export function GoalProgress({ goal }: { readonly goal: GoalResponse }) {
-  const { t } = useLocale();
-  const percent = formatPercentTimes10(goal.figures.percentTimes10);
+  const { t, preferences } = useLocale();
+  const percent = formatPercentTimes10(goal.figures.percentTimes10, preferences);
   const remaining = goal.figures.remainingMinor;
   const remainderText = remaining.startsWith('-')
-    ? t('goals.overTarget', { amount: formatBdtMinor(remaining.slice(1)) })
-    : t('goals.remaining', { amount: formatBdtMinor(remaining) });
+    ? t('goals.overTarget', {
+        amount: formatBdtMinor(remaining.slice(1), preferences),
+      })
+    : t('goals.remaining', { amount: formatBdtMinor(remaining, preferences) });
 
   return (
     <div className="mf-goal">
@@ -29,8 +31,8 @@ export function GoalProgress({ goal }: { readonly goal: GoalResponse }) {
         percent={cappedPercent(goal.figures.percentTimes10)}
         percentText={percent === null ? undefined : t('goals.percentOfTarget', { percent })}
         valueText={t('goals.savedOf', {
-          saved: formatBdtMinor(goal.figures.savedMinor),
-          target: formatBdtMinor(goal.targetMinor),
+          saved: formatBdtMinor(goal.figures.savedMinor, preferences),
+          target: formatBdtMinor(goal.targetMinor, preferences),
         })}
         emphasis={goal.figures.overfunded ? 'attention' : 'normal'}
       />

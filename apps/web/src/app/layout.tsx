@@ -22,11 +22,12 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
     // before React hydrates; the attribute is cosmetic and safe to ignore.
     <html lang="en" suppressHydrationWarning>
       <body>
-        {/* Applies the stored light/dark choice before first paint (no flash).
-            Light is the default when nothing valid is stored. */}
+        {/* Applies the stored Light/Dark/System choice before first paint (no
+            flash). Light is the default when nothing valid is stored; System
+            resolves through the OS preference (IT-11). */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem("mf-theme");if(t!=="light"&&t!=="dark")t="light";document.documentElement.setAttribute("data-theme",t);}catch(e){document.documentElement.setAttribute("data-theme","light");}})();`,
+            __html: `(function(){try{var t=localStorage.getItem("mf-theme");if(t!=="light"&&t!=="dark"&&t!=="system")t="light";var r=t==="system"?(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"):t;document.documentElement.setAttribute("data-theme",r);}catch(e){document.documentElement.setAttribute("data-theme","light");}})();`,
           }}
         />
         {/* Bangla/English label preference for every route (requirements.md

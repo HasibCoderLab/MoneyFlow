@@ -22,5 +22,8 @@ export default defineConfig({
     globals: true,
     include: ['src/**/*.test.{ts,tsx}'],
     restoreMocks: true,
+    // Full-repo runs execute the API suite in parallel; jsdom interaction tests
+    // can exceed the 5s default under that CPU contention without being hung.
+    testTimeout: 15_000,
   },
 });

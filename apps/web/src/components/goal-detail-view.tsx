@@ -38,7 +38,7 @@ import { useAsyncData } from '@/lib/use-async-data';
  * reloads the server's exact figures after every action.
  */
 export function GoalDetailView({ goalId }: { readonly goalId: string }) {
-  const { t, locale } = useLocale();
+  const { t, preferences } = useLocale();
   const router = useRouter();
   const load = useCallback(() => fetchGoal(goalId), [goalId]);
   const { state, retry } = useAsyncData(load);
@@ -116,7 +116,7 @@ export function GoalDetailView({ goalId }: { readonly goalId: string }) {
             {t(GOAL_TYPE_LABEL[goal.type])} · {t(GOAL_STATUS_LABEL[goal.status])}
             {goal.deadline === null
               ? ` · ${t('goals.noDeadline')}`
-              : ` · ${t('goals.deadline', { date: formatGoalDate(locale, goal.deadline) })}`}
+              : ` · ${t('goals.deadline', { date: formatGoalDate(goal.deadline, preferences) })}`}
           </p>
         </div>
       </header>
@@ -181,10 +181,10 @@ export function GoalDetailView({ goalId }: { readonly goalId: string }) {
                     <span>
                       {reversal ? t('goals.reversalLabel') : t('goals.contributionLabel')}
                     </span>
-                    <span>{formatBdtMinor(row.amountMinor)}</span>
+                    <span>{formatBdtMinor(row.amountMinor, preferences)}</span>
                   </p>
                   <p className="mf-goal-row__meta">
-                    {formatInstantDate(locale, row.occurredAt)}
+                    {formatInstantDate(row.occurredAt, preferences.timezone, preferences)}
                     {row.note === null ? '' : ` · ${row.note}`}
                   </p>
                   {reversal ? null : reversed ? (
@@ -193,7 +193,7 @@ export function GoalDetailView({ goalId }: { readonly goalId: string }) {
                     <Button
                       variant="ghost"
                       onClick={() => setReverseTarget(row)}
-                      aria-label={`${t('goals.reverseButton')}: ${formatBdtMinor(row.amountMinor)}`}
+                      aria-label={`${t('goals.reverseButton')}: ${formatBdtMinor(row.amountMinor, preferences)}`}
                     >
                       {t('goals.reverseButton')}
                     </Button>

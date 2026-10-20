@@ -20,21 +20,21 @@
 
 ## Decision dependencies (what must be settled before what)
 
-| Decision (register)                 | Blocks                                                   | Can wait?                |
-| ----------------------------------- | -------------------------------------------------------- | ------------------------ |
-| DR-01 money representation          | IT-1 (money module), IT-2 (schema)                       | **No**                   |
-| DR-02 accounting semantics          | IT-1, IT-2, IT-6, IT-7                                   | **No**                   |
-| DR-04 auth/session strategy         | IT-2 (auth tables), IT-3                                 | **No**                   |
-| DR-05 database/Prisma strategy      | IT-2 (migration + adapter)                               | **No**                   |
-| DR-03 savings-goal method           | IT-10 (schema lands later; document rule now)            | No — accepted 2026-10-20 |
-| DR-06 email provider                | IT-13 (verification/recovery), not IT-3 development path | Yes, before launch       |
-| DR-07 MVP scope confirmation        | Sequencing/deadline expectations generally               | Recommended before IT-1  |
-| DR-08/09/10 launch assumptions      | Public pages, legal text, age gate                       | Yes until launch         |
-| DR-11 locale defaults (week start)  | IT-11 (preference default only)                          | Yes until IT-11          |
-| DR-12 multiple layouts              | IT-11 scope                                              | Yes until IT-11          |
-| DR-13 AI timing                     | V1 planning                                              | Yes                      |
-| DR-14/15/16 ops, backups, retention | IT-13, production deployment                             | Yes until launch         |
-| DR-17 pricing/legal                 | Marketing/subscription work                              | Yes                      |
+| Decision (register)                 | Blocks                                                   | Can wait?                                        |
+| ----------------------------------- | -------------------------------------------------------- | ------------------------------------------------ |
+| DR-01 money representation          | IT-1 (money module), IT-2 (schema)                       | **No**                                           |
+| DR-02 accounting semantics          | IT-1, IT-2, IT-6, IT-7                                   | **No**                                           |
+| DR-04 auth/session strategy         | IT-2 (auth tables), IT-3                                 | **No**                                           |
+| DR-05 database/Prisma strategy      | IT-2 (migration + adapter)                               | **No**                                           |
+| DR-03 savings-goal method           | IT-10 (schema lands later; document rule now)            | No — accepted 2026-10-20                         |
+| DR-06 email provider                | IT-13 (verification/recovery), not IT-3 development path | Yes, before launch                               |
+| DR-07 MVP scope confirmation        | Sequencing/deadline expectations generally               | Recommended before IT-1                          |
+| DR-08/09/10 launch assumptions      | Public pages, legal text, age gate                       | Yes until launch                                 |
+| DR-11 locale defaults (week start)  | IT-11 (preference default only)                          | Resolved (accepted; IT-11 uses Saturday default) |
+| DR-12 multiple layouts              | V1 customization scope                                   | Yes — single layout in MVP; decision stays open  |
+| DR-13 AI timing                     | V1 planning                                              | Yes                                              |
+| DR-14/15/16 ops, backups, retention | IT-13, production deployment                             | Yes until launch                                 |
+| DR-17 pricing/legal                 | Marketing/subscription work                              | Yes                                              |
 
 **DR-01, DR-02, DR-04, and DR-05 are accepted (2026-10-16)** after the
 clarification round (ADR-0003/ADR-0004, `accounting-rules.md` §11) and the
@@ -42,8 +42,11 @@ ADR-0006/ADR-0007 review; **IT-1 is implemented**; **IT-2 is implemented and
 awaiting owner review** — the real-PostgreSQL acceptance checks run in CI's
 PostgreSQL 16 job, while machines without Docker/PostgreSQL cannot run them
 locally. **DR-03 is accepted (2026-10-20)** — ADR-0005 is `Accepted`, which
-unblocked IT-10; **IT-10 is now implemented and awaiting owner review**, and
-IT-11 is the next task. Everything else can proceed incrementally.
+unblocked IT-10; **IT-10 is now implemented and awaiting owner review**.
+**IT-11 is implemented and awaiting owner review** (ADR-0010): persisted
+profile/preferences and a single validated dashboard layout, with the
+remaining preview screens unchanged. **IT-12 is the next task.** Everything
+else can proceed incrementally.
 
 ## Phase A — foundations (the first implementation phase)
 
@@ -294,10 +297,41 @@ same pattern; all depend on the approved accounting rules.
 
 ## Phase D — customization, data rights, hardening
 
-- **IT-11 Preferences & customization:** profile/preferences persistence
-  (theme, locale, timezone, week start, reduced motion), dashboard layout
-  persistence with validated schema + reset-to-default, preference/layout
-  tests, mobile behavior preserved.
+### IT-11 — Preferences & customization
+
+**Status:** Implemented 2026-10-20 — awaiting owner review.
+
+**Scope:** server-backed profile (`GET/PATCH /api/v1/me`) and preferences
+(`GET/PATCH /api/v1/preferences`), a single dashboard layout
+(`GET/PUT /api/v1/dashboard/layout`, `POST …/reset`), the API-backed
+`/app/settings/preferences`, `/app/settings/profile`, and `/app/customize`
+screens, and preference-aware display formatting. Theme/locale choices remain
+cached for guests and reconcile with the signed-in account.
+
+**Decisions required:** DR-11 (accepted) and DR-12 (single-layout conservative
+option; decision remains open). Detail: ADR-0010.
+
+**Acceptance criteria**
+
+- A missing preference row returns the documented defaults without writing;
+  partial updates preserve omitted fields and reject unknown fields.
+- Theme, locale, timezone, week start, date/number formats, and reduced motion
+  persist per session-derived user; every query is isolated by user.
+- BDT is enforced and shown read-only; no conversion or currency picker.
+- The saved timezone affects dashboard/report/budget period boundaries, and
+  the saved week start affects weekly report buckets. An explicit query
+  `timezone` still wins; no financial row is created or changed.
+- Dashboard layout saves all supported widgets exactly once with order and
+  visibility, rejects partial/duplicate/unknown data, normalizes stale rows on
+  read, and resets by deleting the saved row.
+- The dashboard renders the saved order/visibility with a default fallback and
+  an all-hidden recovery link; mobile layout remains usable.
+- Unit, web, and real-PostgreSQL integration tests cover defaults, validation,
+  persistence, reset, stale normalization, cross-user isolation, and financial
+  invariance.
+- Gates: format, lint, typecheck, unit tests, integration tests, build,
+  `db:validate`, and `git diff --check` run and reported truthfully.
+
 - **IT-12 Export, deletion, audit:** CSV export of the user's transactions
   (scoped, tested); account deletion workflow honoring the retention policy
   (DR-16); audit events for destructive/security actions; confirmation UX.

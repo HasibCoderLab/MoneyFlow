@@ -7,7 +7,9 @@ import { HealthModule } from './modules/health/health.module';
 import { AccountsModule } from './modules/accounts/accounts.module';
 import { BudgetsModule } from './modules/budgets/budgets.module';
 import { CategoriesModule } from './modules/categories/categories.module';
+import { DashboardLayoutModule } from './modules/dashboard-layout/dashboard-layout.module';
 import { GoalsModule } from './modules/goals/goals.module';
+import { PreferencesModule } from './modules/preferences/preferences.module';
 import { SummaryModule } from './modules/summary/summary.module';
 import { TransactionsModule } from './modules/transactions/transactions.module';
 
@@ -33,6 +35,8 @@ import { TransactionsModule } from './modules/transactions/transactions.module';
     SummaryModule,
     BudgetsModule,
     GoalsModule,
+    PreferencesModule,
+    DashboardLayoutModule,
   ],
   providers: [
     {

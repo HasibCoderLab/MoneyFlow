@@ -1,40 +1,30 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import type { ThemePreference } from '@moneyflow/contracts';
+import { useState } from 'react';
+
+import { usePreferences } from '@/lib/i18n/locale-context';
 
 /**
- * Theme switcher: Light ↔ Dark (requirements.md §5.2, §5.7).
+ * Theme switcher: Light → Dark → System (requirements.md §5.2, §5.7).
  *
- * - Default `light`: the `data-theme` attribute is always set explicitly,
- *   so the rendered theme never depends on the OS setting.
- * - The choice is stored in `localStorage` (theme preference only —
- *   no financial or sensitive data) and applied by a blocking script in the
- *   root layout before first paint, so there is no theme flash.
- * - A legacy stored `system` value (from before the option was removed)
- *   falls back to `light`.
+ * - `LIGHT` is the documented default; `SYSTEM` follows the OS setting live.
+ * - The provider applies the resolved theme to `data-theme` and caches the
+ *   chosen value before first paint (root layout script), so there is no
+ *   theme flash.
+ * - A signed-in change is PATCHed to `GET /api/v1/preferences`; a guest keeps
+ *   the browser-local display choice (IT-11).
  * - Icons are inline here (not in the shared icon set) so this self-contained
  *   control never conflicts with concurrently edited files.
  */
-type ThemeChoice = 'light' | 'dark';
 
-const STORAGE_KEY = 'mf-theme';
+const ORDER: readonly ThemePreference[] = ['LIGHT', 'DARK', 'SYSTEM'];
 
-const ORDER: readonly ThemeChoice[] = ['light', 'dark'];
-
-const LABELS: Record<ThemeChoice, string> = {
-  light: 'Light',
-  dark: 'Dark',
+const LABELS: Record<ThemePreference, string> = {
+  LIGHT: 'Light',
+  DARK: 'Dark',
+  SYSTEM: 'System',
 };
-
-function readStoredChoice(): ThemeChoice {
-  try {
-    const stored = window.localStorage.getItem(STORAGE_KEY);
-    if (stored === 'light' || stored === 'dark') return stored;
-  } catch {
-    // Private mode / blocked storage: fall back to light, stay silent.
-  }
-  return 'light';
-}
 
 function SunGlyph() {
   return (
@@ -74,35 +64,61 @@ function MoonGlyph() {
   );
 }
 
+function MonitorGlyph() {
+  return (
+    <svg
+      width="1em"
+      height="1em"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.75}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <rect x="3" y="4" width="18" height="13" rx="2" />
+      <path d="M8 21h8M12 17v4" />
+    </svg>
+  );
+}
+
+function Glyph({ theme }: { readonly theme: ThemePreference }) {
+  if (theme === 'DARK') return <MoonGlyph />;
+  if (theme === 'SYSTEM') return <MonitorGlyph />;
+  return <SunGlyph />;
+}
+
 export function ThemeToggle() {
-  // SSR-safe initial: 'light' on both server and first client render.
-  const [choice, setChoice] = useState<ThemeChoice>('light');
+  const { preferences, savePreferences, preferencesStatus } = usePreferences();
+  const [saveFailed, setSaveFailed] = useState(false);
 
-  useEffect(() => {
-    setChoice(readStoredChoice());
-  }, []);
+  const choice = preferences.theme;
+  const next = ORDER[(ORDER.indexOf(choice) + 1) % ORDER.length] ?? 'LIGHT';
 
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', choice);
-    try {
-      window.localStorage.setItem(STORAGE_KEY, choice);
-    } catch {
-      // Storage unavailable: theme still applies for this session.
-    }
-  }, [choice]);
-
-  const next = ORDER[(ORDER.indexOf(choice) + 1) % ORDER.length] ?? 'light';
+  const onSwitch = () => {
+    setSaveFailed(false);
+    void savePreferences({ theme: next }).catch(() => setSaveFailed(true));
+  };
 
   return (
-    <button
-      type="button"
-      className="mf-btn mf-btn--ghost"
-      onClick={() => setChoice(next)}
-      aria-label={`Theme: ${LABELS[choice]}. Switch to ${LABELS[next]}.`}
-      title={`Theme: ${LABELS[choice]} (switch to ${LABELS[next]})`}
-    >
-      {choice === 'light' ? <SunGlyph /> : <MoonGlyph />}
-      <span>{LABELS[choice]}</span>
-    </button>
+    <>
+      <button
+        type="button"
+        className="mf-btn mf-btn--ghost"
+        onClick={onSwitch}
+        aria-label={`Theme: ${LABELS[choice]}. Switch to ${LABELS[next]}.`}
+        title={`Theme: ${LABELS[choice]} (switch to ${LABELS[next]})`}
+      >
+        <Glyph theme={choice} />
+        <span>{LABELS[choice]}</span>
+      </button>
+      {saveFailed && preferencesStatus !== 'guest' ? (
+        <span className="mf-visually-hidden" role="status">
+          Theme applied in this browser, but it could not be saved to your account.
+        </span>
+      ) : null}
+    </>
   );
 }

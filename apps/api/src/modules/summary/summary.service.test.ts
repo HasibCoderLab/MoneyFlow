@@ -1,7 +1,9 @@
 import { BadRequestException } from '@nestjs/common';
+import { DEFAULT_USER_PREFERENCES } from '@moneyflow/contracts';
 import { describe, expect, it, vi } from 'vitest';
 
 import type { PrismaService } from '../../prisma/prisma.service';
+import type { PreferencesService } from '../preferences/preferences.service';
 import { SummaryService } from './summary.service';
 
 /**
@@ -35,7 +37,15 @@ function mockDb() {
 type MockDb = ReturnType<typeof mockDb>;
 
 function createService(mock: MockDb): SummaryService {
-  return new SummaryService(mock as unknown as PrismaService);
+  const preferences = {
+    getEffectivePreferences: vi
+      .fn()
+      .mockResolvedValue({ ...DEFAULT_USER_PREFERENCES, updatedAt: null }),
+  };
+  return new SummaryService(
+    mock as unknown as PrismaService,
+    preferences as unknown as PreferencesService,
+  );
 }
 
 function accountRow(id: string, openingBalanceMinor: bigint, status = 'ACTIVE') {

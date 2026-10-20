@@ -20,6 +20,8 @@ Superseded), **Context**, **Decision**, **Consequences**.
 | 0006 | Authentication and session strategy | Accepted |
 | 0007 | Database platform and Prisma 7      | Accepted |
 | 0008 | Transactional email provider        | Proposed |
+| 0009 | UI language toggle                  | Accepted |
+| 0010 | Preferences and dashboard layout    | Accepted |
 
 ## Decision register
 

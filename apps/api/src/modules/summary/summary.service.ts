@@ -14,13 +14,9 @@ import { DEFAULT_CURRENCY_CODE } from '../../domain/money/currency';
 import { percentTimes10 } from '../../domain/money/percentage';
 import { PrismaService } from '../../prisma/prisma.service';
 import { deriveAccountBalance } from '../accounts/balance';
+import { PreferencesService } from '../preferences/preferences.service';
 import { parseSummaryQuery } from './dto';
-import {
-  bucketDayTotals,
-  SUMMARY_WEEK_STARTS_ON,
-  type DayTotals,
-  type ResolvedSummaryPeriod,
-} from './summary-periods';
+import { bucketDayTotals, type DayTotals, type ResolvedSummaryPeriod } from './summary-periods';
 
 /**
  * Summary service (IT-8) — the single aggregation path behind
@@ -46,7 +42,10 @@ import {
  */
 @Injectable()
 export class SummaryService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly preferences: PreferencesService,
+  ) {}
 
   /** `GET /api/v1/dashboard` — every widget figure the dashboard renders. */
   public async getDashboard(
@@ -54,7 +53,8 @@ export class SummaryService {
     query: Record<string, unknown>,
     now: Date = new Date(),
   ): Promise<DashboardResponse> {
-    const parsed = parseSummaryQuery(query, now);
+    const preferences = await this.preferences.getEffectivePreferences(userId);
+    const parsed = parseSummaryQuery(withPreferenceDefaults(query, preferences.timezone), now);
 
     const [balance, aggregates, recentTransactions, spending] = await Promise.all([
       this.loadActiveBalance(userId),
@@ -79,23 +79,27 @@ export class SummaryService {
     query: Record<string, unknown>,
     now: Date = new Date(),
   ): Promise<ReportSummaryResponse> {
-    const parsed = parseSummaryQuery(query, now);
+    const preferences = await this.preferences.getEffectivePreferences(userId);
+    const parsed = parseSummaryQuery(withPreferenceDefaults(query, preferences.timezone), now);
     const aggregates = await this.loadPeriodAggregates(userId, parsed.period);
 
-    const series = bucketDayTotals(aggregates.days, parsed.granularity, parsed.period).map(
-      (bucket) => ({
-        startDate: bucket.startDate,
-        endDate: bucket.endDate,
-        incomeMinor: toContractString(bucket.incomeMinor),
-        expenseMinor: toContractString(bucket.expenseMinor),
-      }),
-    );
+    const series = bucketDayTotals(
+      aggregates.days,
+      parsed.granularity,
+      parsed.period,
+      preferences.weekStartsOn,
+    ).map((bucket) => ({
+      startDate: bucket.startDate,
+      endDate: bucket.endDate,
+      incomeMinor: toContractString(bucket.incomeMinor),
+      expenseMinor: toContractString(bucket.expenseMinor),
+    }));
 
     return {
       period: toPeriodResponse(parsed.period),
       totals: toTotals(aggregates),
       granularity: parsed.granularity,
-      weekStartsOn: parsed.granularity === 'weekly' ? SUMMARY_WEEK_STARTS_ON : null,
+      weekStartsOn: parsed.granularity === 'weekly' ? preferences.weekStartsOn : null,
       series,
     };
   }
@@ -106,7 +110,8 @@ export class SummaryService {
     query: Record<string, unknown>,
     now: Date = new Date(),
   ): Promise<ReportCategoriesResponse> {
-    const parsed = parseSummaryQuery(query, now);
+    const preferences = await this.preferences.getEffectivePreferences(userId);
+    const parsed = parseSummaryQuery(withPreferenceDefaults(query, preferences.timezone), now);
     const spending = await this.loadCategorySpending(userId, parsed.period);
 
     return {
@@ -369,6 +374,19 @@ interface PeriodAggregates {
 interface CategorySpending {
   readonly totalExpenseMinor: bigint;
   readonly categories: CategorySpendSummary[];
+}
+
+/**
+ * An explicit query `timezone` still wins (the existing API contract allows
+ * callers to request a period in a specific zone); otherwise the user's saved
+ * preference supplies the boundary zone. The preference changes only period
+ * boundaries, never recorded instants or totals.
+ */
+function withPreferenceDefaults(
+  query: Record<string, unknown>,
+  timezone: string,
+): Record<string, unknown> {
+  return query.timezone === undefined ? { ...query, timezone } : query;
 }
 
 function toPeriodResponse(period: ResolvedSummaryPeriod): SummaryPeriod {

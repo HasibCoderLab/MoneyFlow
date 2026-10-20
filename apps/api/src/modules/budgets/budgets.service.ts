@@ -16,7 +16,8 @@ import { percentTimes10 } from '../../domain/money/percentage';
 import { DEFAULT_CURRENCY_CODE } from '../../domain/money/currency';
 import { assertUuid, mapMoneyError } from '../../common/http-errors';
 import { PrismaService } from '../../prisma/prisma.service';
-import { DEFAULT_TIMEZONE, startOfLocalDay } from '../transactions/occurrence';
+import { startOfLocalDay } from '../transactions/occurrence';
+import { PreferencesService } from '../preferences/preferences.service';
 import { addLocalMonths } from '../summary/summary-periods';
 import {
   parseCreateBudgetInput,
@@ -54,7 +55,10 @@ import {
  */
 @Injectable()
 export class BudgetsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly preferences: PreferencesService,
+  ) {}
 
   /** `GET /api/v1/budgets` — the caller's budgets with current utilization. */
   public async listBudgets(userId: string, query: unknown): Promise<BudgetResponse[]> {
@@ -338,7 +342,9 @@ export class BudgetsService {
     userId: string,
     budgets: readonly (BudgetRow & { categoryLimits: LimitRow[] })[],
   ): Promise<BudgetResponse[]> {
-    const timezone = DEFAULT_TIMEZONE;
+    // Budget periods follow the user's saved timezone (IT-11); the financial
+    // periods themselves remain the documented local-month boundaries.
+    const { timezone } = await this.preferences.getEffectivePreferences(userId);
     const spentByBudget = new Map<string, Map<string, bigint>>();
     const totalSpentByBudget = new Map<string, bigint>();
 

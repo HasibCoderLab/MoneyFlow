@@ -4,16 +4,22 @@ import type {
   CreateBudgetRequest,
   CreateGoalContributionRequest,
   CreateGoalRequest,
+  DashboardLayoutResponse,
   DashboardResponse,
   GoalContributionResponse,
   GoalDetailResponse,
   GoalResponse,
   GoalStatusAction,
+  MeResponse,
   ReportCategoriesResponse,
   ReportGranularity,
   ReportSummaryResponse,
   UpdateBudgetRequest,
+  UpdateDashboardLayoutRequest,
   UpdateGoalRequest,
+  UpdateMeRequest,
+  UpdateUserPreferencesRequest,
+  UserPreferencesResponse,
 } from '@moneyflow/contracts';
 
 import { getApiBaseUrl } from './auth-client';
@@ -246,4 +252,45 @@ export function reverseGoalContribution(
     'POST',
     {},
   );
+}
+
+// ── IT-11: profile, preferences, and dashboard customization ──────────────
+
+/** `GET /api/v1/me` — the signed-in user's own safe profile projection. */
+export function fetchMe(): Promise<MeResponse> {
+  return getJson<MeResponse>('/api/v1/me');
+}
+
+/** `PATCH /api/v1/me` — updates only the display name (session-derived id). */
+export function updateMe(body: UpdateMeRequest): Promise<MeResponse> {
+  return sendJson<MeResponse>('/api/v1/me', 'PATCH', body);
+}
+
+/** `GET /api/v1/preferences` — saved values or documented server defaults. */
+export function fetchPreferences(): Promise<UserPreferencesResponse> {
+  return getJson<UserPreferencesResponse>('/api/v1/preferences');
+}
+
+/** `PATCH /api/v1/preferences` — partial update; omitted values are kept. */
+export function updatePreferences(
+  body: UpdateUserPreferencesRequest,
+): Promise<UserPreferencesResponse> {
+  return sendJson<UserPreferencesResponse>('/api/v1/preferences', 'PATCH', body);
+}
+
+/** `GET /api/v1/dashboard/layout` — saved layout or the default. */
+export function fetchDashboardLayout(): Promise<DashboardLayoutResponse> {
+  return getJson<DashboardLayoutResponse>('/api/v1/dashboard/layout');
+}
+
+/** `PUT /api/v1/dashboard/layout` — replaces the single saved layout. */
+export function saveDashboardLayout(
+  body: UpdateDashboardLayoutRequest,
+): Promise<DashboardLayoutResponse> {
+  return sendJson<DashboardLayoutResponse>('/api/v1/dashboard/layout', 'PUT', body);
+}
+
+/** `POST /api/v1/dashboard/layout/reset` — deletes the saved layout. */
+export function resetDashboardLayout(): Promise<DashboardLayoutResponse> {
+  return sendJson<DashboardLayoutResponse>('/api/v1/dashboard/layout/reset', 'POST', {});
 }
