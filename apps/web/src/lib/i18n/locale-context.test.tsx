@@ -11,6 +11,12 @@ vi.mock('@/lib/api-client', async (importOriginal) => {
   };
 });
 
+const mockPathname = vi.hoisted(() => ({ current: '/app/dashboard' }));
+
+vi.mock('next/navigation', () => ({
+  usePathname: () => mockPathname.current,
+}));
+
 import { ApiClientError, fetchPreferences, updatePreferences } from '@/lib/api-client';
 
 import { LocaleProvider, usePreferences } from './locale-context';
@@ -52,6 +58,7 @@ beforeEach(() => {
   mockedFetch.mockReset();
   mockedUpdate.mockReset();
   mockedFetch.mockResolvedValue(savedPreferences);
+  mockPathname.current = '/app/dashboard';
   window.localStorage.clear();
   document.documentElement.removeAttribute('data-theme');
   document.documentElement.removeAttribute('data-reduced-motion');
@@ -95,6 +102,23 @@ describe('preferences provider (IT-11)', () => {
     expect(screen.getByTestId('locale').textContent).toBe('bn');
     expect(screen.getByTestId('theme').textContent).toBe('SYSTEM');
     expect(document.documentElement.getAttribute('data-reduced-motion')).toBe('system');
+  });
+
+  it('does not request private preferences on a public route', async () => {
+    mockPathname.current = '/sign-up';
+    window.localStorage.setItem('mf-theme', 'dark');
+    window.localStorage.setItem('mf-locale', 'bn');
+
+    render(
+      <LocaleProvider>
+        <Probe />
+      </LocaleProvider>,
+    );
+
+    expect(await screen.findByText('guest')).toBeTruthy();
+    expect(mockedFetch).not.toHaveBeenCalled();
+    expect(screen.getByTestId('locale').textContent).toBe('bn');
+    expect(screen.getByTestId('theme').textContent).toBe('DARK');
   });
 
   it('saves a partial update and applies the server response', async () => {

@@ -7,6 +7,7 @@ import {
   type UpdateUserPreferencesRequest,
   type UserPreferencesResponse,
 } from '@moneyflow/contracts';
+import { usePathname } from 'next/navigation';
 import {
   createContext,
   useCallback,
@@ -135,6 +136,12 @@ export function LocaleProvider({ children }: { readonly children: ReactNode }) {
   const [preferences, setPreferences] = useState<UserPreferencesResponse>(DEFAULT_PREFERENCES);
   const [preferencesStatus, setPreferencesStatusState] = useState<PreferencesStatus>('loading');
   const [reloadToken, setReloadToken] = useState(0);
+  const pathname = usePathname();
+
+  // Saved preferences belong to an authenticated account. Only the private
+  // app routes ask the API for them; public pages keep the browser-cached
+  // display choice and avoid a guaranteed 401 on every signed-out visit.
+  const syncsWithServer = pathname === '/app' || pathname.startsWith('/app/');
 
   const preferencesRef = useRef(preferences);
   const statusRef = useRef<PreferencesStatus>('loading');
@@ -172,6 +179,10 @@ export function LocaleProvider({ children }: { readonly children: ReactNode }) {
   // Reconcile with the signed-in user's saved preferences. The server is the
   // source of truth when a session exists; a 401 is a normal guest state.
   useEffect(() => {
+    if (!syncsWithServer) {
+      setPreferencesStatus('guest');
+      return;
+    }
     let cancelled = false;
     setPreferencesStatus('loading');
     fetchPreferences()
@@ -187,7 +198,7 @@ export function LocaleProvider({ children }: { readonly children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [applyPreferences, reloadToken, setPreferencesStatus]);
+  }, [applyPreferences, reloadToken, setPreferencesStatus, syncsWithServer]);
 
   // Apply the theme, including live OS changes while `SYSTEM` is selected.
   useEffect(() => {
