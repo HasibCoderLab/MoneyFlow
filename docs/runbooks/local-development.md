@@ -179,4 +179,6 @@ Re-apply the deliberate manual annotations (UTC `timestamptz` columns, the
   `.env`; empty means disabled. The browser origin and
   `NEXT_PUBLIC_API_URL` must match the configured values exactly, including
   the port (for example web `http://localhost:3000` and API
-  `http://localhost:4000`).
+  `http://localhost:4000`). If Next.js starts on `3001` because `3000` is
+  busy, include `http://localhost:3001` in `CORS_ORIGINS` and restart the
+  API; the example file allows both local ports.
