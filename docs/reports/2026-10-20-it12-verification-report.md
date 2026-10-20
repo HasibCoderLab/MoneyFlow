@@ -185,10 +185,19 @@ rolled back and the suite passes.
 
 ## H. CI Evidence
 
-Local verification is complete. The repository workflow is configured to run
-unit tests, the PostgreSQL 16 integration job, lint/typecheck/build, and schema
-validation. The exact-commit GitHub Actions result is checked after pushing the
-IT-12 commit; this report does not claim a CI result that was not observed.
+GitHub Actions [run 39430934832](https://github.com/HasibCoderLab/MoneyFlow/actions/runs/39430934832)
+(workflow run 11, `push`) completed **success** for the implementation commit
+`f090425c39f8e4ce6924609625513c9ecd720981`:
+
+- **Checks (format, lint, typecheck, unit tests, build): success.** The job
+  passed formatting, lint, type-check, unit tests, production build, and
+  Prisma schema validation.
+- **Integration tests (PostgreSQL 16): success.** The job passed the full
+  real-PostgreSQL 16 suite inside its service container.
+
+The result was observed through the public GitHub Actions API after the push
+on 2026-10-20. No CI result is claimed beyond that exact commit; this report's
+documentation-only follow-up is verified separately.
 
 ---
 
