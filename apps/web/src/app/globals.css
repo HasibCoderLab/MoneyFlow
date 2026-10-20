@@ -1620,6 +1620,80 @@ a {
   flex: 1 1 9rem;
 }
 
+/* ── Goals view (IT-10) ────────────────────────────────────── */
+/* Standalone API-backed goal cards and the contribution ledger list.
+   Additive only; reuses --mf-* tokens for both themes. */
+
+.mf-goal-list {
+  display: grid;
+  gap: var(--mf-space-3);
+}
+
+.mf-goal-list .mf-goal-row {
+  padding: var(--mf-space-3);
+  border: 1px solid var(--mf-border);
+  border-radius: var(--mf-radius-md);
+  background: var(--mf-surface);
+}
+
+.mf-goal-row + .mf-goal-row {
+  margin-top: 0;
+}
+
+.mf-goal-row__title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mf-space-2);
+  margin: 0 0 0.4rem;
+  font-size: 0.9rem;
+  font-weight: 650;
+}
+
+.mf-goal-row__status {
+  padding: 0.1rem 0.55rem;
+  border-radius: 999px;
+  background: var(--mf-surface-hover);
+  color: var(--mf-muted-text);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.mf-goal-row__meta {
+  margin: 0.15rem 0 0.5rem;
+  font-size: 0.8rem;
+  color: var(--mf-faint-text);
+}
+
+.mf-contribution-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--mf-space-3);
+}
+
+.mf-contribution-row {
+  padding-top: var(--mf-space-3);
+  border-top: 1px solid var(--mf-border);
+}
+
+.mf-contribution-row:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.mf-contribution-row__title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mf-space-2);
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
 .mf-dialog__actions {
   display: flex;
   flex-wrap: wrap;

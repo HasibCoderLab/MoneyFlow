@@ -20,28 +20,30 @@
 
 ## Decision dependencies (what must be settled before what)
 
-| Decision (register)                 | Blocks                                                   | Can wait?                    |
-| ----------------------------------- | -------------------------------------------------------- | ---------------------------- |
-| DR-01 money representation          | IT-1 (money module), IT-2 (schema)                       | **No**                       |
-| DR-02 accounting semantics          | IT-1, IT-2, IT-6, IT-7                                   | **No**                       |
-| DR-04 auth/session strategy         | IT-2 (auth tables), IT-3                                 | **No**                       |
-| DR-05 database/Prisma strategy      | IT-2 (migration + adapter)                               | **No**                       |
-| DR-03 savings-goal method           | IT-10 (schema lands later; document rule now)            | No for IT-10, yes until then |
-| DR-06 email provider                | IT-13 (verification/recovery), not IT-3 development path | Yes, before launch           |
-| DR-07 MVP scope confirmation        | Sequencing/deadline expectations generally               | Recommended before IT-1      |
-| DR-08/09/10 launch assumptions      | Public pages, legal text, age gate                       | Yes until launch             |
-| DR-11 locale defaults (week start)  | IT-11 (preference default only)                          | Yes until IT-11              |
-| DR-12 multiple layouts              | IT-11 scope                                              | Yes until IT-11              |
-| DR-13 AI timing                     | V1 planning                                              | Yes                          |
-| DR-14/15/16 ops, backups, retention | IT-13, production deployment                             | Yes until launch             |
-| DR-17 pricing/legal                 | Marketing/subscription work                              | Yes                          |
+| Decision (register)                 | Blocks                                                   | Can wait?                |
+| ----------------------------------- | -------------------------------------------------------- | ------------------------ |
+| DR-01 money representation          | IT-1 (money module), IT-2 (schema)                       | **No**                   |
+| DR-02 accounting semantics          | IT-1, IT-2, IT-6, IT-7                                   | **No**                   |
+| DR-04 auth/session strategy         | IT-2 (auth tables), IT-3                                 | **No**                   |
+| DR-05 database/Prisma strategy      | IT-2 (migration + adapter)                               | **No**                   |
+| DR-03 savings-goal method           | IT-10 (schema lands later; document rule now)            | No — accepted 2026-10-20 |
+| DR-06 email provider                | IT-13 (verification/recovery), not IT-3 development path | Yes, before launch       |
+| DR-07 MVP scope confirmation        | Sequencing/deadline expectations generally               | Recommended before IT-1  |
+| DR-08/09/10 launch assumptions      | Public pages, legal text, age gate                       | Yes until launch         |
+| DR-11 locale defaults (week start)  | IT-11 (preference default only)                          | Yes until IT-11          |
+| DR-12 multiple layouts              | IT-11 scope                                              | Yes until IT-11          |
+| DR-13 AI timing                     | V1 planning                                              | Yes                      |
+| DR-14/15/16 ops, backups, retention | IT-13, production deployment                             | Yes until launch         |
+| DR-17 pricing/legal                 | Marketing/subscription work                              | Yes                      |
 
 **DR-01, DR-02, DR-04, and DR-05 are accepted (2026-10-16)** after the
 clarification round (ADR-0003/ADR-0004, `accounting-rules.md` §11) and the
 ADR-0006/ADR-0007 review; **IT-1 is implemented**; **IT-2 is implemented and
 awaiting owner review** — the real-PostgreSQL acceptance checks run in CI's
 PostgreSQL 16 job, while machines without Docker/PostgreSQL cannot run them
-locally. Everything else can proceed incrementally.
+locally. **DR-03 is accepted (2026-10-20)** — ADR-0005 is `Accepted`, which
+unblocked IT-10; **IT-10 is now implemented and awaiting owner review**, and
+IT-11 is the next task. Everything else can proceed incrementally.
 
 ## Phase A — foundations (the first implementation phase)
 
@@ -263,6 +265,32 @@ same pattern; all depend on the approved accounting rules.
   add/reverse, progress/overfunding rules (ADR-0005), deadline display,
   emergency-fund template, double-counting tests (balances, budgets, income
   unaffected).
+  **Status (2026-10-20): implemented — awaiting owner review.**
+  ADR-0005 (accepted) is implemented end to end:
+  `Goal`/`GoalContribution` models + migration `20261020163000_add_goals`
+  (CHECKs for positive targets, deadline ≥ start, contribution/reversal sign,
+  no self-reversal; UNIQUE `reversesContributionId`), shared contracts,
+  `apps/api/src/modules/goals/` (CRUD, pause/resume/complete/archive/unarchive,
+  contribution add/list, linked reversal inside a locked transaction, progress
+  as `Σ amountMinor` with unclamped remainder and exact percentage,
+  session-scoped 404s), and the API-backed `/app/goals` + `/app/goals/[goalId]`
+  pages with the emergency-fund preset, contribution add/reverse, delete
+  confirmation, and en/bn states. Unit tests (`dto.test.ts`,
+  `goals.service.test.ts`), web tests (list + detail + dashboard card), and a
+  new real-PostgreSQL suite (`test/integration/goals.test.ts`: CRUD,
+  transitions, isolation, exactness beyond `Number.MAX_SAFE_INTEGER`, reversal
+  rules, cascade, database guards, and the no-effect-on-balances/totals/
+  budgets invariant) are committed. Verified locally on 2026-10-20: API unit
+  377/377, web 197/197, and integration 117/117 all pass; format/lint/
+  typecheck/build pass. The integration run used a disposable native
+  PostgreSQL 16.10 cluster on localhost (no Docker), applied the committed
+  migration history from scratch, and confirmed the goal constraints/indexes;
+  CI's PostgreSQL 16 job re-runs the same suite.
+  **Open detail carried forward (not blocking):** the preset's suggested target
+  is a fixed illustrative ৳30,000 example, clearly labelled as a suggestion and
+  fully editable; a data-derived suggestion (or an owner-chosen figure) still
+  needs the owner's decision before it is presented as anything more than an
+  example (`requirements.md` §5.8, ADR-0005).
 
 ## Phase D — customization, data rights, hardening
 

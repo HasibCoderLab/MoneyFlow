@@ -39,19 +39,21 @@ datasource db {
 // text — financial tables below use plain `String` for `userId` to match.
 
 model User {
-  id            String        @id
-  name          String
-  email         String
-  emailVerified Boolean       @default(false)
-  image         String?
-  createdAt     DateTime      @default(now()) @db.Timestamptz(3)
-  updatedAt     DateTime      @updatedAt @db.Timestamptz(3)
-  sessions      Session[]
-  authaccounts  AuthAccount[]
-  accounts      Account[]
-  categories    Category[]
-  transactions  Transaction[]
-  budgets       Budget[]
+  id                String             @id
+  name              String
+  email             String
+  emailVerified     Boolean            @default(false)
+  image             String?
+  createdAt         DateTime           @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime           @updatedAt @db.Timestamptz(3)
+  sessions          Session[]
+  authaccounts      AuthAccount[]
+  accounts          Account[]
+  categories        Category[]
+  transactions      Transaction[]
+  budgets           Budget[]
+  goals             Goal[]
+  goalContributions GoalContribution[]
 
   @@unique([email])
   @@map("user")
@@ -275,4 +277,86 @@ model BudgetCategoryLimit {
   @@unique([budgetId, categoryId])
   @@index([categoryId])
   @@map("budgetCategoryLimit")
+}
+
+// ── Goals (IT-10, ADR-0005, requirements.md §5.8, domain-model.md) ───────
+//
+// Goals are *virtual* savings targets: progress is always Σ
+// `GoalContribution.amountMinor` (contributions positive, reversal rows
+// negative), derived on read and never stored. Contributions are immutable
+// and never touch account balances, income, expenses, or budgets
+// (accounting-rules.md §1/§9). A reversal links to its original through
+// `reversesContributionId`, which is UNIQUE — the database itself rejects a
+// second reversal of the same contribution. The "no reversal of a reversal"
+// and amount-sign rules are raw SQL CHECKs in the migration (same
+// convention as the IT-2/IT-9 hand-added constraints).
+
+enum GoalType {
+  GENERAL
+  EMERGENCY_FUND
+  EDUCATION
+  DEVICE
+  TRAVEL
+  DEBT_PAYOFF
+  CUSTOM
+}
+
+enum GoalPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum GoalStatus {
+  ACTIVE
+  PAUSED
+  COMPLETED
+  ARCHIVED
+}
+
+model Goal {
+  id            String             @id @default(uuid()) @db.Uuid
+  userId        String
+  name          String             @db.VarChar(80)
+  type          GoalType           @default(GENERAL)
+  // Strictly > 0 (raw SQL CHECK); BDT in the MVP (ADR-0003/DR-08).
+  targetMinor   BigInt
+  currency      String             @db.VarChar(3)
+  startDate     DateTime           @db.Date
+  // Optional; must not be before startDate (raw SQL CHECK).
+  deadline      DateTime?          @db.Date
+  priority      GoalPriority       @default(MEDIUM)
+  status        GoalStatus         @default(ACTIVE)
+  createdAt     DateTime           @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime           @updatedAt @db.Timestamptz(3)
+  user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contributions GoalContribution[]
+
+  @@index([userId, status])
+  @@index([userId, createdAt])
+  @@map("goal")
+}
+
+model GoalContribution {
+  id                     String            @id @default(uuid()) @db.Uuid
+  userId                 String
+  goalId                 String            @db.Uuid
+  // Positive = contribution, negative = reversal (raw SQL CHECK ties the
+  // sign to `reversesContributionId`). Never zero.
+  amountMinor            BigInt
+  occurredAt             DateTime          @db.Timestamptz(3)
+  note                   String?           @db.VarChar(500)
+  // Set only on reversal rows; UNIQUE, so a contribution can be reversed once.
+  reversesContributionId String?           @unique @db.Uuid
+  createdAt              DateTime          @default(now()) @db.Timestamptz(3)
+  user                   User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  goal                   Goal              @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  // Self-relation: a reversal points at the contribution it undoes, and the
+  // original knows its reversal. Cascade keeps the pair consistent on delete.
+  reverses               GoalContribution? @relation("GoalContributionReversal", fields: [reversesContributionId], references: [id], onDelete: Cascade)
+  reversedBy             GoalContribution? @relation("GoalContributionReversal")
+
+  @@index([userId, occurredAt(sort: Desc)])
+  @@index([goalId, occurredAt(sort: Desc)])
+  @@map("goalContribution")
 }

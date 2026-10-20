@@ -16,7 +16,7 @@ Superseded), **Context**, **Decision**, **Consequences**.
 | 0002 | Tooling and version pinning         | Accepted |
 | 0003 | Money representation                | Accepted |
 | 0004 | Accounting model                    | Accepted |
-| 0005 | Savings goals — virtual ledger      | Proposed |
+| 0005 | Savings goals — virtual ledger      | Accepted |
 | 0006 | Authentication and session strategy | Accepted |
 | 0007 | Database platform and Prisma 7      | Accepted |
 | 0008 | Transactional email provider        | Proposed |

@@ -2,11 +2,18 @@ import type {
   BudgetResponse,
   CategoryResponse,
   CreateBudgetRequest,
+  CreateGoalContributionRequest,
+  CreateGoalRequest,
   DashboardResponse,
+  GoalContributionResponse,
+  GoalDetailResponse,
+  GoalResponse,
+  GoalStatusAction,
   ReportCategoriesResponse,
   ReportGranularity,
   ReportSummaryResponse,
   UpdateBudgetRequest,
+  UpdateGoalRequest,
 } from '@moneyflow/contracts';
 
 import { getApiBaseUrl } from './auth-client';
@@ -181,4 +188,62 @@ export function moveBudget(
 /** `DELETE /api/v1/budgets/:id` — hard delete (limits cascade). */
 export function deleteBudget(id: string): Promise<void> {
   return sendJson<void>(`/api/v1/budgets/${id}`, 'DELETE', {});
+}
+
+/**
+ * `GET /api/v1/goals` — the caller's goals with server-derived progress
+ * (IT-10, ADR-0005). `includeArchived=true` keeps archived goals visible with
+ * their chip; nothing here is computed in the browser.
+ */
+export function fetchGoals(includeArchived = true): Promise<GoalResponse[]> {
+  const flag = includeArchived ? 'true' : 'false';
+  return getJson<GoalResponse[]>(`/api/v1/goals?includeArchived=${flag}`);
+}
+
+/** `GET /api/v1/goals/:id` — the goal plus its ledger history. */
+export function fetchGoal(id: string): Promise<GoalDetailResponse> {
+  return getJson<GoalDetailResponse>(`/api/v1/goals/${id}`);
+}
+
+/** `POST /api/v1/goals` — creates a goal (progress starts at zero). */
+export function createGoal(body: CreateGoalRequest): Promise<GoalResponse> {
+  return sendJson<GoalResponse>('/api/v1/goals', 'POST', body);
+}
+
+/** `PATCH /api/v1/goals/:id` — edits plan fields (never status). */
+export function updateGoal(id: string, body: UpdateGoalRequest): Promise<GoalResponse> {
+  return sendJson<GoalResponse>(`/api/v1/goals/${id}`, 'PATCH', body);
+}
+
+/** `DELETE /api/v1/goals/:id` — hard delete (ledger rows cascade). */
+export function deleteGoal(id: string): Promise<void> {
+  return sendJson<void>(`/api/v1/goals/${id}`, 'DELETE', {});
+}
+
+/** `POST /api/v1/goals/:id/{pause,resume,complete,archive,unarchive}`. */
+export function moveGoal(id: string, action: GoalStatusAction): Promise<GoalResponse> {
+  return sendJson<GoalResponse>(`/api/v1/goals/${id}/${action}`, 'POST', {});
+}
+
+/** `POST /api/v1/goals/:id/contributions` — appends an immutable ledger row. */
+export function addGoalContribution(
+  id: string,
+  body: CreateGoalContributionRequest,
+): Promise<GoalContributionResponse> {
+  return sendJson<GoalContributionResponse>(`/api/v1/goals/${id}/contributions`, 'POST', body);
+}
+
+/**
+ * `POST /api/v1/goals/:id/contributions/:contributionId/reverse` — appends
+ * the linked negative reversal (the only way to remove a contribution).
+ */
+export function reverseGoalContribution(
+  goalId: string,
+  contributionId: string,
+): Promise<GoalContributionResponse> {
+  return sendJson<GoalContributionResponse>(
+    `/api/v1/goals/${goalId}/contributions/${contributionId}/reverse`,
+    'POST',
+    {},
+  );
 }

@@ -432,3 +432,131 @@ export interface UpdateBudgetRequest {
   totalLimit?: string | null;
   categoryLimits?: BudgetCategoryLimitInput[];
 }
+
+// ── IT-10: goals and the virtual contribution ledger ─────────────────────
+// ADR-0005 (accepted 2026-10-20): goals are virtual allocations. Progress is
+// `Σ GoalContribution.amountMinor` (contributions positive, reversals
+// negative) — derived on every read, never stored, and never added to account
+// balances, income/expense totals, or budget utilization. Every money figure
+// is a minor-unit integer string (§11.1); `remainingMinor` is never clamped,
+// so overfunding shows truthfully as a negative remainder and > 100%.
+
+/** Goal kinds (requirements.md §5.8, domain-model.md). */
+export type GoalType =
+  'GENERAL' | 'EMERGENCY_FUND' | 'EDUCATION' | 'DEVICE' | 'TRAVEL' | 'DEBT_PAYOFF' | 'CUSTOM';
+
+/** Display ordering only (domain-model.md); never a financial calculation. */
+export type GoalPriority = 'LOW' | 'MEDIUM' | 'HIGH';
+
+/** Goal lifecycle (domain-model.md). Completed and archived goals keep their history. */
+export type GoalStatus = 'ACTIVE' | 'PAUSED' | 'COMPLETED' | 'ARCHIVED';
+
+/** One explicit progress status move (`POST /api/v1/goals/:id/<action>`). */
+export type GoalStatusAction = 'pause' | 'resume' | 'complete' | 'archive' | 'unarchive';
+
+/**
+ * Server-computed progress for one goal (accounting-rules.md §7).
+ * `savedMinor` is the exact ledger sum; `remainingMinor` may be negative when
+ * the goal is overfunded and is never clamped; `percentTimes10` is `"1200"`
+ * for 120%. `overfunded` is a convenience flag derived from the same exact
+ * values — the UI still shows the real percentage.
+ */
+export interface GoalFigures {
+  savedMinor: string;
+  /** `targetMinor - savedMinor`; negative means overfunded. */
+  remainingMinor: string;
+  /** Percentage ×10, half-up; null only when the target is zero (never in MVP). */
+  percentTimes10: string | null;
+  overfunded: boolean;
+}
+
+/** A goal as returned by the list/detail endpoints (progress derived on read). */
+export interface GoalResponse {
+  id: string;
+  name: string;
+  type: GoalType;
+  /** Single-currency MVP (DR-08/ADR-0003); goals never convert. */
+  currency: string;
+  targetMinor: string;
+  /** Local calendar date `YYYY-MM-DD` (user timezone, date-only). */
+  startDate: string;
+  /** Local calendar date `YYYY-MM-DD`, or null when no deadline is set. */
+  deadline: string | null;
+  priority: GoalPriority;
+  status: GoalStatus;
+  figures: GoalFigures;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** One ledger row: contribution (positive) or reversal (negative, linked). */
+export interface GoalContributionResponse {
+  id: string;
+  goalId: string;
+  /** Positive for a contribution, negative for a reversal — never zero. */
+  amountMinor: string;
+  /** Resolved UTC instant, ISO 8601 (date-only input anchors at local noon). */
+  occurredAt: string;
+  note: string | null;
+  /** Set on reversal rows: the contribution this row undoes. */
+  reversesContributionId: string | null;
+  /** Set on a contribution that has been reversed: its reversal row, if any. */
+  reversedByContributionId: string | null;
+  createdAt: string;
+}
+
+/**
+ * `GET /api/v1/goals/:id` — the goal plus its full ledger history in
+ * deterministic order (`occurredAt DESC, id DESC`). Goal histories are
+ * manually entered and small in the MVP; pagination is deferred, and the
+ * list endpoint (no history) stays bounded by goal count.
+ */
+export interface GoalDetailResponse extends GoalResponse {
+  contributions: GoalContributionResponse[];
+}
+
+/** `GET /api/v1/goals?includeArchived=true` — array, same shape as budgets. */
+export type GoalListResponse = GoalResponse[];
+
+/** `POST /api/v1/goals` body. Money is a canonical decimal string. */
+export interface CreateGoalRequest {
+  /** Trimmed display name, 1–80 characters. */
+  name: string;
+  /** Defaults to `GENERAL`. */
+  type?: GoalType;
+  /** Unsigned decimal string, strictly greater than zero. */
+  target: string;
+  /** Local calendar date `YYYY-MM-DD`. */
+  startDate: string;
+  /** Optional local date; must not be before `startDate`. */
+  deadline?: string;
+  /** Defaults to `MEDIUM`. */
+  priority?: GoalPriority;
+}
+
+/**
+ * `PATCH /api/v1/goals/:id` body; all fields optional. Status changes go
+ * through the explicit action endpoints, never through this body.
+ */
+export interface UpdateGoalRequest {
+  name?: string;
+  type?: GoalType;
+  target?: string;
+  startDate?: string;
+  /** `null` clears the deadline. */
+  deadline?: string | null;
+  priority?: GoalPriority;
+}
+
+/**
+ * `POST /api/v1/goals/:id/contributions` body. The amount is a positive
+ * decimal string; contributions are immutable once recorded (remove one by
+ * reversing it). `occurredDate` defaults to today in `Asia/Dhaka`; future
+ * dates are rejected, like transaction occurrences (§5.4/ADR-0004 §7).
+ */
+export interface CreateGoalContributionRequest {
+  amount: string;
+  occurredDate?: string;
+  /** Optional note, ≤500 characters. */
+  note?: string;
+}

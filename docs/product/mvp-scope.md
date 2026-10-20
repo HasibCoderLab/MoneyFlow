@@ -54,7 +54,7 @@ computed by tested server-side code from the user's own records
 6. **One persisted dashboard layout** (show/hide/reorder/reset) in MVP;
    multiple named layouts are V1 and need user validation (§18.7, DR-12).
 7. **Goals are virtual progress tracking** (contribution ledger), not linked
-   account balances, in MVP (ADR-0005, §18.6).
+   account balances, in MVP (ADR-0005, §18.6) — approved 2026-10-20 (DR-03).
 8. **BDT-only MVP** with explicit currency storage and server-side
    enforcement (ADR-0003; register DR-08). No conversion, no cross-currency
    transfers.

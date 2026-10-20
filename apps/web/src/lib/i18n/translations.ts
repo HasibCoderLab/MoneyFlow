@@ -3,9 +3,9 @@
  * requirements.md §7.4: English (default) and Bangla.
  *
  * Scope: the shared chrome (app shell, landing navigation and footer) and
- * the wired dashboard, reports, categories, and budgets pages translate
- * through this dictionary, including their loading, signed-out, empty,
- * and error states. Accounts, transactions, goals, and settings still
+ * the wired dashboard, reports, categories, budgets, and goals pages
+ * translate through this dictionary, including their loading, signed-out,
+ * empty, and error states. Accounts, transactions, and settings still
  * render English only — a known, deliberate limitation, not an accident,
  * so the dictionaries below only contain keys whose Bangla text has
  * actually been reviewed.
@@ -70,13 +70,13 @@ const en = {
   'app.addTransaction': 'Add Transaction',
   'app.menu': 'Menu',
   'app.footerNote':
-    'Foundation build — dashboard, reports, categories, and budgets show your recorded data; accounts, transactions, and goals are still previews.',
+    'Foundation build — dashboard, reports, categories, budgets, and goals show your recorded data; accounts and transactions are still previews.',
 
   // Sample-data banner — rendered only on pages that still use mock data
   'banner.ariaLabel': 'Preview data notice',
   'banner.title': 'UI preview — sample data.',
   'banner.body':
-    'The figures on this page are still fictional sample data; dashboard, reports, categories, and budgets already use your recorded data.',
+    'The figures on this page are still fictional sample data; dashboard, reports, categories, budgets, and goals already use your recorded data.',
 
   // Transaction rows (recent activity + sample browser)
   'tx.type.income': 'Income',
@@ -142,9 +142,10 @@ const en = {
   'dashboard.categoriesSubtitle': 'Recorded spending for the period',
   'dashboard.categoriesEmpty': 'No expenses recorded for this period.',
   'dashboard.goalsTitle': 'Savings goals',
-  'dashboard.goalsSubtitle': 'Arrives with a later update',
-  'dashboard.goalsPlaceholder':
-    'Savings goal tracking is not available in this build yet — no goal figures are shown.',
+  'dashboard.goalsSubtitle': 'Progress computed from your contributions',
+  'dashboard.goalsEmpty': 'No goals yet — create one to track what you are setting aside.',
+  'dashboard.goalsNote':
+    'Tracking only: contributing to a goal never moves money between accounts or counts as spending.',
   'dashboard.budgetsTitle': 'Budgets',
   'dashboard.budgetsSubtitle': 'Monthly spending plans',
   'dashboard.budgetsPlaceholder':
@@ -230,6 +231,96 @@ const en = {
   'budgets.errorDuplicateCategory': 'Each category can appear only once.',
   'budgets.serverError': 'The budget could not be saved. Please try again.',
 
+  // Goals — wired to the IT-10 goal and contribution endpoints (ADR-0005)
+  'goals.title': 'Savings goals',
+  'goals.subtitle':
+    'What you are setting aside — progress is tracked from contributions and never moves money between accounts.',
+  'goals.newButton': 'New goal',
+  'goals.presetButton': 'Emergency-fund preset',
+  'goals.editButton': 'Edit',
+  'goals.deleteButton': 'Delete',
+  'goals.pauseButton': 'Pause',
+  'goals.resumeButton': 'Resume',
+  'goals.completeButton': 'Mark complete',
+  'goals.archiveButton': 'Archive',
+  'goals.unarchiveButton': 'Unarchive',
+  'goals.viewDetails': 'View details',
+  'goals.status.active': 'Active',
+  'goals.status.paused': 'Paused',
+  'goals.status.completed': 'Completed',
+  'goals.status.archived': 'Archived',
+  'goals.type.GENERAL': 'General savings',
+  'goals.type.EMERGENCY_FUND': 'Emergency fund',
+  'goals.type.EDUCATION': 'Education',
+  'goals.type.DEVICE': 'Device purchase',
+  'goals.type.TRAVEL': 'Travel',
+  'goals.type.DEBT_PAYOFF': 'Debt payoff',
+  'goals.type.CUSTOM': 'Custom goal',
+  'goals.priority.LOW': 'Low',
+  'goals.priority.MEDIUM': 'Medium',
+  'goals.priority.HIGH': 'High',
+  'goals.presetName': 'Emergency fund',
+  'goals.presetNote':
+    'Suggested example target — change it to fit your situation. This is a suggestion, not financial advice.',
+  'goals.savedOf': '{saved} of {target} tracked',
+  'goals.remaining': '{amount} remaining',
+  'goals.overTarget': '{amount} over target',
+  'goals.percentOfTarget': '{percent} of target',
+  'goals.deadline': 'Deadline {date}',
+  'goals.noDeadline': 'No deadline set',
+  'goals.trackingNote':
+    'Progress tracks contributions you record. Contributing never moves money between accounts, and it is never counted as income or spending.',
+  'goals.emptyTitle': 'No goals yet.',
+  'goals.emptyBody':
+    'Create a goal to track what you are setting aside. Contributions are tracking only — they never move money between accounts.',
+  'goals.formCreateTitle': 'New goal',
+  'goals.formEditTitle': 'Edit goal',
+  'goals.fieldName': 'Goal name',
+  'goals.fieldType': 'Type',
+  'goals.fieldTarget': 'Target amount',
+  'goals.fieldStart': 'Start date',
+  'goals.fieldDeadline': 'Deadline (optional)',
+  'goals.fieldPriority': 'Priority',
+  'goals.save': 'Save goal',
+  'goals.saving': 'Saving…',
+  'goals.cancel': 'Cancel',
+  'goals.deleteConfirmTitle': 'Delete this goal?',
+  'goals.deleteConfirmBody':
+    '“{name}” and its contribution history will be removed. Account balances, income, spending, and budgets are not affected.',
+  'goals.deleteConfirmButton': 'Delete goal',
+  'goals.errorNameRequired': 'Enter a goal name.',
+  'goals.errorNameTooLong': 'The name must be at most 80 characters.',
+  'goals.errorTargetFormat': 'Enter a target like 30000 or 30000.50.',
+  'goals.errorTargetPositive': 'The target must be greater than zero.',
+  'goals.errorStartRequired': 'Choose a start date.',
+  'goals.errorDeadlineBeforeStart': 'The deadline cannot be before the start date.',
+  'goals.serverError': 'The goal could not be saved. Please try again.',
+  'goals.actionError': 'That action could not be completed. Please try again.',
+  'goals.contributionAmount': 'Contribution amount',
+  'goals.contributionDate': 'Date (optional)',
+  'goals.contributionNote': 'Note (optional)',
+  'goals.addContribution': 'Add contribution',
+  'goals.adding': 'Adding…',
+  'goals.errorContributionFormat': 'Enter a contribution like 500 or 500.50.',
+  'goals.errorContributionPositive': 'The contribution must be greater than zero.',
+  'goals.errorContributionFuture': 'Choose today or an earlier date.',
+  'goals.contributionServerError': 'The contribution could not be added. Please try again.',
+  'goals.historyTitle': 'Contribution history',
+  'goals.historySubtitle': 'Every contribution and reversal, newest first',
+  'goals.contributionPausedNote':
+    'Contributions can only be added while the goal is active. Resume or unarchive it to add one.',
+  'goals.historyEmpty': 'No contributions recorded yet.',
+  'goals.contributionLabel': 'Contribution',
+  'goals.reversalLabel': 'Reversal',
+  'goals.reverseButton': 'Reverse',
+  'goals.reversedNote': 'Already reversed',
+  'goals.reverseConfirmTitle': 'Reverse this contribution?',
+  'goals.reverseConfirmBody':
+    'A reversal entry will be added to the history. The original contribution stays visible and account balances are not affected.',
+  'goals.reverseConfirmButton': 'Reverse contribution',
+  'goals.reverseServerError': 'The contribution could not be reversed. Please try again.',
+  'goals.backToGoals': 'Back to goals',
+
   // Categories — wired to `GET /api/v1/categories` (IT-5 API)
   'categories.title': 'Categories',
   'categories.subtitle':
@@ -274,12 +365,12 @@ const bn: Record<TranslationKey, string> = {
   'app.addTransaction': 'লেনদেন যোগ করুন',
   'app.menu': 'মেনু',
   'app.footerNote':
-    'ফাউন্ডেশন বিল্ড — ড্যাশবোর্ড, রিপোর্ট, ক্যাটাগরি ও বাজেটে আপনার রেকর্ড করা ডেটা দেখা যায়; অ্যাকাউন্ট, লেনদেন ও লক্ষ্য এখনো প্রিভিউ।',
+    'ফাউন্ডেশন বিল্ড — ড্যাশবোর্ড, রিপোর্ট, ক্যাটাগরি, বাজেট ও লক্ষ্যে আপনার রেকর্ড করা ডেটা দেখা যায়; অ্যাকাউন্ট ও লেনদেন এখনো প্রিভিউ।',
 
   'banner.ariaLabel': 'প্রিভিউ ডেটা নোটিশ',
   'banner.title': 'ইউআই প্রিভিউ — নমুনা ডেটা।',
   'banner.body':
-    'এই পেজের হিসাব এখনো কাল্পনিক নমুনা ডেটা; ড্যাশবোর্ড, রিপোর্ট, ক্যাটাগরি ও বাজেটে ইতিমধ্যে আপনার রেকর্ড করা ডেটা ব্যবহৃত হয়।',
+    'এই পেজের হিসাব এখনো কাল্পনিক নমুনা ডেটা; ড্যাশবোর্ড, রিপোর্ট, ক্যাটাগরি, বাজেট ও লক্ষ্যে ইতিমধ্যে আপনার রেকর্ড করা ডেটা ব্যবহৃত হয়।',
 
   'tx.type.income': 'আয়',
   'tx.type.expense': 'খরচ',
@@ -340,9 +431,10 @@ const bn: Record<TranslationKey, string> = {
   'dashboard.categoriesSubtitle': 'এই সময়ের রেকর্ড করা খরচ',
   'dashboard.categoriesEmpty': 'এই সময়ে কোনো খরচ রেকর্ড হয়নি।',
   'dashboard.goalsTitle': 'সঞ্চয়ের লক্ষ্য',
-  'dashboard.goalsSubtitle': 'পরবর্তী আপডেটে আসছে',
-  'dashboard.goalsPlaceholder':
-    'এই বিল্ডে সঞ্চয় লক্ষ্য ট্র্যাকিং এখনো নেই — কোনো লক্ষ্যের হিসাব দেখানো হচ্ছে না।',
+  'dashboard.goalsSubtitle': 'আপনার জমা থেকে হিসাব করা অগ্রগতি',
+  'dashboard.goalsEmpty': 'এখনো কোনো লক্ষ্য নেই — কিছু জমা রাখতে একটি লক্ষ্য তৈরি করুন।',
+  'dashboard.goalsNote':
+    'শুধু ট্র্যাকিং: লক্ষ্যে জমা যোগ করলে অ্যাকাউন্টের মধ্যে টাকা যায় না, খরচও ধরা হয় না।',
   'dashboard.budgetsTitle': 'বাজেট',
   'dashboard.budgetsSubtitle': 'মাসিক খরচের পরিকল্পনা',
   'dashboard.budgetsPlaceholder':
@@ -424,6 +516,95 @@ const bn: Record<TranslationKey, string> = {
   'budgets.errorTooManyLimits': 'একটি বাজেটে সর্বোচ্চ ৫০টি ক্যাটাগরি রাখা যায়।',
   'budgets.errorDuplicateCategory': 'একই ক্যাটাগরি একাধিকবার দেওয়া যায় না।',
   'budgets.serverError': 'বাজেট সংরক্ষণ করা যায়নি। আবার চেষ্টা করুন।',
+
+  'goals.title': 'সঞ্চয়ের লক্ষ্য',
+  'goals.subtitle':
+    'আপনি যা জমা রাখছেন — জমার হিসাব থেকে অগ্রগতি ট্র্যাক হয়, অ্যাকাউন্টের মধ্যে টাকা যায় না।',
+  'goals.newButton': 'নতুন লক্ষ্য',
+  'goals.presetButton': 'ইমার্জেন্সি ফান্ড প্রিসেট',
+  'goals.editButton': 'সম্পাদনা',
+  'goals.deleteButton': 'মুছুন',
+  'goals.pauseButton': 'সাময়িক বিরতি',
+  'goals.resumeButton': 'চালু করুন',
+  'goals.completeButton': 'সম্পন্ন হিসাবে চিহ্নিত করুন',
+  'goals.archiveButton': 'আর্কাইভ',
+  'goals.unarchiveButton': 'আর্কাইভ থেকে ফেরান',
+  'goals.viewDetails': 'বিস্তারিত দেখুন',
+  'goals.status.active': 'সক্রিয়',
+  'goals.status.paused': 'সাময়িক বিরতিতে',
+  'goals.status.completed': 'সম্পন্ন',
+  'goals.status.archived': 'আর্কাইভ করা',
+  'goals.type.GENERAL': 'সাধারণ সঞ্চয়',
+  'goals.type.EMERGENCY_FUND': 'ইমার্জেন্সি ফান্ড',
+  'goals.type.EDUCATION': 'শিক্ষা',
+  'goals.type.DEVICE': 'ডিভাইস কেনা',
+  'goals.type.TRAVEL': 'ভ্রমণ',
+  'goals.type.DEBT_PAYOFF': 'ঋণ পরিশোধ',
+  'goals.type.CUSTOM': 'নিজস্ব লক্ষ্য',
+  'goals.priority.LOW': 'কম',
+  'goals.priority.MEDIUM': 'মাঝারি',
+  'goals.priority.HIGH': 'বেশি',
+  'goals.presetName': 'ইমার্জেন্সি ফান্ড',
+  'goals.presetNote':
+    'প্রস্তাবিত নমুনা লক্ষ্য — আপনার অবস্থা অনুযায়ী বদলে নিন। এটি একটি প্রস্তাব, আর্থিক পরামর্শ নয়।',
+  'goals.savedOf': '{target}-এর মধ্যে {saved} জমা',
+  'goals.remaining': '{amount} বাকি',
+  'goals.overTarget': 'লক্ষ্যের চেয়ে {amount} বেশি',
+  'goals.percentOfTarget': 'লক্ষ্যের {percent}',
+  'goals.deadline': 'সময়সীমা {date}',
+  'goals.noDeadline': 'কোনো সময়সীমা নেই',
+  'goals.trackingNote':
+    'আপনি যে জমা রেকর্ড করেন তার ভিত্তিতে অগ্রগতি হিসাব হয়। জমা যোগ করলে অ্যাকাউন্টের মধ্যে টাকা যায় না এবং তা আয় বা খরচ হিসেবে ধরা হয় না।',
+  'goals.emptyTitle': 'এখনো কোনো লক্ষ্য নেই।',
+  'goals.emptyBody':
+    'কিছু জমা রাখার হিসাব রাখতে একটি লক্ষ্য তৈরি করুন। জমা শুধু ট্র্যাকিং — অ্যাকাউন্টের মধ্যে টাকা যায় না।',
+  'goals.formCreateTitle': 'নতুন লক্ষ্য',
+  'goals.formEditTitle': 'লক্ষ্য সম্পাদনা',
+  'goals.fieldName': 'লক্ষ্যের নাম',
+  'goals.fieldType': 'ধরন',
+  'goals.fieldTarget': 'লক্ষ্যের পরিমাণ',
+  'goals.fieldStart': 'শুরুর তারিখ',
+  'goals.fieldDeadline': 'সময়সীমা (ঐচ্ছিক)',
+  'goals.fieldPriority': 'গুরুত্ব',
+  'goals.save': 'লক্ষ্য সংরক্ষণ করুন',
+  'goals.saving': 'সংরক্ষণ হচ্ছে…',
+  'goals.cancel': 'বাতিল',
+  'goals.deleteConfirmTitle': 'এই লক্ষ্যটি মুছবেন?',
+  'goals.deleteConfirmBody':
+    '“{name}” এবং তার জমার ইতিহাস মুছে যাবে। অ্যাকাউন্টের ব্যালেন্স, আয়, খরচ বা বাজেটে কোনো প্রভাব পড়বে না।',
+  'goals.deleteConfirmButton': 'লক্ষ্য মুছুন',
+  'goals.errorNameRequired': 'লক্ষ্যের নাম লিখুন।',
+  'goals.errorNameTooLong': 'নাম সর্বোচ্চ ৮০ অক্ষরের হতে পারবে।',
+  'goals.errorTargetFormat': '৩০০০০ বা ৩০০০০.৫০ আকারে পরিমাণ লিখুন।',
+  'goals.errorTargetPositive': 'লক্ষ্য শূন্যের চেয়ে বেশি হতে হবে।',
+  'goals.errorStartRequired': 'শুরুর তারিখ বাছুন।',
+  'goals.errorDeadlineBeforeStart': 'সময়সীমা শুরুর তারিখের আগে হতে পারবে না।',
+  'goals.serverError': 'লক্ষ্য সংরক্ষণ করা যায়নি। আবার চেষ্টা করুন।',
+  'goals.actionError': 'কাজটি সম্পন্ন করা যায়নি। আবার চেষ্টা করুন।',
+  'goals.contributionAmount': 'জমার পরিমাণ',
+  'goals.contributionDate': 'তারিখ (ঐচ্ছিক)',
+  'goals.contributionNote': 'নোট (ঐচ্ছিক)',
+  'goals.addContribution': 'জমা যোগ করুন',
+  'goals.adding': 'যোগ হচ্ছে…',
+  'goals.errorContributionFormat': '৫০০ বা ৫০০.৫০ আকারে জমার পরিমাণ লিখুন।',
+  'goals.errorContributionPositive': 'জমার পরিমাণ শূন্যের চেয়ে বেশি হতে হবে।',
+  'goals.errorContributionFuture': 'আজ বা আগের কোনো তারিখ বাছুন।',
+  'goals.contributionServerError': 'জমা যোগ করা যায়নি। আবার চেষ্টা করুন।',
+  'goals.historyTitle': 'জমার ইতিহাস',
+  'goals.historySubtitle': 'সব জমা ও ফেরানো এন্ট্রি, নতুন আগে',
+  'goals.contributionPausedNote':
+    'লক্ষ্য সক্রিয় থাকলেই কেবল জমা যোগ করা যায়। যোগ করতে চাইলে চালু করুন বা আর্কাইভ থেকে ফেরান।',
+  'goals.historyEmpty': 'এখনো কোনো জমা রেকর্ড হয়নি।',
+  'goals.contributionLabel': 'জমা',
+  'goals.reversalLabel': 'ফেরানো এন্ট্রি',
+  'goals.reverseButton': 'ফেরান',
+  'goals.reversedNote': 'ইতিমধ্যে ফেরানো হয়েছে',
+  'goals.reverseConfirmTitle': 'এই জমাটি ফেরাবেন?',
+  'goals.reverseConfirmBody':
+    'ইতিহাসে একটি ফেরানো এন্ট্রি যোগ হবে। মূল জমাটি দৃশ্যমান থাকবে এবং অ্যাকাউন্টের ব্যালেন্সে কোনো প্রভাব পড়বে না।',
+  'goals.reverseConfirmButton': 'জমা ফেরান',
+  'goals.reverseServerError': 'জমাটি ফেরানো যায়নি। আবার চেষ্টা করুন।',
+  'goals.backToGoals': 'লক্ষ্যের তালিকায় ফিরুন',
 
   'categories.title': 'ক্যাটাগরি',
   'categories.subtitle': 'আপনার টাকা যে লেবেলে রেকর্ড হয় — আয়, খরচ ও আর্কাইভ করা ইতিহাস।',

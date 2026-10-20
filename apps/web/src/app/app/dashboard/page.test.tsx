@@ -1,4 +1,4 @@
-import type { DashboardResponse } from '@moneyflow/contracts';
+import type { DashboardResponse, GoalResponse } from '@moneyflow/contracts';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -11,13 +11,38 @@ vi.mock('next/navigation', () => ({
 // 401 → signed-out mapping under test is the production one.
 vi.mock('@/lib/api-client', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/lib/api-client')>();
-  return { ...actual, fetchDashboard: vi.fn() };
+  return { ...actual, fetchDashboard: vi.fn(), fetchGoals: vi.fn() };
 });
 
-import { ApiClientError, fetchDashboard } from '@/lib/api-client';
+import { ApiClientError, fetchDashboard, fetchGoals } from '@/lib/api-client';
 import DashboardPage from './page';
 
 const mockedFetchDashboard = vi.mocked(fetchDashboard);
+const mockedFetchGoals = vi.mocked(fetchGoals);
+
+/** One goal as the IT-10 API returns it; the dashboard shows real progress. */
+function goalFixture(overrides: Partial<GoalResponse> = {}): GoalResponse {
+  return {
+    id: 'goal-1',
+    name: 'Emergency fund',
+    type: 'EMERGENCY_FUND',
+    currency: 'BDT',
+    targetMinor: '3000000',
+    startDate: '2026-10-01',
+    deadline: null,
+    priority: 'MEDIUM',
+    status: 'ACTIVE',
+    figures: {
+      savedMinor: '800000',
+      remainingMinor: '2200000',
+      percentTimes10: '267',
+      overfunded: false,
+    },
+    createdAt: '2026-10-01T00:00:00.000Z',
+    updatedAt: '2026-10-01T00:00:00.000Z',
+    ...overrides,
+  };
+}
 
 function dashboardFixture(overrides: Partial<DashboardResponse> = {}): DashboardResponse {
   return {
@@ -71,6 +96,8 @@ function dashboardFixture(overrides: Partial<DashboardResponse> = {}): Dashboard
 describe('dashboard route (wired to GET /api/v1/dashboard)', () => {
   beforeEach(() => {
     mockedFetchDashboard.mockReset();
+    mockedFetchGoals.mockReset();
+    mockedFetchGoals.mockResolvedValue([]);
   });
 
   afterEach(() => {
@@ -113,10 +140,13 @@ describe('dashboard route (wired to GET /api/v1/dashboard)', () => {
 
   it('asks signed-out visitors to sign in instead of showing sample data', async () => {
     mockedFetchDashboard.mockRejectedValue(new ApiClientError('Unauthorized', 401));
+    mockedFetchGoals.mockRejectedValue(new ApiClientError('Unauthorized', 401));
     render(<DashboardPage />);
 
-    expect(await screen.findByText('Sign in to see your data')).toBeTruthy();
-    expect(screen.getByRole('link', { name: 'Sign in' }).getAttribute('href')).toBe('/sign-in');
+    expect((await screen.findAllByText('Sign in to see your data')).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole('link', { name: 'Sign in' })[0]?.getAttribute('href')).toBe(
+      '/sign-in',
+    );
     expect(screen.queryByText('BDT 12,450')).toBeNull(); // no mock fallback figure
   });
 
@@ -146,15 +176,16 @@ describe('dashboard route (wired to GET /api/v1/dashboard)', () => {
     expect(screen.getByText('No expenses recorded for this period.')).toBeTruthy();
   });
 
-  it('keeps goals and budgets as honest placeholders with no fabricated figures', async () => {
+  it('shows real goal progress from the goals API and keeps no fabricated figures', async () => {
     mockedFetchDashboard.mockResolvedValue(dashboardFixture());
-    const { container } = render(<DashboardPage />);
+    mockedFetchGoals.mockResolvedValue([goalFixture()]);
+    render(<DashboardPage />);
     await screen.findByText('BDT 63,500');
 
+    expect(await screen.findByText('BDT 8,000 of BDT 30,000 tracked')).toBeTruthy();
+    expect(screen.getByText('26.7% of target')).toBeTruthy();
     expect(
-      screen.getByText(
-        'Savings goal tracking is not available in this build yet — no goal figures are shown.',
-      ),
+      screen.getByText(/Tracking only: contributing to a goal never moves money/),
     ).toBeTruthy();
     // Budgets exist since IT-9 but live on their own page; the card points
     // there honestly and shows no invented figures (IT-9).
@@ -163,8 +194,18 @@ describe('dashboard route (wired to GET /api/v1/dashboard)', () => {
         'Budgets live on their own page: create a monthly plan and track spending against it there. No budget figures are shown here.',
       ),
     ).toBeTruthy();
-    expect(container.querySelector('.mf-progress')).toBeNull();
     expect(screen.queryByText(/sample goals/i)).toBeNull();
+  });
+
+  it('shows an honest empty goals state instead of invented progress', async () => {
+    mockedFetchDashboard.mockResolvedValue(dashboardFixture());
+    render(<DashboardPage />);
+    await screen.findByText('BDT 63,500');
+
+    expect(
+      await screen.findByText('No goals yet — create one to track what you are setting aside.'),
+    ).toBeTruthy();
+    expect(screen.queryByRole('progressbar')).toBeNull();
   });
 
   it('never draws a trend sparkline the API does not provide', async () => {

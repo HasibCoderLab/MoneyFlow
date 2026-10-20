@@ -153,7 +153,10 @@ Notes:
 | `createdAt`              | timestamptz | Contributions are immutable (reversal pattern) |
 
 Progress is always `Σ amountMinor`; no stored amount on `Goal`
-(ADR-0005).
+(ADR-0005). A contribution created with only a local date is anchored at
+00:00 local time in `Asia/Dhaka`; a reversal is recorded at the instant it is
+created. Neither row is a transaction: accounts, income/expense totals, and
+budgets never see them.
 
 ### `Budget` and `BudgetCategoryLimit`
 

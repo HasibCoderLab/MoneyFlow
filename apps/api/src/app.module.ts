@@ -7,6 +7,7 @@ import { HealthModule } from './modules/health/health.module';
 import { AccountsModule } from './modules/accounts/accounts.module';
 import { BudgetsModule } from './modules/budgets/budgets.module';
 import { CategoriesModule } from './modules/categories/categories.module';
+import { GoalsModule } from './modules/goals/goals.module';
 import { SummaryModule } from './modules/summary/summary.module';
 import { TransactionsModule } from './modules/transactions/transactions.module';
 
@@ -31,6 +32,7 @@ import { TransactionsModule } from './modules/transactions/transactions.module';
     TransactionsModule,
     SummaryModule,
     BudgetsModule,
+    GoalsModule,
   ],
   providers: [
     {

@@ -23,30 +23,34 @@
 
 ## Summary
 
-| ID    | Decision                          | Priority | Status                 | Recommendation                                                | Owner approval         |
-| ----- | --------------------------------- | -------- | ---------------------- | ------------------------------------------------------------- | ---------------------- |
-| DR-01 | Money representation              | P0       | Accepted               | Integer minor units, BDT registry, string contracts           | Approved 2026-10-16    |
-| DR-02 | Accounting semantics              | P0       | Accepted               | Derived balances; 4 types; fixed refund/future-date rules     | Approved 2026-10-16    |
-| DR-03 | Savings-goal method               | P1       | Proposed               | Virtual contribution ledger (no account link in MVP)          | **Required**           |
-| DR-04 | Auth & session strategy           | P0       | Accepted               | Better Auth in API; email/password first, Google second       | Approved 2026-10-16    |
-| DR-05 | Database & Prisma strategy        | P0       | Accepted               | Neon + `@prisma/adapter-pg` + direct CLI URL + Docker test DB | Approved 2026-10-16    |
-| DR-06 | Email provider                    | P2       | Proposed               | Resend (deferred until verification/recovery task)            | Required, non-blocking |
-| DR-07 | MVP scope interpretation          | P1       | Interpretation         | See `docs/product/mvp-scope.md`                               | **Confirm**            |
-| DR-08 | Launch geography & BDT-only MVP   | P2       | Proposed               | Bangladesh, BDT-only, stored currency                         | **Confirm**            |
-| DR-09 | Product name & domain             | P3       | Unresolved             | No recommendation possible (branding)                         | **Owner-only**         |
-| DR-10 | Age policy for accounts           | P3       | Proposed               | 18+ for MVP (avoid minor-consent obligations)                 | **Confirm**            |
-| DR-11 | Week-start / locale defaults      | P3       | Accepted               | Default Saturday for `bn-BD`, user-configurable               | Approved 2026-10-17    |
-| DR-12 | Multiple dashboard layouts        | P3       | Proposed               | Single persisted layout in MVP, multiple in V1                | Confirm                |
-| DR-13 | AI timing (MVP vs V1)             | P2       | Proposed               | Defer AI to V1                                                | Confirm                |
-| DR-14 | Hosting / deployment              | P2       | Unresolved             | Options below; needs owner budget/accounts                    | **Owner**              |
-| DR-15 | Backups, RPO/RTO                  | P3       | Unresolved             | Needs owner risk tolerance and Neon plan choice               | **Owner**              |
-| DR-16 | Export/deletion/retention & audit | P2       | Proposed               | CSV export; hard delete; minimal audit events                 | **Required**           |
-| DR-17 | Pricing, payments, legal review   | P3       | Out of scope (for now) | None — after validation (§3.2, §18.12/13)                     | Owner, later           |
+| ID    | Decision                          | Priority | Status                 | Recommendation                                                                                   | Owner approval         |
+| ----- | --------------------------------- | -------- | ---------------------- | ------------------------------------------------------------------------------------------------ | ---------------------- |
+| DR-01 | Money representation              | P0       | Accepted               | Integer minor units, BDT registry, string contracts                                              | Approved 2026-10-16    |
+| DR-02 | Accounting semantics              | P0       | Accepted               | Derived balances; 4 types; fixed refund/future-date rules                                        | Approved 2026-10-16    |
+| DR-03 | Savings-goal method               | P1       | Accepted               | Virtual contribution ledger (no account link in MVP); emergency-fund preset with editable target | Approved 2026-10-20    |
+| DR-04 | Auth & session strategy           | P0       | Accepted               | Better Auth in API; email/password first, Google second                                          | Approved 2026-10-16    |
+| DR-05 | Database & Prisma strategy        | P0       | Accepted               | Neon + `@prisma/adapter-pg` + direct CLI URL + Docker test DB                                    | Approved 2026-10-16    |
+| DR-06 | Email provider                    | P2       | Proposed               | Resend (deferred until verification/recovery task)                                               | Required, non-blocking |
+| DR-07 | MVP scope interpretation          | P1       | Interpretation         | See `docs/product/mvp-scope.md`                                                                  | **Confirm**            |
+| DR-08 | Launch geography & BDT-only MVP   | P2       | Proposed               | Bangladesh, BDT-only, stored currency                                                            | **Confirm**            |
+| DR-09 | Product name & domain             | P3       | Unresolved             | No recommendation possible (branding)                                                            | **Owner-only**         |
+| DR-10 | Age policy for accounts           | P3       | Proposed               | 18+ for MVP (avoid minor-consent obligations)                                                    | **Confirm**            |
+| DR-11 | Week-start / locale defaults      | P3       | Accepted               | Default Saturday for `bn-BD`, user-configurable                                                  | Approved 2026-10-17    |
+| DR-12 | Multiple dashboard layouts        | P3       | Proposed               | Single persisted layout in MVP, multiple in V1                                                   | Confirm                |
+| DR-13 | AI timing (MVP vs V1)             | P2       | Proposed               | Defer AI to V1                                                                                   | Confirm                |
+| DR-14 | Hosting / deployment              | P2       | Unresolved             | Options below; needs owner budget/accounts                                                       | **Owner**              |
+| DR-15 | Backups, RPO/RTO                  | P3       | Unresolved             | Needs owner risk tolerance and Neon plan choice                                                  | **Owner**              |
+| DR-16 | Export/deletion/retention & audit | P2       | Proposed               | CSV export; hard delete; minimal audit events                                                    | **Required**           |
+| DR-17 | Pricing, payments, legal review   | P3       | Out of scope (for now) | None — after validation (§3.2, §18.12/13)                                                        | Owner, later           |
 
 **Added 2026-10-17:** the Bangla/English label toggle in the UI preview is
 now implemented as a browser-local display preference (ADR-0009). It does
 not settle DR-08 (launch geography) or DR-11 (default locale/week start);
 the default stays English until the owner confirms those.
+
+**Updated 2026-10-20:** DR-03 is accepted, so **IT-10 is no longer blocked**
+by an open decision. Acceptance covers the savings-goal method only; it does
+not approve IT-11 (DR-11/DR-12) or any other open item in this register.
 
 ---
 
@@ -102,7 +106,7 @@ validation), tests (effect matrix, edit/delete, boundaries), future
 clarification round (ADR-0004 Clarifications; `accounting-rules.md` §11).
 IT-1 implements the pure effect matrix from this decision.
 
-## DR-03 — Savings-goal method (P1, Proposed)
+## DR-03 — Savings-goal method (P1, Accepted)
 
 **Context:** §18.6: virtual allocations vs account-linked balances. Detail:
 ADR-0005.
@@ -121,8 +125,39 @@ truthfully.
 endpoints), tests (progress, reversal, no balance/budget effect), future
 (additive V1 linking).
 
-**Approval required: yes** — blocks IT-10; documented now so IT-2 needs no
+**Approval required: yes** — blocked IT-10; documented early so IT-2 needed no
 goal table yet.
+
+**Status update (2026-10-20): approved by the product owner.** ADR-0005 is
+`Accepted`:
+
+- **Savings-goal method:** virtual contribution ledger. Goal progress is
+  `Σ GoalContribution.amountMinor` (contributions minus reversals); no stored
+  goal balance and no account link in MVP; contributions never touch account
+  balances, income, expenses, or budgets. The V1 hybrid path (transfer plus a
+  ledger entry referencing it) stays documented and additive.
+- **Emergency-fund template:** a UI preset for `type = EMERGENCY_FUND` with a
+  **suggested, editable target**. The suggestion pre-fills the target; the
+  user can change it before saving and edit it later, and the preset never
+  locks, overwrites, or silently commits a target. Label the amount as a
+  suggestion, not financial advice (`requirements.md` §5.8). The target stays
+  the ordinary `Goal.targetMinor` field.
+- **Open detail (not a blocker):** the source of the suggested amount (fixed
+  illustrative default vs. deterministic suggestion from the user's own
+  recorded data) is not decided by this approval and must be confirmed with
+  the owner before the goal form ships. It must remain deterministic and
+  honestly labelled in either case.
+
+**Impact unblocked:** IT-10 (goal schema + migration, contribution/reversal
+endpoints, progress/overfunding rules, emergency-fund preset, double-counting
+tests) could now be planned and implemented.
+
+**Status update (2026-10-20, later):** IT-10 is **implemented and awaiting
+owner review** — goals models + migration, CRUD/lifecycle endpoints,
+contribution/reversal endpoints, the API-backed goals list/detail pages, and
+unit/web/integration coverage. The preset's suggested target is the fixed
+illustrative ৳30,000 example described above; its source is still open and
+non-blocking (ADR-0005).
 
 ## DR-04 — Authentication & session strategy (P0, Accepted)
 
