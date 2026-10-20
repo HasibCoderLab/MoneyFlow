@@ -1,4 +1,8 @@
-import type { CategorySpendSummary, RecentSummaryTransaction } from '@moneyflow/contracts';
+import type {
+  CategorySpendSummary,
+  RecentSummaryTransaction,
+  TransactionResponse,
+} from '@moneyflow/contracts';
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -9,6 +13,7 @@ import {
   formatRangeLabel,
   isWholeMonth,
   recentTransactionRows,
+  transactionRows,
 } from './summary-display';
 
 /** Label + display-model tests for the wired dashboard/report widgets (IT-8). */
@@ -194,6 +199,102 @@ describe('recentTransactionRows', () => {
 
   it('returns an empty list for no activity', () => {
     expect(recentTransactionRows([], 'Asia/Dhaka')).toEqual([]);
+  });
+});
+
+function fullRow(overrides: Partial<TransactionResponse>): TransactionResponse {
+  return {
+    id: 'tx-1',
+    type: 'EXPENSE',
+    amountMinor: '32000',
+    currency: 'BDT',
+    occurredAt: '2026-02-05T06:00:00.000Z',
+    accountId: 'a1',
+    fromAccountId: null,
+    toAccountId: null,
+    categoryId: 'c1',
+    adjustmentSign: null,
+    note: null,
+    idempotencyKey: null,
+    createdAt: '2026-02-05T06:00:00.000Z',
+    updatedAt: '2026-02-05T06:00:00.000Z',
+    ...overrides,
+  };
+}
+
+describe('transactionRows', () => {
+  it('resolves account and category names and keeps transfer rows unsigned', () => {
+    const rows = transactionRows(
+      [
+        fullRow({ id: 'e', note: 'Market', categoryId: 'c1' }),
+        fullRow({
+          id: 't',
+          type: 'TRANSFER',
+          amountMinor: '200000',
+          accountId: null,
+          categoryId: null,
+          fromAccountId: 'a1',
+          toAccountId: 'a2',
+        }),
+        fullRow({
+          id: 'a',
+          type: 'ADJUSTMENT',
+          accountId: 'a1',
+          categoryId: null,
+          adjustmentSign: -1,
+          note: 'Correction',
+        }),
+      ],
+      [
+        { id: 'a1', name: 'Cash' },
+        { id: 'a2', name: 'Bank' },
+      ],
+      [{ id: 'c1', name: 'Groceries' }],
+      'Asia/Dhaka',
+    );
+
+    expect(rows).toEqual([
+      {
+        id: 'e',
+        direction: 'expense',
+        description: 'Market',
+        category: 'Groceries',
+        accountLabel: 'Cash',
+        dateLabel: '5 Feb 2026',
+        amountText: '\u2212BDT 320',
+      },
+      {
+        id: 't',
+        direction: 'transfer',
+        description: null,
+        category: null,
+        accountLabel: 'Cash \u2192 Bank',
+        dateLabel: '5 Feb 2026',
+        amountText: 'BDT 2,000',
+      },
+      {
+        id: 'a',
+        direction: 'adjustment',
+        description: 'Correction',
+        category: null,
+        accountLabel: 'Cash',
+        dateLabel: '5 Feb 2026',
+        amountText: '\u2212BDT 320',
+      },
+    ]);
+  });
+
+  it('falls back to the category name, then null, without inventing a label', () => {
+    const [byCategory, missing] = transactionRows(
+      [fullRow({ note: '  ', categoryId: 'c1' }), fullRow({ id: 'x', categoryId: 'gone' })],
+      [{ id: 'a1', name: 'Cash' }],
+      [{ id: 'c1', name: 'Groceries' }],
+      'Asia/Dhaka',
+    );
+
+    expect(byCategory?.description).toBe('Groceries');
+    expect(missing?.description).toBeNull();
+    expect(missing?.category).toBeNull();
   });
 });
 

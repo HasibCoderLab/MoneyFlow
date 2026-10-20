@@ -1,9 +1,12 @@
 import type {
+  AccountResponse,
   BudgetResponse,
   CategoryResponse,
+  CreateAccountRequest,
   CreateBudgetRequest,
   CreateGoalContributionRequest,
   CreateGoalRequest,
+  CreateTransactionRequest,
   DashboardLayoutResponse,
   DashboardResponse,
   GoalContributionResponse,
@@ -14,10 +17,15 @@ import type {
   ReportCategoriesResponse,
   ReportGranularity,
   ReportSummaryResponse,
+  TransactionListResponse,
+  TransactionResponse,
+  TransactionType,
+  UpdateAccountRequest,
   UpdateBudgetRequest,
   UpdateDashboardLayoutRequest,
   UpdateGoalRequest,
   UpdateMeRequest,
+  UpdateTransactionRequest,
   UpdateUserPreferencesRequest,
   UserPreferencesResponse,
 } from '@moneyflow/contracts';
@@ -144,8 +152,96 @@ export function fetchCategories(includeArchived = true): Promise<CategoryRespons
   return getJson<CategoryResponse[]>(`/api/v1/categories?includeArchived=${flag}`);
 }
 
-/** Body helper shared by the budget mutations. */
-async function sendJson<T>(path: string, method: string, body: unknown): Promise<T> {
+// ── Accounts (IT-4) ─────────────────────────────────────────────────────
+
+/** `GET /api/v1/accounts` — own accounts, including archived rows. */
+export function fetchAccounts(): Promise<AccountResponse[]> {
+  return getJson<AccountResponse[]>('/api/v1/accounts');
+}
+
+/** `POST /api/v1/accounts` — creates an account and its opening balance. */
+export function createAccount(body: CreateAccountRequest): Promise<AccountResponse> {
+  return sendJson<AccountResponse>('/api/v1/accounts', 'POST', body);
+}
+
+/** `PATCH /api/v1/accounts/:id` — rename, or set an unused opening balance. */
+export function updateAccount(id: string, body: UpdateAccountRequest): Promise<AccountResponse> {
+  return sendJson<AccountResponse>(`/api/v1/accounts/${id}`, 'PATCH', body);
+}
+
+/** `POST /api/v1/accounts/:id/{archive,unarchive}` — preserves history. */
+export function moveAccount(id: string, action: 'archive' | 'unarchive'): Promise<AccountResponse> {
+  return sendJson<AccountResponse>(`/api/v1/accounts/${id}/${action}`, 'POST', {});
+}
+
+// ── Transactions (IT-4/IT-6/IT-7) ───────────────────────────────────────
+
+/** Optional server-side filters for `GET /api/v1/transactions`. */
+export interface TransactionListQuery {
+  readonly type?: TransactionType;
+  readonly accountId?: string;
+  readonly categoryId?: string;
+  readonly dateFrom?: string;
+  readonly dateTo?: string;
+  readonly timezone?: string;
+  readonly limit?: number;
+  readonly offset?: number;
+}
+
+function transactionQueryString(query: TransactionListQuery): string {
+  const search = new URLSearchParams();
+  if (query.type !== undefined) search.set('type', query.type);
+  if (query.accountId !== undefined) search.set('accountId', query.accountId);
+  if (query.categoryId !== undefined) search.set('categoryId', query.categoryId);
+  if (query.dateFrom !== undefined) search.set('dateFrom', query.dateFrom);
+  if (query.dateTo !== undefined) search.set('dateTo', query.dateTo);
+  if (query.timezone !== undefined) search.set('timezone', query.timezone);
+  if (query.limit !== undefined) search.set('limit', String(query.limit));
+  if (query.offset !== undefined) search.set('offset', String(query.offset));
+  const text = search.toString();
+  return text.length > 0 ? `?${text}` : '';
+}
+
+/** `GET /api/v1/transactions` — own rows, stable order, offset paging. */
+export function fetchTransactions(
+  query: TransactionListQuery = {},
+): Promise<TransactionListResponse> {
+  return getJson<TransactionListResponse>(`/api/v1/transactions${transactionQueryString(query)}`);
+}
+
+/**
+ * `POST /api/v1/transactions`. The caller supplies an idempotency key so a
+ * double-submit or retried request cannot record the same movement twice.
+ */
+export function createTransaction(
+  body: CreateTransactionRequest,
+  idempotencyKey: string,
+): Promise<TransactionResponse> {
+  return sendJson<TransactionResponse>('/api/v1/transactions', 'POST', body, {
+    'idempotency-key': idempotencyKey,
+  });
+}
+
+/** `PATCH /api/v1/transactions/:id`; `type` itself is immutable. */
+export function updateTransaction(
+  id: string,
+  body: UpdateTransactionRequest,
+): Promise<TransactionResponse> {
+  return sendJson<TransactionResponse>(`/api/v1/transactions/${id}`, 'PATCH', body);
+}
+
+/** `DELETE /api/v1/transactions/:id` — hard delete after UI confirmation. */
+export function deleteTransaction(id: string): Promise<void> {
+  return sendJson<void>(`/api/v1/transactions/${id}`, 'DELETE', {});
+}
+
+/** Body helper shared by authenticated mutations. */
+async function sendJson<T>(
+  path: string,
+  method: string,
+  body: unknown,
+  extraHeaders: Readonly<Record<string, string>> = {},
+): Promise<T> {
   const baseUrl = getApiBaseUrl();
   if (!baseUrl) {
     throw new ApiClientError(UNAVAILABLE_MESSAGE, 0);
@@ -155,7 +251,11 @@ async function sendJson<T>(path: string, method: string, body: unknown): Promise
     response = await fetch(`${baseUrl}${path}`, {
       method,
       credentials: 'include',
-      headers: { accept: 'application/json', 'content-type': 'application/json' },
+      headers: {
+        accept: 'application/json',
+        'content-type': 'application/json',
+        ...extraHeaders,
+      },
       body: JSON.stringify(body),
     });
   } catch {

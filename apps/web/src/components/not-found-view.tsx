@@ -36,7 +36,7 @@ export function NotFoundView({ variant }: NotFoundViewProps) {
         The link you followed may be broken, or the page may have been moved. Nothing was changed
         {isApp
           ? ' — your accounts, transactions, goals, and budgets are unaffected.'
-          : ' — MoneyFlow is still a foundation build and no financial data is affected.'}
+          : ' — sign in to view your own recorded financial data.'}
       </p>
       <nav className="mf-notfound__actions" aria-label="Page-not-found recovery">
         {isApp ? (
@@ -54,7 +54,7 @@ export function NotFoundView({ variant }: NotFoundViewProps) {
               Back to home
             </Link>
             <Link className="mf-btn mf-btn--ghost" href="/app/dashboard">
-              Open UI preview
+              Open the app
             </Link>
           </>
         )}
@@ -62,7 +62,7 @@ export function NotFoundView({ variant }: NotFoundViewProps) {
       <p className="mf-notfound__hint">
         {isApp
           ? 'Use the menu to reach Accounts, Budgets, Goals, Reports, or Settings.'
-          : 'The UI preview shows the planned dashboard using clearly labelled sample data.'}
+          : 'Sign in to see figures computed from your own recorded records.'}
       </p>
     </div>
   );

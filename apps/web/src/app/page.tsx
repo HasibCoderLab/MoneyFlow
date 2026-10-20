@@ -257,8 +257,10 @@ export default function Home() {
           <div className="mf-status-note">
             <p className="mf-status-note__title">This is a foundation build</p>
             <p className="mf-status-note__body">
-              The interfaces you see are working previews. Some features are not built yet, and
-              nothing here is real financial data.
+              Accounts, transactions, dashboard, reports, categories, budgets, and goals run against
+              the authenticated API and show your own recorded data. The product illustration on
+              this page is sample data and is labelled as such; AI chat, exports, and account
+              recovery are not built yet.
             </p>
           </div>
         </div>
@@ -504,18 +506,19 @@ export default function Home() {
             <div className="mf-cta">
               <div>
                 <h2 className="mf-cta__title" id="cta-title">
-                  Start with the UI preview
+                  Track your own money
                 </h2>
                 <p className="mf-cta__text">
-                  Explore the interface with sample data — no account needed.
+                  Create an account to record accounts and transactions and see your own figures.
+                  Signing in is required for private data.
                 </p>
               </div>
               <div className="mf-cta__actions">
-                <Link className="mf-btn mf-btn--primary" href="/app/dashboard">
-                  Open UI preview
-                </Link>
-                <Link className="mf-btn mf-btn--ghost" href="/sign-up">
+                <Link className="mf-btn mf-btn--primary" href="/sign-up">
                   Create an account
+                </Link>
+                <Link className="mf-btn mf-btn--ghost" href="/sign-in">
+                  Sign in
                 </Link>
               </div>
             </div>

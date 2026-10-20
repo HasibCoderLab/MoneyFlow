@@ -1,7 +1,11 @@
 import type {
+  AccountResponse,
+  CategoryResponse,
   CategorySpendSummary,
   RecentSummaryTransaction,
   SummaryPeriod,
+  TransactionResponse,
+  TransactionType,
 } from '@moneyflow/contracts';
 
 import {
@@ -37,6 +41,8 @@ export interface TransactionRow {
   readonly description: string | null;
   /** Category display name, or null when the record has none. */
   readonly category: string | null;
+  /** Account name, or "From → To" for a transfer, when the caller supplies it. */
+  readonly accountLabel?: string | null;
   readonly dateLabel: string;
   /** Pre-formatted amount with its sign, e.g. "+BDT 12,000" or "−BDT 80". */
   readonly amountText: string;
@@ -130,7 +136,11 @@ export function formatOccurredAt(
 }
 
 function directionOf(row: RecentSummaryTransaction): TransactionDirection {
-  switch (row.type) {
+  return directionOfType(row.type);
+}
+
+function directionOfType(type: TransactionType): TransactionDirection {
+  switch (type) {
     case 'INCOME':
       return 'income';
     case 'EXPENSE':
@@ -177,6 +187,60 @@ export function recentTransactionRows(
     dateLabel: formatOccurredAt(row.occurredAt, timezone, options),
     amountText: `${signOf(row)}${formatBdtMinor(row.amountMinor, options)}`,
   }));
+}
+
+function signOfType(row: Pick<TransactionResponse, 'type' | 'adjustmentSign'>): string {
+  switch (row.type) {
+    case 'INCOME':
+      return '+';
+    case 'EXPENSE':
+      return '\u2212';
+    case 'ADJUSTMENT':
+      return row.adjustmentSign === -1 ? '\u2212' : '+';
+    case 'TRANSFER':
+      return '';
+  }
+}
+
+/**
+ * Maps persisted transaction rows to the shared list model. Account and
+ * category names are resolved from the caller's API responses; missing
+ * references stay null instead of inventing a label. Amounts are formatted
+ * exactly as stored — never recalculated.
+ */
+export function transactionRows(
+  transactions: readonly TransactionResponse[],
+  accounts: readonly Pick<AccountResponse, 'id' | 'name'>[],
+  categories: readonly Pick<CategoryResponse, 'id' | 'name'>[],
+  timezone: string,
+  options: DisplayFormatOptions = DEFAULT_DISPLAY_FORMAT,
+): TransactionRow[] {
+  const accountNames = new Map(accounts.map((account) => [account.id, account.name]));
+  const categoryNames = new Map(categories.map((category) => [category.id, category.name]));
+
+  return transactions.map((row) => {
+    const categoryName =
+      row.categoryId === null ? null : (categoryNames.get(row.categoryId) ?? null);
+    const accountName = row.accountId === null ? null : (accountNames.get(row.accountId) ?? null);
+    const fromName =
+      row.fromAccountId === null ? null : (accountNames.get(row.fromAccountId) ?? null);
+    const toName = row.toAccountId === null ? null : (accountNames.get(row.toAccountId) ?? null);
+    const transferAccounts = [fromName, toName].filter((name): name is string => name !== null);
+    return {
+      id: row.id,
+      direction: directionOfType(row.type),
+      description: row.note !== null && row.note.trim().length > 0 ? row.note : categoryName,
+      category: categoryName,
+      accountLabel:
+        row.type === 'TRANSFER'
+          ? transferAccounts.length === 2
+            ? transferAccounts.join(' \u2192 ')
+            : null
+          : accountName,
+      dateLabel: formatOccurredAt(row.occurredAt, timezone, options),
+      amountText: `${signOfType(row)}${formatBdtMinor(row.amountMinor, options)}`,
+    };
+  });
 }
 
 /**

@@ -24,13 +24,14 @@ describe('settings index', () => {
     ]);
   });
 
-  it('describes what is saved today and marks security/data as previews', () => {
+  it('describes what is saved today and the remaining unbuilt controls honestly', () => {
     render(<SettingsPage />);
     for (const label of ['Profile', 'Preferences', 'Dashboard layout', 'Security', 'Data']) {
       expect(screen.getByRole('link', { name: label })).toBeTruthy();
     }
     expect(screen.getByText(/saved per user/i)).toBeTruthy();
-    expect(screen.getByText(/remain previews until their assigned tasks/i)).toBeTruthy();
+    expect(screen.getByText(/server-enforced sessions are live/i)).toBeTruthy();
+    expect(screen.getByText(/CSV export and account deletion are not built yet/i)).toBeTruthy();
     expect(screen.queryByRole('link', { name: /forgot|reset|billing|subscription/i })).toBeNull();
   });
 

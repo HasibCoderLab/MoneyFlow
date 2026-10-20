@@ -6,13 +6,13 @@
 | ---------- | -------------- | ------------------------------------------------------------------ |
 | Node.js    | ≥ 20.11 (24.x) | Verified locally on v24.12.0                                       |
 | pnpm       | 12.x           | `corepack enable` or `npm i -g pnpm` — pinned via `packageManager` |
-| Docker     | optional       | Needed for the local PostgreSQL and integration tests              |
-| PostgreSQL | optional       | 16 via Docker, or a local install                                  |
+| Docker     | optional       | One way to run PostgreSQL locally; a native install works too      |
+| PostgreSQL | optional       | 16, native or containerised                                        |
 
-> Docker and PostgreSQL are **not required** for install, lint,
-> type-check, the unit tests, or builds. They are required for database
-> commands (`db:migrate`, `db:deploy`) and the integration tests
-> (`test:integration`).
+> PostgreSQL is **not required** for install, lint, type-check, the unit
+> tests, or builds. It is required for database commands (`db:migrate`,
+> `db:deploy`) and the integration tests (`test:integration`). A native
+> PostgreSQL 16 install is sufficient; Docker is optional.
 
 ## First-time setup
 
@@ -36,7 +36,7 @@ pnpm format:check     # Prettier
 pnpm lint             # ESLint across all workspace packages
 pnpm typecheck        # builds shared packages, then tsc per package
 pnpm test             # builds shared packages, then vitest per package (database-free)
-pnpm test:integration # real-PostgreSQL suite — needs the local Docker database
+pnpm test:integration # real-PostgreSQL suite — needs a local PostgreSQL database
 pnpm build            # production builds: contracts, test-utils, web, api
 ```
 
@@ -79,8 +79,13 @@ Notes:
 - Without a reachable database, `/api/v1/health` reports `degraded` and
   protected routes answer 503 (fail closed) — never a bypass.
 - Email verification, password recovery, and Google Sign-In are deferred
-  launch gates (ADR-0006); the web app's sign-in/sign-up pages are still
-  disconnected shells.
+  launch gates (ADR-0006). The web app's sign-in/sign-up forms post to this
+  API and rely on the API's HttpOnly session cookie; set
+  `NEXT_PUBLIC_API_URL` in the repository-root `.env` so the browser bundle
+  targets the same API origin allowed by `CORS_ORIGINS`.
+- `apps/web/next.config.ts` loads the repository-root `.env` explicitly
+  because Next only reads `apps/web/.env*` by default. Shell, CI, and
+  deployment environment values still take precedence.
 
 ## Local PostgreSQL
 
@@ -133,7 +138,7 @@ Notes:
 ## Integration tests (real PostgreSQL)
 
 ```bash
-pnpm test:integration  # needs the local Docker PostgreSQL + TEST_DATABASE_URL
+pnpm test:integration  # needs a local PostgreSQL + TEST_DATABASE_URL
 ```
 
 `TEST_DATABASE_URL` (see `.env.example`) must point at `localhost` — the
@@ -171,4 +176,7 @@ Re-apply the deliberate manual annotations (UTC `timestamptz` columns, the
   through the configured SWC transform (`apps/api/vitest.config.ts`);
   do not bypass it.
 - **CORS errors later on:** API CORS is opt-in via `CORS_ORIGINS` in
-  `.env`; empty means disabled.
+  `.env`; empty means disabled. The browser origin and
+  `NEXT_PUBLIC_API_URL` must match the configured values exactly, including
+  the port (for example web `http://localhost:3000` and API
+  `http://localhost:4000`).

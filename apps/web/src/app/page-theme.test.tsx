@@ -29,7 +29,7 @@ describe('landing theme switcher', () => {
     expect(screen.getByRole('button', { name: /theme: light/i })).toBeTruthy();
   });
 
-  it('switches the document theme without touching preview links', () => {
+  it('switches the document theme without changing real auth links', () => {
     render(
       <LocaleProvider>
         <Home />
@@ -38,9 +38,9 @@ describe('landing theme switcher', () => {
     const toggle = screen.getByRole('button', { name: /theme:/i });
     fireEvent.click(toggle);
     expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
-    const previewLinks = screen.getAllByRole('link', { name: /open (the )?ui preview/i });
-    for (const link of previewLinks) {
-      expect(link.getAttribute('href')).toBe('/app/dashboard');
+    const signUpLinks = screen.getAllByRole('link', { name: /get started|create an account/i });
+    for (const link of signUpLinks) {
+      expect(link.getAttribute('href')).toBe('/sign-up');
     }
     document.documentElement.removeAttribute('data-theme');
     window.localStorage.clear();

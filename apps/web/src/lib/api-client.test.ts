@@ -2,8 +2,12 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   ApiClientError,
+  createAccount,
   createBudget,
+  createTransaction,
   deleteBudget,
+  deleteTransaction,
+  fetchAccounts,
   fetchBudgets,
   fetchCategories,
   fetchDashboard,
@@ -12,12 +16,16 @@ import {
   fetchPreferences,
   fetchReportCategories,
   fetchReportSummary,
+  fetchTransactions,
+  moveAccount,
   moveBudget,
   resetDashboardLayout,
   saveDashboardLayout,
+  updateAccount,
   updateBudget,
   updateMe,
   updatePreferences,
+  updateTransaction,
 } from './api-client';
 
 const BASE_URL = 'http://localhost:4000';
@@ -328,6 +336,137 @@ describe('preferences and layout client (IT-11)', () => {
     expect(fetchMock).toHaveBeenLastCalledWith(
       `${BASE_URL}/api/v1/dashboard/layout/reset`,
       expect.objectContaining({ method: 'POST' }),
+    );
+  });
+});
+
+describe('accounts client (IT-4)', () => {
+  it('lists accounts with the session cookie', async () => {
+    process.env.NEXT_PUBLIC_API_URL = BASE_URL;
+    const fetchMock = mockFetchOnce({ body: [] });
+
+    await fetchAccounts();
+
+    expect(fetchMock).toHaveBeenCalledWith(`${BASE_URL}/api/v1/accounts`, {
+      credentials: 'include',
+      headers: { accept: 'application/json' },
+    });
+  });
+
+  it('POSTs a create body and PATCHes renames', async () => {
+    process.env.NEXT_PUBLIC_API_URL = BASE_URL;
+    const fetchMock = mockFetchOnce({ status: 201, body: { id: 'a1' } });
+
+    await createAccount({
+      name: 'Cash',
+      type: 'CASH',
+      currency: 'BDT',
+      openingBalance: '1500.50',
+    });
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      `${BASE_URL}/api/v1/accounts`,
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({
+          name: 'Cash',
+          type: 'CASH',
+          currency: 'BDT',
+          openingBalance: '1500.50',
+        }),
+      }),
+    );
+
+    await updateAccount('a1', { name: 'Wallet cash' });
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      `${BASE_URL}/api/v1/accounts/a1`,
+      expect.objectContaining({
+        method: 'PATCH',
+        body: JSON.stringify({ name: 'Wallet cash' }),
+      }),
+    );
+  });
+
+  it('archives and unarchives through the status endpoints', async () => {
+    process.env.NEXT_PUBLIC_API_URL = BASE_URL;
+    const fetchMock = mockFetchOnce({ body: { id: 'a1' } });
+
+    await moveAccount('a1', 'archive');
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      `${BASE_URL}/api/v1/accounts/a1/archive`,
+      expect.objectContaining({ method: 'POST' }),
+    );
+
+    await moveAccount('a1', 'unarchive');
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      `${BASE_URL}/api/v1/accounts/a1/unarchive`,
+      expect.objectContaining({ method: 'POST' }),
+    );
+  });
+});
+
+describe('transactions client (IT-4/IT-6/IT-7)', () => {
+  it('serializes only the provided list filters and paging', async () => {
+    process.env.NEXT_PUBLIC_API_URL = BASE_URL;
+    const fetchMock = mockFetchOnce({ body: { items: [], nextOffset: null, total: 0 } });
+
+    await fetchTransactions({
+      type: 'EXPENSE',
+      accountId: 'a1',
+      dateFrom: '2026-10-01',
+      timezone: 'Asia/Dhaka',
+      limit: 20,
+      offset: 40,
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${BASE_URL}/api/v1/transactions?type=EXPENSE&accountId=a1&dateFrom=2026-10-01&timezone=Asia%2FDhaka&limit=20&offset=40`,
+      expect.objectContaining({ credentials: 'include' }),
+    );
+  });
+
+  it('POSTs a create body with an idempotency key', async () => {
+    process.env.NEXT_PUBLIC_API_URL = BASE_URL;
+    const fetchMock = mockFetchOnce({ status: 201, body: { id: 't1' } });
+    const body = {
+      type: 'EXPENSE' as const,
+      amount: '350.50',
+      occurredDate: '2026-10-20',
+      timezone: 'Asia/Dhaka',
+      accountId: 'a1',
+      categoryId: 'c1',
+      note: 'Groceries',
+    };
+
+    await createTransaction(body, 'key-1');
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${BASE_URL}/api/v1/transactions`,
+      expect.objectContaining({
+        method: 'POST',
+        headers: {
+          accept: 'application/json',
+          'content-type': 'application/json',
+          'idempotency-key': 'key-1',
+        },
+        body: JSON.stringify(body),
+      }),
+    );
+  });
+
+  it('PATCHes edits and DELETEs records', async () => {
+    process.env.NEXT_PUBLIC_API_URL = BASE_URL;
+    const fetchMock = mockFetchOnce({ body: { id: 't1' } });
+
+    await updateTransaction('t1', { amount: '99', occurredDate: '2026-10-19' });
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      `${BASE_URL}/api/v1/transactions/t1`,
+      expect.objectContaining({ method: 'PATCH' }),
+    );
+
+    await deleteTransaction('t1');
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      `${BASE_URL}/api/v1/transactions/t1`,
+      expect.objectContaining({ method: 'DELETE' }),
     );
   });
 });

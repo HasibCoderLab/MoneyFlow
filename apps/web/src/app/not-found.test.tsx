@@ -15,9 +15,9 @@ describe('site 404 page', () => {
   it('offers only real recovery destinations', () => {
     render(<SiteNotFound />);
     const home = screen.getByRole('link', { name: /back to home/i });
-    const preview = screen.getByRole('link', { name: /open ui preview/i });
+    const app = screen.getByRole('link', { name: /open the app/i });
     expect(home.getAttribute('href')).toBe('/');
-    expect(preview.getAttribute('href')).toBe('/app/dashboard');
+    expect(app.getAttribute('href')).toBe('/app/dashboard');
   });
 
   it('never shows financial figures', () => {

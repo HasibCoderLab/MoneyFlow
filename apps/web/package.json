@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@moneyflow/contracts": "workspace:*",
+    "@next/env": "16.4.1",
     "next": "^16.4.1",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"

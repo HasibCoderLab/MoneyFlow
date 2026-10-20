@@ -83,8 +83,8 @@ export function AuthShell({ children }: { readonly children: ReactNode }) {
             </ul>
           </div>
           <p className="mf-auth-aside__footer">
-            Foundation build — every figure in the preview is labelled sample data.{' '}
-            <Link href="/app/dashboard">Open the dashboard preview</Link>
+            Foundation build — the app shows recorded figures from your own account.{' '}
+            <Link href="/app/dashboard">Open the dashboard</Link>
           </p>
         </aside>
         <main id="main-content" className="mf-auth-main">

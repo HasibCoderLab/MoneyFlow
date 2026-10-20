@@ -14,12 +14,12 @@ describe('home (landing) page', () => {
     ).toBeTruthy();
   });
 
-  it('points every call to action at the only real destination (the preview)', () => {
+  it('points primary account actions at the real sign-up route', () => {
     render(<Home />);
-    const previewLinks = screen.getAllByRole('link', { name: /open (the )?ui preview/i });
-    expect(previewLinks.length).toBeGreaterThan(0);
-    for (const link of previewLinks) {
-      expect(link.getAttribute('href')).toBe('/app/dashboard');
+    const signUpLinks = screen.getAllByRole('link', { name: /get started|create an account/i });
+    expect(signUpLinks.length).toBeGreaterThan(0);
+    for (const link of signUpLinks) {
+      expect(link.getAttribute('href')).toBe('/sign-up');
     }
   });
 
@@ -32,11 +32,14 @@ describe('home (landing) page', () => {
     expect(hrefs).toEqual(['#capabilities', '#trust', '#roadmap']);
   });
 
-  it('states plainly that this is a foundation build with no real data', () => {
+  it('states what is live and labels the illustration as sample data', () => {
     render(<Home />);
     expect(screen.getByText(/this is a foundation build/i)).toBeTruthy();
-    expect(screen.getByText(/are not built yet/i)).toBeTruthy();
-    expect(screen.getByText(/nothing here is real financial data/i)).toBeTruthy();
+    expect(screen.getByText(/run against the authenticated API/i)).toBeTruthy();
+    expect(screen.getByText(/product illustration on this page is sample data/i)).toBeTruthy();
+    expect(
+      screen.getByText(/AI chat, exports, and account recovery are not built yet/i),
+    ).toBeTruthy();
   });
 
   it('lists planned capabilities and labels each with its release', () => {

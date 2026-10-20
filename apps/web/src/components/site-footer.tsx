@@ -10,11 +10,11 @@ import type { TranslationKey } from '@/lib/i18n/translations';
  *
  * Ground rules this follows:
  * - Only links to routes that exist: in-page anchors on `/` and the live
- *   `/app/*` preview pages. Privacy/Terms/Contact pages do not exist yet, so
- *   they appear as honest forthcoming text — never as dead links.
+ *   authenticated `/app/*` pages. Privacy/Terms/Contact pages do not exist yet,
+ *   so they appear as honest forthcoming text — never as dead links.
  * - No testimonials, user counts, certifications, pricing, or guarantees.
  * - States the working-title status, the PaathAI relationship, and the
- *   not-financial-advice + sample-data disclaimers in plain language.
+ *   not-financial-advice disclaimer in plain language.
  * - Covered strings resolve through the locale context; the footer is a
  *   client component so the stored Bangla choice applies after mount.
  */

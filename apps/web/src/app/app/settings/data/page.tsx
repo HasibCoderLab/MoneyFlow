@@ -4,9 +4,8 @@ import { AppShell } from '@/components/app-shell';
 import { Card } from '@/components/card';
 
 export const metadata: Metadata = {
-  title: 'Your data — MoneyFlow UI preview',
-  description:
-    'Export and deletion — no records exist in this preview, so there is nothing to export or delete yet.',
+  title: 'Your data — MoneyFlow',
+  description: 'Your recorded data, and the export and deletion controls that are not built yet.',
 };
 
 type PlannedRight = {
@@ -32,11 +31,11 @@ const PLANNED_RIGHTS: readonly PlannedRight[] = [
 ];
 
 /**
- * Data route (requirements.md §4.3 `/app/settings/data`, §5.1, §10.3). No
- * financial record exists in this preview, so there is genuinely nothing to
- * export or delete and the page states that plainly. The exact deletion and
- * retention rules are still an unconfirmed decision, so they are named as
- * pending rather than described as agreed behaviour.
+ * Data route (requirements.md §4.3 `/app/settings/data`, §5.1, §10.3).
+ * Recorded accounts, transactions, categories, budgets, and goals are real
+ * and persisted, but no export or deletion workflow exists yet, so neither
+ * is offered as a control. Deletion and retention rules remain an
+ * unconfirmed decision and are named as pending.
  */
 export default function DataSettingsPage() {
   return (
@@ -50,13 +49,14 @@ export default function DataSettingsPage() {
         </div>
       </header>
 
-      <Card title="Export and deletion" subtitle="No records exist in this preview">
+      <Card title="Export and deletion" subtitle="Not built yet">
         <div className="mf-empty">
-          <p className="mf-empty__title">There is nothing to export or delete yet</p>
+          <p className="mf-empty__title">Export and deletion are not available yet</p>
           <p className="mf-empty__text">
-            This build stores no accounts, transactions, goals, or budgets — on the server or in
-            your browser, apart from the theme choice on the preferences page. A download or delete
-            button here would have nothing real behind it, so neither is shown.
+            Your recorded accounts, transactions, categories, budgets, and goals are stored in your
+            own MoneyFlow account. CSV export and account deletion are not implemented, so no
+            download or delete button is shown — a control with nothing real behind it would not be
+            honest. Nothing is exported or deleted by visiting this page.
           </p>
         </div>
       </Card>

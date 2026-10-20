@@ -34,9 +34,9 @@ describe('site footer', () => {
     expect(screen.queryByText(/testimonial|users|\d+%/i)).toBeNull();
   });
 
-  it('groups preview navigation under its own labelled landmark', () => {
+  it('groups app navigation under its own labelled landmark', () => {
     render(<SiteFooter />);
-    const nav = screen.getByRole('navigation', { name: /preview/i });
+    const nav = screen.getByRole('navigation', { name: /^app$/i });
     const labels = within(nav)
       .getAllByRole('link')
       .map((link) => link.textContent);

@@ -36,12 +36,14 @@ const SECTIONS: readonly SettingsSection[] = [
   {
     label: 'Security',
     href: '/app/settings/security',
-    description: 'Sessions, password, and recovery — there is no account or session yet.',
+    description:
+      'Authentication and server-enforced sessions are live; session management and password recovery are not built yet.',
   },
   {
     label: 'Data',
     href: '/app/settings/data',
-    description: 'Export, deletion, and retention — nothing is recorded to export or delete yet.',
+    description:
+      'Your recorded data exists; CSV export and account deletion are not built yet, so nothing is exported or deleted here.',
   },
 ];
 
@@ -74,8 +76,8 @@ export default function SettingsPage() {
           ))}
         </ul>
         <p className="mf-chart-note">
-          Security and data controls remain previews until their assigned tasks. They are never
-          presented as operational before then.
+          Authentication is live and enforced by the server. Session management, password recovery,
+          CSV export, and account deletion remain unbuilt and are never presented as operational.
         </p>
       </Card>
     </AppShell>

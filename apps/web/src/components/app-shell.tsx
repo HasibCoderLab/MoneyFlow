@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import type { ComponentType, ReactNode } from 'react';
 
-import { MockDataBanner } from '@/components/mock-data-banner';
 import { LanguageToggle } from '@/components/language-toggle';
 import { ThemeToggle } from '@/components/theme-toggle';
 import {
@@ -46,11 +45,10 @@ export const APP_NAV_ITEMS: readonly NavItem[] = [
 ];
 
 /**
- * Shared application chrome for the UI preview: skip link, sticky
- * branded topbar with the primary Add Transaction action, sidebar
- * navigation, sample-data banner, and footer. Responsive — the sidebar
- * becomes a horizontally scrollable top bar on narrow screens
- * (requirements.md §7.3).
+ * Shared application chrome: skip link, sticky branded topbar with the
+ * primary Add Transaction action, sidebar navigation, and footer.
+ * Responsive — the sidebar becomes a horizontally scrollable top bar on
+ * narrow screens (requirements.md §7.3).
  */
 export function AppShell({ children }: { readonly children: ReactNode }) {
   const pathname = usePathname();
@@ -106,7 +104,6 @@ export function AppShell({ children }: { readonly children: ReactNode }) {
         </nav>
 
         <div className="mf-app-content">
-          <MockDataBanner />
           <main id="main-content" className="mf-app-main">
             {children}
           </main>

@@ -10,8 +10,8 @@ export const metadata: Metadata = {
 
 /**
  * App-section 404 (Next.js App Router convention). Renders for unknown
- * URLs under /app/*. Keeps the shared app chrome (navigation, sample-data
- * banner) so users stay oriented; the body itself carries no figures.
+ * URLs under /app/*. Keeps the shared app chrome so users stay oriented; the
+ * body itself carries no figures.
  */
 export default function AppNotFound() {
   return (

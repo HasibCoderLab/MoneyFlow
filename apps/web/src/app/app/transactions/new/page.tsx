@@ -1,17 +1,19 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 
 import { AppShell } from '@/components/app-shell';
-import { TransactionForm } from '@/components/transaction-form';
+import { NewTransactionView } from '@/components/new-transaction-view';
 
 export const metadata: Metadata = {
-  title: 'New transaction — MoneyFlow UI preview',
+  title: 'New transaction — MoneyFlow',
+  description: 'Record money in, money out, or a transfer between your own accounts.',
 };
 
 /**
- * Transaction entry route (requirements.md §4.3, §5.4, §7.5). Renders the
- * form UI foundation only — validation is live, saving stays disabled until
- * the transaction API (IT-6) lands. Shell banner + in-form notice keep the
- * preview honest (AGENTS.md rule 12).
+ * Transaction entry route (requirements.md §4.3, §5.4, §7.5). Accounts and
+ * categories are loaded from the authenticated API, saving persists through
+ * `POST /api/v1/transactions` with an idempotency key, and success is shown
+ * explicitly.
  */
 export default function NewTransactionPage() {
   return (
@@ -20,12 +22,14 @@ export default function NewTransactionPage() {
         <div>
           <h1>New transaction</h1>
           <p className="mf-page-header__subtitle">
-            Record money in, money out, or a move between your own accounts — layout preview with
-            sample options.
+            Record money in, money out, or a move between your own accounts.
           </p>
         </div>
+        <Link className="mf-btn mf-btn--ghost" href="/app/transactions">
+          Back to transactions
+        </Link>
       </header>
-      <TransactionForm />
+      <NewTransactionView />
     </AppShell>
   );
 }

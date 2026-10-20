@@ -5,8 +5,7 @@ import { NotFoundView } from '@/components/not-found-view';
 
 export const metadata: Metadata = {
   title: 'Page not found — MoneyFlow',
-  description:
-    'The page you requested does not exist. Return home or open the MoneyFlow UI preview.',
+  description: 'The page you requested does not exist. Return home or open the MoneyFlow app.',
 };
 
 /**

@@ -66,17 +66,11 @@ const en = {
   // Application shell (requirements.md §4.3)
   'app.skipToContent': 'Skip to main content',
   'app.workingTitle': '(working title)',
-  'app.badge': 'UI preview',
+  'app.badge': 'Foundation build',
   'app.addTransaction': 'Add Transaction',
   'app.menu': 'Menu',
   'app.footerNote':
-    'Foundation build — dashboard, reports, categories, budgets, and goals show your recorded data; accounts and transactions are still previews.',
-
-  // Sample-data banner — rendered only on pages that still use mock data
-  'banner.ariaLabel': 'Preview data notice',
-  'banner.title': 'UI preview — sample data.',
-  'banner.body':
-    'The figures on this page are still fictional sample data; dashboard, reports, categories, budgets, and goals already use your recorded data.',
+    'Foundation build — accounts, transactions, dashboard, reports, categories, budgets, and goals all show your recorded data.',
 
   // Transaction rows (recent activity + sample browser)
   'tx.type.income': 'Income',
@@ -114,7 +108,7 @@ const en = {
   'footer.about':
     'A personal finance companion for students, beginner savers, and young earners — a standalone product under the PaathAI umbrella, separate from the PaathAI education platform.',
   'footer.productHeading': 'Product',
-  'footer.previewHeading': 'UI preview',
+  'footer.previewHeading': 'App',
   'footer.legalHeading': 'Legal',
   'footer.legalNote':
     'Privacy policy and terms will be published here before public launch. Nothing here is financial advice.',
@@ -361,16 +355,11 @@ const bn: Record<TranslationKey, string> = {
 
   'app.skipToContent': 'মূল কন্টেন্টে যান',
   'app.workingTitle': '(কাজের নাম)',
-  'app.badge': 'ইউআই প্রিভিউ',
+  'app.badge': 'ফাউন্ডেশন বিল্ড',
   'app.addTransaction': 'লেনদেন যোগ করুন',
   'app.menu': 'মেনু',
   'app.footerNote':
-    'ফাউন্ডেশন বিল্ড — ড্যাশবোর্ড, রিপোর্ট, ক্যাটাগরি, বাজেট ও লক্ষ্যে আপনার রেকর্ড করা ডেটা দেখা যায়; অ্যাকাউন্ট ও লেনদেন এখনো প্রিভিউ।',
-
-  'banner.ariaLabel': 'প্রিভিউ ডেটা নোটিশ',
-  'banner.title': 'ইউআই প্রিভিউ — নমুনা ডেটা।',
-  'banner.body':
-    'এই পেজের হিসাব এখনো কাল্পনিক নমুনা ডেটা; ড্যাশবোর্ড, রিপোর্ট, ক্যাটাগরি, বাজেট ও লক্ষ্যে ইতিমধ্যে আপনার রেকর্ড করা ডেটা ব্যবহৃত হয়।',
+    'ফাউন্ডেশন বিল্ড — অ্যাকাউন্ট, লেনদেন, ড্যাশবোর্ড, রিপোর্ট, ক্যাটাগরি, বাজেট ও লক্ষ্যে আপনার রেকর্ড করা ডেটা দেখা যায়।',
 
   'tx.type.income': 'আয়',
   'tx.type.expense': 'খরচ',
@@ -404,7 +393,7 @@ const bn: Record<TranslationKey, string> = {
   'footer.about':
     'শিক্ষার্থী, নতুন সঞ্চয়কারী ও তরুণ আয়কারীদের জন্য একটি ব্যক্তিগত অর্থসঙ্গী — PaathAI-এর অধীনে একটি স্বতন্ত্র প্রোডাক্ট, PaathAI শিক্ষা প্ল্যাটফর্ম থেকে সম্পূর্ণ আলাদা।',
   'footer.productHeading': 'প্রোডাক্ট',
-  'footer.previewHeading': 'ইউআই প্রিভিউ',
+  'footer.previewHeading': 'অ্যাপ',
   'footer.legalHeading': 'আইনি',
   'footer.legalNote':
     'পাবলিক লঞ্চের আগে এখানে প্রাইভেসি নীতিমালা ও শর্তাবলি প্রকাশ করা হবে। এখানকার কোনো তথ্য আর্থিক পরামর্শ নয়।',

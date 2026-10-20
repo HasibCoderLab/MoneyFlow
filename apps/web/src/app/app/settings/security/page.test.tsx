@@ -3,32 +3,31 @@ import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('next/navigation', () => ({
   usePathname: () => '/app/settings/security',
+  useRouter: () => ({ push: vi.fn() }),
 }));
 
 import SecurityPage from './page';
 
-describe('security route (preview, no account exists)', () => {
-  it('renders the security heading with an honest empty state', () => {
+describe('security route (live authentication)', () => {
+  it('describes the real server-enforced session and offers a working sign-out control', () => {
     render(<SecurityPage />);
     expect(screen.getByRole('heading', { level: 1, name: 'Security' })).toBeTruthy();
-    expect(screen.getByText(/nothing to manage here/i)).toBeTruthy();
-    expect(screen.getByText(/no account, no session, and no password/i)).toBeTruthy();
+    expect(screen.getByText(/signed in with an HttpOnly session cookie/i)).toBeTruthy();
+    expect(screen.getByRole('button', { name: /^sign out$/i })).toBeTruthy();
   });
 
-  it('names only real destinations and no pretend session controls', () => {
+  it('lists unimplemented controls as planned rather than rendering fake controls', () => {
     render(<SecurityPage />);
-    expect(screen.getByRole('link', { name: /visible previews/i }).getAttribute('href')).toBe(
-      '/sign-in',
-    );
-    expect(
-      screen.queryByRole('button', { name: /sign out|end session|change password/i }),
-    ).toBeNull();
+    expect(screen.queryByRole('button', { name: /change password|end session/i })).toBeNull();
+    for (const name of ['Active sessions', 'Sign out everywhere', 'Password change']) {
+      expect(screen.getByText(name)).toBeTruthy();
+    }
+    expect(screen.getAllByText(/planned/i).length).toBeGreaterThanOrEqual(1);
   });
 
   it('explains that authorization is server-side and errors stay generic', () => {
     render(<SecurityPage />);
     expect(screen.getByText(/enforced by the server/i)).toBeTruthy();
     expect(screen.getByText(/described in general\s+terms/i)).toBeTruthy();
-    expect(screen.getAllByText(/planned/i).length).toBeGreaterThanOrEqual(1);
   });
 });

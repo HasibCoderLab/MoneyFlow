@@ -957,27 +957,6 @@ a {
   flex-shrink: 0;
 }
 
-/* Mock-data banner */
-
-.mf-mock-banner {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.6rem;
-  padding: 0.65rem 0.9rem;
-  border: 1px solid var(--mf-accent-purple-border);
-  border-left: 3px solid var(--mf-accent-purple);
-  border-radius: var(--mf-radius);
-  background: var(--mf-accent-purple-softer);
-  color: var(--mf-accent-purple-ink);
-  font-size: 0.82rem;
-}
-
-.mf-mock-banner svg {
-  font-size: 1rem;
-  flex-shrink: 0;
-  margin-top: 0.1rem;
-}
-
 /* Footer */
 
 .mf-app-footer {
@@ -1375,6 +1354,29 @@ a {
   color: var(--mf-muted-text);
 }
 
+.mf-tx__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.2rem;
+  flex-shrink: 0;
+}
+
+.mf-tx__actions .mf-btn {
+  padding: 0.2rem 0.45rem;
+  font-size: 0.74rem;
+}
+
+@media (max-width: 40rem) {
+  .mf-tx {
+    flex-wrap: wrap;
+  }
+
+  .mf-tx__actions {
+    width: 100%;
+  }
+}
+
 /* ── Spending donut + legend ───────────────────────────────────────── */
 
 .mf-donut {
@@ -1469,6 +1471,38 @@ a {
   margin: 0;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+}
+
+.mf-account__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.25rem;
+  margin-top: 0.25rem;
+}
+
+.mf-account__actions .mf-btn {
+  padding: 0.2rem 0.5rem;
+  font-size: 0.76rem;
+}
+
+.mf-filter-grid,
+.mf-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: var(--mf-space-2) var(--mf-space-3);
+}
+
+.mf-filter-grid {
+  margin-bottom: var(--mf-space-2);
+}
+
+.mf-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--mf-space-2);
+  margin-top: var(--mf-space-3);
 }
 
 .mf-budget-row__remaining {

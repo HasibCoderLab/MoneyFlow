@@ -1,19 +1,19 @@
 import type { Metadata } from 'next';
 
 import { AppShell } from '@/components/app-shell';
-import { Card } from '@/components/card';
-import { TransactionBrowser } from '@/components/transaction-browser';
-import { MOCK_RECENT_TRANSACTIONS } from '@/lib/mock-data';
+import { TransactionsView } from '@/components/transactions-view';
 
 export const metadata: Metadata = {
-  title: 'Transactions — MoneyFlow UI preview',
+  title: 'Transactions — MoneyFlow',
+  description:
+    'Your recorded income, expenses, transfers, and adjustments from the authenticated API.',
 };
 
 /**
- * Transactions route (requirements.md §4.3, §5.4). Layout preview only:
- * the sample rows with a client-side search over the visible set. Server
- * search, filters, pagination, editing, and export arrive with the
- * transaction API (IT-6). Shell banner keeps the sample labelling honest.
+ * Transactions route (requirements.md §4.3, §5.4). The view reads persisted
+ * rows from `GET /api/v1/transactions`, applies server-side filters and
+ * offset pagination, and offers edit/delete for the selected record. No
+ * sample rows are rendered in the authenticated flow.
  */
 export default function TransactionsPage() {
   return (
@@ -22,14 +22,12 @@ export default function TransactionsPage() {
         <div>
           <h1>Transactions</h1>
           <p className="mf-page-header__subtitle">
-            Every recorded movement of money — sample rows for this preview.
+            Every recorded movement of money — filter, edit, or remove your own records.
           </p>
         </div>
       </header>
 
-      <Card title="All activity" subtitle="Sample rows">
-        <TransactionBrowser transactions={MOCK_RECENT_TRANSACTIONS} />
-      </Card>
+      <TransactionsView />
     </AppShell>
   );
 }

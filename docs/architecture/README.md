@@ -66,10 +66,14 @@ is approved or implemented yet.
 
 ## Current state
 
-Foundation plus a labelled UI preview: `HealthModule`
-(`GET /api/v1/health`), environment validation, Prisma CLI configuration
-without a schema model, and a sample-data dashboard preview under `/app/*`
-(not approved, not committed at the time of writing). The financial schema
-is deferred until the Phase 1 decisions (see `docs/decisions/`) are
-approved — planned sequence in
+Foundation through IT-11, plus the 2026-10-20 integration audit: the NestJS
+API owns the Prisma/PostgreSQL schema for users, sessions, accounts,
+categories, transactions, budgets, goals/contributions, preferences, and
+dashboard layouts. The Next.js app consumes the authenticated `/api/v1`
+routes only; accounts, transactions, dashboard, reports, categories, budgets,
+goals, profile, preferences, and customization no longer render sample
+records. Auth uses HttpOnly session cookies, and every private query is
+scoped to the server-verified user. The landing-page product illustration is
+explicitly labelled sample data. Accepted decisions live in
+`docs/decisions/`; sequencing is in
 [`docs/product/implementation-plan.md`](../product/implementation-plan.md).

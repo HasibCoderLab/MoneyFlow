@@ -7,11 +7,12 @@ vi.mock('next/navigation', () => ({
 
 import DataSettingsPage from './page';
 
-describe('data settings route (preview, no records exist)', () => {
-  it('renders the data heading and says there is nothing to export or delete', () => {
+describe('data settings route (real records, no export yet)', () => {
+  it('says export and deletion are unavailable without claiming records do not exist', () => {
     render(<DataSettingsPage />);
     expect(screen.getByRole('heading', { level: 1, name: 'Your data' })).toBeTruthy();
-    expect(screen.getByText(/nothing to export or delete yet/i)).toBeTruthy();
+    expect(screen.getByText(/export and deletion are not available yet/i)).toBeTruthy();
+    expect(screen.getByText(/are stored in your own MoneyFlow account/i)).toBeTruthy();
   });
 
   it('names the planned rights without rendering controls that do nothing', () => {

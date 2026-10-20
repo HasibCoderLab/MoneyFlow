@@ -44,9 +44,12 @@ PostgreSQL 16 job, while machines without Docker/PostgreSQL cannot run them
 locally. **DR-03 is accepted (2026-10-20)** — ADR-0005 is `Accepted`, which
 unblocked IT-10; **IT-10 is now implemented and awaiting owner review**.
 **IT-11 is implemented and awaiting owner review** (ADR-0010): persisted
-profile/preferences and a single validated dashboard layout, with the
-remaining preview screens unchanged. **IT-12 is the next task.** Everything
-else can proceed incrementally.
+profile/preferences and a single validated dashboard layout. A follow-up
+integration audit closed the remaining sample-data screens: accounts and
+transactions (create/edit/delete/filter/paginate) now use the authenticated
+API, the browser bundle receives the repository-root API URL, and sign-in /
+sign-up / sign-out are live. **IT-12 is the next task.** Everything else can
+proceed incrementally.
 
 ## Phase A — foundations (the first implementation phase)
 
@@ -239,9 +242,11 @@ same pattern; all depend on the approved accounting rules.
   dashboard, reports, and categories pages consume the live endpoints through
   `apps/web/src/lib/api-client.ts` with translated loading / signed-out /
   empty / error+retry states (en + bn). The fake hero sparkline was removed,
-  goals/budgets stay honest figure-free placeholders until IT-9/IT-10, and
-  the sample-data banner now renders only on the pages that still use mock
-  data (accounts, transactions, goals — budgets were wired in IT-9). Categories wiring follows
+  goals/budgets stayed honest figure-free placeholders until IT-9/IT-10, and
+  at that point the sample-data banner rendered only on the pages that still
+  used mock data (accounts, transactions, goals — budgets were wired in
+  IT-9; the 2026-10-20 integration audit later removed the banner entirely).
+  Categories wiring follows
   decision D5: real taxonomy via the IT-5 list API (`includeArchived=true`),
   read-only, creation disabled with accurate copy. Database-free gates pass
   locally; the integration suite runs in the CI PostgreSQL 16 job.

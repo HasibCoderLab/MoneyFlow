@@ -11,18 +11,22 @@ describe('landing auth entry points', () => {
     expect(signIn?.textContent).toMatch(/sign in/i);
   });
 
-  it('offers account creation from the closing call to action', () => {
+  it('offers account creation and sign-in from the closing call to action', () => {
     render(<Home />);
-    const cta = screen.getByRole('heading', { name: /start with the ui preview/i }).closest('div')
+    const cta = screen.getByRole('heading', { name: /track your own money/i }).closest('div')
       ?.parentElement as HTMLElement;
     const signUp = cta.querySelector('a[href="/sign-up"]');
+    const signIn = cta.querySelector('a[href="/sign-in"]');
     expect(signUp?.textContent).toMatch(/create an account/i);
+    expect(signIn?.textContent).toMatch(/sign in/i);
   });
 
-  it('keeps every UI-preview call to action pointed at the preview', () => {
+  it('never promises anonymous access to private financial data', () => {
     render(<Home />);
-    for (const link of screen.getAllByRole('link', { name: /open (the )?ui preview/i })) {
-      expect(link.getAttribute('href')).toBe('/app/dashboard');
+    expect(screen.queryByText(/no account needed/i)).toBeNull();
+    expect(screen.queryByRole('link', { name: /ui preview/i })).toBeNull();
+    for (const link of screen.getAllByRole('link', { name: /get started|create an account/i })) {
+      expect(link.getAttribute('href')).toBe('/sign-up');
     }
   });
 });

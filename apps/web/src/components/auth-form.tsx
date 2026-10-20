@@ -25,8 +25,7 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /**
  * Accepted password policy (ADR-0006): minimum length 12, no composition
- * rules. The preview shows the decided rule; enforcement lands with the
- * real auth flow.
+ * rules. Enforced here for immediate guidance and again by the auth API.
  */
 const MIN_PASSWORD_LENGTH = 12;
 
