@@ -25,9 +25,12 @@ where the implementation currently stands.
   transfers, IT-8 summaries/dashboard/reports, IT-9 budgets, IT-10
   goals/contributions, IT-11 profile/preferences/customization, and IT-12
   CSV export/account deletion/audit events.
+- ✅ IT-14 route inventory, public `/features` `/about` `/contact` pages,
+  interactive 2D `/site-map`, and a server-verified `/app` sign-in redirect.
 - ⬜ IT-13 hardening and launch gates: email verification/recovery,
   backup/restore runbook, session/password management, accessibility and
   performance baselines, privacy text, and the final mock-data sweep.
+- ⬜ Onboarding (approved; needs the server-persisted progress migration).
 
 Task detail and acceptance evidence live in
 [`implementation-plan.md`](./implementation-plan.md).

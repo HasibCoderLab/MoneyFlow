@@ -17,7 +17,19 @@ function mockFetchOk() {
 
 afterEach(() => {
   delete process.env.NEXT_PUBLIC_API_URL;
+  window.history.replaceState({}, '', '/sign-in');
 });
+
+async function submitValidSignIn(onAuthenticated: (destination: string) => void) {
+  process.env.NEXT_PUBLIC_API_URL = BASE_URL;
+  mockFetchOk();
+  render(<AuthForm variant="sign-in" onAuthenticated={onAuthenticated} />);
+  fireEvent.change(screen.getByLabelText(/email/i), { target: { value: 'a@example.com' } });
+  fireEvent.change(screen.getByLabelText(/^password/i), {
+    target: { value: 'correct-horse-12' },
+  });
+  fireEvent.click(screen.getByRole('button', { name: /^sign in$/i }));
+}
 
 describe('AuthForm submission', () => {
   it('never calls the API while client-side validation fails', () => {
@@ -32,6 +44,22 @@ describe('AuthForm submission', () => {
     expect(screen.getByText(/valid email address/i)).toBeTruthy();
     expect(fetchMock).not.toHaveBeenCalled();
     expect(onAuthenticated).not.toHaveBeenCalled();
+  });
+
+  it('returns to an internal ?next= destination after sign-in', async () => {
+    window.history.replaceState({}, '', '/sign-in?next=%2Fapp%2Fgoals');
+    const onAuthenticated = vi.fn();
+    await submitValidSignIn(onAuthenticated);
+
+    await waitFor(() => expect(onAuthenticated).toHaveBeenCalledWith('/app/goals'));
+  });
+
+  it('ignores an external ?next= destination', async () => {
+    window.history.replaceState({}, '', '/sign-in?next=https%3A%2F%2Fevil.example');
+    const onAuthenticated = vi.fn();
+    await submitValidSignIn(onAuthenticated);
+
+    await waitFor(() => expect(onAuthenticated).toHaveBeenCalledWith('/app/dashboard'));
   });
 
   it('signs in and navigates to the dashboard on success', async () => {

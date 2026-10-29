@@ -12,7 +12,9 @@ export const metadata: Metadata = {
 /**
  * Sign-in route (requirements.md §4.2, §5.1). Split layout with a trust
  * panel on desktop, local validation, and a live submit connected to the
- * API session endpoints. No recovery or third-party buttons exist yet —
+ * API session endpoints. The form reads a `?next=` return path and validates
+ * it before navigating, so a crafted link cannot send a freshly signed-in
+ * user to another origin. No recovery or third-party buttons exist yet —
  * they arrive only with their real flows.
  */
 export default function SignInPage() {

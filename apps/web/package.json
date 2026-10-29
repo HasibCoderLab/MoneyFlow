@@ -3,8 +3,10 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
+    "predev": "pnpm --filter @moneyflow/contracts build",
     "dev": "next dev",
-    "build": "next build",
+    "build": "pnpm --filter @moneyflow/contracts build && next build",
+    "vercel-build": "pnpm --filter @moneyflow/contracts build && next build",
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit -p tsconfig.json",

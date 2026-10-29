@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import type { ComponentType, ReactNode } from 'react';
 
-import { LanguageToggle } from '@/components/language-toggle';
+import { LanguageSwitcher } from '@/components/language-switcher';
 import { ThemeToggle } from '@/components/theme-toggle';
 import {
   BudgetsIcon,
@@ -20,6 +20,7 @@ import {
 } from '@/components/icons';
 import { useLocale } from '@/lib/i18n/locale-context';
 import type { TranslationKey } from '@/lib/i18n/translations';
+import { primaryNavRoutes } from '@/lib/routes';
 
 type NavItem = {
   readonly labelKey: TranslationKey;
@@ -27,22 +28,29 @@ type NavItem = {
   readonly icon: ComponentType<IconProps>;
 };
 
+/** Icons stay a presentation concern; the route list comes from the catalogue. */
+const NAV_ICONS: Record<string, ComponentType<IconProps>> = {
+  dashboard: DashboardIcon,
+  accounts: WalletIcon,
+  transactions: TransactionsIcon,
+  categories: TagIcon,
+  budgets: BudgetsIcon,
+  goals: GoalsIcon,
+  reports: ReportsIcon,
+  settings: SettingsIcon,
+};
+
 /**
  * Primary navigation following the information architecture in
- * requirements.md §4.3 (routes are kept stable). Labels resolve through
- * the locale context. Active state uses aria-current plus a visual
- * marker; every item is a real link.
+ * requirements.md §4.3 (routes are kept stable). Routes, order, and labels
+ * come from `@/lib/routes`; labels resolve through the locale context.
+ * Active state uses aria-current plus a visual marker; every item is a real
+ * link to an implemented page.
  */
-export const APP_NAV_ITEMS: readonly NavItem[] = [
-  { labelKey: 'nav.dashboard', href: '/app/dashboard', icon: DashboardIcon },
-  { labelKey: 'nav.accounts', href: '/app/accounts', icon: WalletIcon },
-  { labelKey: 'nav.transactions', href: '/app/transactions', icon: TransactionsIcon },
-  { labelKey: 'nav.categories', href: '/app/categories', icon: TagIcon },
-  { labelKey: 'nav.budgets', href: '/app/budgets', icon: BudgetsIcon },
-  { labelKey: 'nav.goals', href: '/app/goals', icon: GoalsIcon },
-  { labelKey: 'nav.reports', href: '/app/reports', icon: ReportsIcon },
-  { labelKey: 'nav.settings', href: '/app/settings', icon: SettingsIcon },
-];
+export const APP_NAV_ITEMS: readonly NavItem[] = primaryNavRoutes().flatMap((route) => {
+  const icon = NAV_ICONS[route.id];
+  return route.nav && icon ? [{ labelKey: route.nav.labelKey, href: route.href, icon }] : [];
+});
 
 /**
  * Shared application chrome: skip link, sticky branded topbar with the
@@ -71,7 +79,7 @@ export function AppShell({ children }: { readonly children: ReactNode }) {
         </div>
         <div className="mf-app-header__right">
           <p className="mf-app-header__badge">{t('app.badge')}</p>
-          <LanguageToggle />
+          <LanguageSwitcher />
           <ThemeToggle />
           <Link className="mf-btn mf-btn--primary" href="/app/transactions/new">
             <PlusIcon />
@@ -85,7 +93,7 @@ export function AppShell({ children }: { readonly children: ReactNode }) {
           <p className="mf-nav__label">{t('app.menu')}</p>
           <ul className="mf-nav__list">
             {APP_NAV_ITEMS.map((item) => {
-              const isActive = pathname === item.href;
+              const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
               const NavIcon = item.icon;
               return (
                 <li key={item.href}>

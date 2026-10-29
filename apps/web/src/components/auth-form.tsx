@@ -6,14 +6,25 @@ import { EyeIcon, EyeOffIcon, InfoIcon } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 
 import { AuthError, signIn, signUp } from '@/lib/auth-client';
+import { safeRedirectPath } from '@/lib/route-access';
 
 type AuthVariant = 'sign-in' | 'sign-up';
 
 type AuthFormProps = {
   readonly variant: AuthVariant;
+  /** Explicit safe post-auth destination; otherwise `?next=` is used. */
+  readonly redirectTo?: string;
   /** Navigation after a successful sign-in/sign-up (injectable for tests). */
   readonly onAuthenticated?: (destination: string) => void;
 };
+
+/** Browser-only return path, validated so it stays on this origin. */
+function requestedDestination(): string {
+  if (typeof window === 'undefined') {
+    return '/app/dashboard';
+  }
+  return safeRedirectPath(new URLSearchParams(window.location.search).get('next'));
+}
 
 function defaultNavigate(destination: string): void {
   // Full-page navigation: guarantees fresh server state with the new
@@ -117,7 +128,11 @@ function PasswordField({
  * characters, no composition rules). Recovery and third-party buttons
  * arrive only with their real flows — never as fakes.
  */
-export function AuthForm({ variant, onAuthenticated = defaultNavigate }: AuthFormProps) {
+export function AuthForm({
+  variant,
+  redirectTo,
+  onAuthenticated = defaultNavigate,
+}: AuthFormProps) {
   const isSignUp = variant === 'sign-up';
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -164,7 +179,7 @@ export function AuthForm({ variant, onAuthenticated = defaultNavigate }: AuthFor
       } else {
         await signIn({ email: email.trim(), password });
       }
-      onAuthenticated('/app/dashboard');
+      onAuthenticated(redirectTo ?? requestedDestination());
     } catch (error) {
       setServerError(
         error instanceof AuthError ? error.message : 'Something went wrong. Please try again.',

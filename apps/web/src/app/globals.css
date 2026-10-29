@@ -210,7 +210,16 @@ body {
     'Segoe UI',
     Roboto,
     'Noto Sans',
+    /* Bengali (bn) glyph coverage even when the OS default UI font has none:
+       Noto on Linux, Nirmala/Vrinda on Windows, Bangla Sangam MN on macOS,
+       plus the Bangladeshi desktop staples Kalpurush/SolaimanLipi. Latin
+       text keeps the earlier faces; each glyph falls back by script. */
     'Noto Sans Bengali',
+    'Nirmala UI',
+    'Vrinda',
+    'Bangla Sangam MN',
+    'Kalpurush',
+    'SolaimanLipi',
     sans-serif;
   background: var(--mf-surface);
   color: var(--mf-text);
@@ -3724,6 +3733,69 @@ a {
   border: 0;
 }
 
+/* ── Language switcher dropdown (requirements.md §7.4, ADR-0012) ──────── */
+
+.mf-lang-switcher {
+  position: relative;
+  display: inline-flex;
+}
+
+.mf-lang-switcher__chevron {
+  font-size: 0.85em;
+  opacity: 0.7;
+}
+
+.mf-lang-switcher__menu {
+  position: absolute;
+  top: calc(100% + 0.375rem);
+  right: 0;
+  z-index: 30;
+  min-width: 11.5rem;
+  margin: 0;
+  padding: 0.25rem;
+  list-style: none;
+  background: var(--mf-card-bg);
+  border: 1px solid var(--mf-border);
+  border-radius: var(--mf-radius-sm);
+  box-shadow: var(--mf-shadow-md);
+}
+
+.mf-lang-switcher__menu[hidden] {
+  display: none;
+}
+
+.mf-lang-switcher__item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.5rem 0.625rem;
+  border: 0;
+  border-radius: calc(var(--mf-radius-sm) - 0.125rem);
+  background: transparent;
+  color: var(--mf-text);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.mf-lang-switcher__item:hover {
+  background: var(--mf-surface-hover);
+}
+
+/* Selected state is carried by aria-checked, the check glyph, and weight —
+   never by color alone (requirements.md §7.3). */
+.mf-lang-switcher__item[aria-checked='true'] {
+  color: var(--mf-primary);
+  font-weight: 600;
+}
+
+.mf-lang-switcher__check {
+  display: inline-flex;
+  width: 1em;
+  flex-shrink: 0;
+}
+
 .mf-preferences-form {
   max-width: 56rem;
 }
@@ -3836,4 +3908,313 @@ html[data-reduced-motion='reduce'] *::after {
   animation-iteration-count: 1 !important;
   transition-duration: 0.01ms !important;
   scroll-behavior: auto !important;
+}
+
+/* ── Public product pages (features / about / contact / sitemap) ────── */
+
+.mf-doc-hero {
+  background: linear-gradient(180deg, var(--mf-hero-from), var(--mf-hero-to));
+  color: var(--mf-hero-ink);
+  padding: clamp(3rem, 7vw, 5rem) 0 clamp(2.5rem, 5vw, 4rem);
+}
+
+.mf-doc-hero .mf-section__eyebrow {
+  color: var(--mf-hero-muted-ink);
+}
+
+.mf-doc-hero__title {
+  margin: 0.35rem 0 0;
+  max-width: 46rem;
+  font-size: clamp(2rem, 4.5vw, 3rem);
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+
+.mf-doc-hero__lead {
+  margin: 1rem 0 0;
+  max-width: 44rem;
+  font-size: 1.02rem;
+  line-height: 1.65;
+  color: var(--mf-hero-muted-ink);
+}
+
+.mf-doc-hero__crumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+  font-size: 0.82rem;
+  color: var(--mf-hero-muted-ink);
+}
+
+.mf-doc-hero__crumbs a {
+  color: inherit;
+  text-underline-offset: 0.2em;
+}
+
+.mf-doc {
+  padding: clamp(2rem, 5vw, 3.5rem) 0 clamp(3rem, 6vw, 4.5rem);
+}
+
+.mf-doc__section {
+  max-width: 52rem;
+  padding-bottom: clamp(1.75rem, 4vw, 2.75rem);
+}
+
+.mf-doc__section + .mf-doc__section {
+  border-top: 1px solid var(--mf-border);
+  padding-top: clamp(1.75rem, 4vw, 2.75rem);
+}
+
+.mf-doc__heading {
+  margin: 0 0 0.85rem;
+  font-size: 1.35rem;
+  letter-spacing: -0.02em;
+}
+
+.mf-doc__section p {
+  margin: 0 0 0.9rem;
+  color: var(--mf-text);
+  line-height: 1.7;
+}
+
+.mf-doc__note {
+  margin: 1rem 0 0;
+  color: var(--mf-muted-text);
+  font-size: 0.88rem;
+  line-height: 1.6;
+}
+
+.mf-doc-hero__crumbs span[aria-current='page'] {
+  color: var(--mf-hero-ink);
+  font-weight: 600;
+}
+
+.mf-sitemap {
+  display: grid;
+  gap: var(--mf-space-4);
+}
+
+.mf-sitemap__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--mf-space-3);
+}
+
+.mf-sitemap__search {
+  flex: 1 1 18rem;
+}
+
+.mf-sitemap__filter {
+  flex: 0 1 14rem;
+}
+
+.mf-sitemap__toolbar .mf-btn {
+  min-height: 2.75rem;
+}
+
+.mf-sitemap__toolbar .mf-field {
+  margin: 0;
+}
+
+.mf-sitemap__count {
+  margin: 0;
+  color: var(--mf-muted-text);
+  font-size: 0.85rem;
+}
+
+.mf-sitemap__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mf-sitemap__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
+  gap: var(--mf-space-4);
+  align-items: start;
+}
+
+.mf-sitemap__tree {
+  display: grid;
+  gap: var(--mf-space-4);
+}
+
+.mf-sitemap__group-title {
+  margin: 0 0 0.5rem;
+  font-size: 0.78rem;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--mf-muted-text);
+}
+
+.mf-sitemap__list {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mf-sitemap__node {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem 0.65rem;
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--mf-border);
+  border-radius: var(--mf-radius);
+  background: var(--mf-card-bg);
+  color: var(--mf-text);
+  text-align: start;
+  cursor: pointer;
+  transition:
+    border-color 120ms ease,
+    box-shadow 120ms ease;
+}
+
+.mf-sitemap__node:hover {
+  border-color: var(--mf-primary);
+}
+
+.mf-sitemap__node:focus-visible {
+  outline: 2px solid var(--mf-primary);
+  outline-offset: 2px;
+}
+
+.mf-sitemap__node--selected {
+  border-color: var(--mf-primary);
+  box-shadow: 0 0 0 1px var(--mf-primary) inset;
+}
+
+.mf-sitemap__node-label {
+  font-weight: 650;
+  font-size: 0.92rem;
+}
+
+.mf-sitemap__node-path {
+  font-size: 0.76rem;
+  color: var(--mf-muted-text);
+  overflow-wrap: anywhere;
+}
+
+.mf-sitemap__badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.mf-sitemap__badge--implemented {
+  background: var(--mf-income-soft);
+  border-color: color-mix(in srgb, var(--mf-income) 40%, transparent);
+  color: var(--mf-income);
+}
+
+.mf-sitemap__badge--planned {
+  background: var(--mf-warm-soft);
+  border-color: color-mix(in srgb, var(--mf-accent-warm) 45%, transparent);
+  color: var(--mf-accent-warm);
+}
+
+.mf-sitemap__badge--deferred {
+  background: color-mix(in srgb, var(--mf-muted-text) 12%, transparent);
+  border-color: color-mix(in srgb, var(--mf-muted-text) 30%, transparent);
+  color: var(--mf-muted-text);
+}
+
+.mf-sitemap__badge--locked {
+  background: transparent;
+  border-color: var(--mf-border);
+  color: var(--mf-muted-text);
+}
+
+.mf-sitemap__detail {
+  position: sticky;
+  top: 1rem;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.mf-sitemap__detail-path code {
+  font-size: 0.82rem;
+  overflow-wrap: anywhere;
+}
+
+.mf-sitemap__facts {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0.5rem 0;
+}
+
+.mf-sitemap__facts > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.86rem;
+}
+
+.mf-sitemap__facts dt {
+  color: var(--mf-muted-text);
+  font-weight: 600;
+}
+
+.mf-sitemap__facts dd {
+  margin: 0;
+  text-align: end;
+}
+
+.mf-sitemap__detail-text {
+  margin: 0.35rem 0 0.75rem;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.mf-sitemap__detail-unavailable {
+  margin: 0;
+  color: var(--mf-muted-text);
+  font-size: 0.85rem;
+}
+
+.mf-sitemap__text-list {
+  border: 1px solid var(--mf-border);
+  border-radius: var(--mf-radius);
+  background: var(--mf-card-bg);
+  padding: 0.85rem 1rem;
+}
+
+.mf-sitemap__text-list summary {
+  cursor: pointer;
+  font-weight: 650;
+  font-size: 0.9rem;
+}
+
+.mf-sitemap__text-list ul {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0.75rem 0 0;
+  padding-left: 1.1rem;
+  font-size: 0.85rem;
+  line-height: 1.55;
+}
+
+@media (max-width: 55.99rem) {
+  .mf-sitemap__layout {
+    grid-template-columns: 1fr;
+  }
+
+  .mf-sitemap__detail {
+    position: static;
+  }
 }

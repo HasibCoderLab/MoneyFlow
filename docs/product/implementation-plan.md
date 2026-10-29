@@ -397,6 +397,26 @@ acceptance. Results are recorded in
   (DR-15), accessibility pass, performance baseline, privacy text matching
   implementation, final mock-data sweep.
 
+### IT-14 — Route inventory, public pages, and 2D sitemap
+
+**Status:** Implemented 2026-10-29 — awaiting owner review.
+
+- `apps/web/src/lib/routes.ts` is the single typed catalogue of paths,
+  groups, access, status, and descriptions; the primary navigation, footer,
+  sitemap, and route tests read it. A test walks `src/app` and fails if the
+  catalogue and the real page tree disagree.
+- Public `/features`, `/about`, `/contact`, and `/site-map` pages. Privacy,
+  terms, and pricing stay absent and are marked deferred — no placeholder
+  legal text or invented plans.
+- `/site-map` is a responsive 2D tree with search, area filter, reset,
+  detail panel, status/access badges, and a plain-text list alternative.
+- `middleware.ts` redirects session-less visits to `/sign-in?next=…`;
+  `app/app/layout.tsx` additionally verifies the cookie with `GET /me`, and
+  the form only accepts validated internal return paths.
+- No schema, API, or financial-calculation changes. Onboarding remains the
+  next increment (progress-persistence migration approved, not built).
+- Verification: `docs/reports/2026-10-29-route-inventory-sitemap-report.md`.
+
 ## Deliverable format for every implementation task
 
 1. Understanding and scope (this plan + requirements references).

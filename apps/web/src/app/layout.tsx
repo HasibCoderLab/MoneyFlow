@@ -19,13 +19,25 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
     // suppressHydrationWarning: the pre-paint script below may add data-theme
-    // before React hydrates; the attribute is cosmetic and safe to ignore.
+    // and lang before React hydrates; those attributes are cosmetic and safe
+    // to ignore.
     <html lang="en" suppressHydrationWarning>
       {/* Grammar/spellchecker browser extensions inject attributes such as
           data-gr-ext-installed onto <body> before React hydrates. Suppress only
-          this element's attribute mismatch so their markup is not treated as
-          an application hydration bug. */}
+          this element's attribute mismatch so their markup is not treated as an
+          application hydration bug. */}
       <body suppressHydrationWarning>
+        {/* Applies the stored Bangla/English choice to <html lang> before first
+            paint (requirements.md §5.2/§7.4, ADR-0012), so assistive tech
+            announces the right language from the very first frame. English is
+            the default when nothing valid is stored; the provider then owns the
+            attribute (locale-context.tsx). Display preference only — the
+            string is never sent anywhere. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var l=localStorage.getItem("mf-locale");document.documentElement.setAttribute("lang",l==="bn"?"bn":"en");}catch(e){document.documentElement.setAttribute("lang","en");}})();`,
+          }}
+        />
         {/* Applies the stored Light/Dark/System choice before first paint (no
             flash). Light is the default when nothing valid is stored; System
             resolves through the OS preference (IT-11). */}

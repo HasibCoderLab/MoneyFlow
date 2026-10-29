@@ -51,6 +51,11 @@ const en = {
   'common.loading': 'Loading…',
   'common.tryAgain': 'Try again',
 
+  // Language switcher (requirements.md §7.4, ADR-0009/ADR-0012)
+  'language.menuLabel': 'Language',
+  'language.triggerLabel': 'Language: {current}. Change language',
+  'language.announce': 'Language changed to {language}.',
+
   // Shared data states on the API-backed pages (IT-8)
   'summary.signedOutTitle': 'Sign in to see your data',
   'summary.signedOutBody':
@@ -116,6 +121,10 @@ const en = {
     '© {year} MoneyFlow — foundation build. The final product name is not yet decided.',
   'footer.capabilities': 'Capabilities',
   'footer.privacyAndTrust': 'Privacy and trust',
+  'footer.featuresLink': 'Features',
+  'footer.aboutLink': 'About',
+  'footer.contactLink': 'Contact',
+  'footer.sitemapLink': 'Sitemap',
 
   // Dashboard — wired to `GET /api/v1/dashboard` (IT-8)
   'dashboard.title': 'Dashboard',
@@ -342,6 +351,10 @@ const bn: Record<TranslationKey, string> = {
   'common.loading': 'লোড হচ্ছে…',
   'common.tryAgain': 'আবার চেষ্টা করুন',
 
+  'language.menuLabel': 'ভাষা',
+  'language.triggerLabel': 'ভাষা: {current}। ভাষা পরিবর্তন করুন',
+  'language.announce': 'ভাষা পরিবর্তন করে {language} করা হয়েছে।',
+
   'summary.signedOutTitle': 'আপনার ডেটা দেখতে সাইন ইন করুন',
   'summary.signedOutBody':
     'এই পেজে আপনার নিজের অ্যাকাউন্টের হিসাব দেখা যায়, তাই আগে সাইন ইন করতে হবে।',
@@ -401,6 +414,10 @@ const bn: Record<TranslationKey, string> = {
     '© {year} MoneyFlow — ফাউন্ডেশন বিল্ড। প্রোডাক্টের চূড়ান্ত নাম এখনো নির্ধারিত হয়নি।',
   'footer.capabilities': 'সুবিধাসমূহ',
   'footer.privacyAndTrust': 'গোপনীয়তা ও নিরাপত্তা',
+  'footer.featuresLink': 'ফিচারসমূহ',
+  'footer.aboutLink': 'পরিচিতি',
+  'footer.contactLink': 'যোগাযোগ',
+  'footer.sitemapLink': 'সাইটম্যাপ',
 
   'dashboard.title': 'ড্যাশবোর্ড',
   'dashboard.subtitle': 'এক নজরে আপনার টাকা — আপনার অ্যাকাউন্টের রেকর্ড করা হিসাব।',

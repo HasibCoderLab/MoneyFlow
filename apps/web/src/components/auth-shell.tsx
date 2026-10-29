@@ -2,7 +2,7 @@ import Link from 'next/link';
 import type { ComponentType, ReactNode } from 'react';
 
 import { CheckIcon, ShieldIcon, WalletIcon, type IconProps } from '@/components/icons';
-import { LanguageToggle } from '@/components/language-toggle';
+import { LanguageSwitcher } from '@/components/language-switcher';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { I18nText } from '@/components/i18n-text';
 
@@ -89,7 +89,7 @@ export function AuthShell({ children }: { readonly children: ReactNode }) {
         </aside>
         <main id="main-content" className="mf-auth-main">
           <div className="mf-auth-theme">
-            <LanguageToggle />
+            <LanguageSwitcher />
             <ThemeToggle />
           </div>
           <div className="mf-auth-card">{children}</div>

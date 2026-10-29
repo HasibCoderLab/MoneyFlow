@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 
-import { LanguageToggle } from '@/components/language-toggle';
+import { LanguageSwitcher } from '@/components/language-switcher';
 import { LandingNav } from '@/components/landing-nav';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { useLocale } from '@/lib/i18n/locale-context';
@@ -42,20 +42,14 @@ export function LandingTopbar() {
           </Link>
         </nav>
         <div className="mf-landing-actions">
-          <LanguageToggle />
+          <LanguageSwitcher />
           <ThemeToggle />
-          <Link className="mf-btn mf-btn--ghost" href="/sign-in">
+          <Link className="mf-btn mf-btn--primary" href="/sign-in">
             {t('common.signIn')}
           </Link>
-          <Link className="mf-btn mf-btn--primary" href="/sign-up">
-            {t('common.getStarted')}
-          </Link>
           <LandingNav>
-            <Link className="mf-btn mf-btn--ghost" href="/sign-in">
+            <Link className="mf-btn mf-btn--primary" href="/sign-in">
               {t('common.signIn')}
-            </Link>
-            <Link className="mf-btn mf-btn--primary" href="/sign-up">
-              {t('common.getStarted')}
             </Link>
           </LandingNav>
         </div>

@@ -4,14 +4,15 @@ import Link from 'next/link';
 
 import { useLocale } from '@/lib/i18n/locale-context';
 import type { TranslationKey } from '@/lib/i18n/translations';
+import { getRouteById } from '@/lib/routes';
 
 /**
  * Public site footer (requirements.md §1.2, §4.1, §7.4).
  *
  * Ground rules this follows:
- * - Only links to routes that exist: in-page anchors on `/` and the live
- *   authenticated `/app/*` pages. Privacy/Terms/Contact pages do not exist yet,
- *   so they appear as honest forthcoming text — never as dead links.
+ * - Every destination comes from the central route catalogue and is an
+ *   implemented page. Privacy/Terms/Contact pages do not exist yet, so they
+ *   appear as honest forthcoming text — never as dead links.
  * - No testimonials, user counts, certifications, pricing, or guarantees.
  * - States the working-title status, the PaathAI relationship, and the
  *   not-financial-advice disclaimer in plain language.
@@ -23,19 +24,28 @@ type FooterLink = {
   readonly href: string;
 };
 
+function catalogueHref(id: string): string {
+  const route = getRouteById(id);
+  if (!route) {
+    throw new Error(`Unknown route id in footer: ${id}`);
+  }
+  return route.href;
+}
+
 const PRODUCT_LINKS: readonly FooterLink[] = [
-  { labelKey: 'footer.capabilities', href: '/#capabilities' },
-  { labelKey: 'footer.privacyAndTrust', href: '/#trust' },
-  { labelKey: 'landing.roadmap', href: '/#roadmap' },
+  { labelKey: 'footer.featuresLink', href: catalogueHref('features') },
+  { labelKey: 'footer.aboutLink', href: catalogueHref('about') },
+  { labelKey: 'footer.contactLink', href: catalogueHref('contact') },
+  { labelKey: 'footer.sitemapLink', href: catalogueHref('site-map') },
 ] as const;
 
 const PREVIEW_LINKS: readonly FooterLink[] = [
-  { labelKey: 'nav.dashboard', href: '/app/dashboard' },
-  { labelKey: 'nav.accounts', href: '/app/accounts' },
-  { labelKey: 'nav.transactions', href: '/app/transactions' },
-  { labelKey: 'nav.budgets', href: '/app/budgets' },
-  { labelKey: 'nav.goals', href: '/app/goals' },
-  { labelKey: 'nav.reports', href: '/app/reports' },
+  { labelKey: 'nav.dashboard', href: catalogueHref('dashboard') },
+  { labelKey: 'nav.accounts', href: catalogueHref('accounts') },
+  { labelKey: 'nav.transactions', href: catalogueHref('transactions') },
+  { labelKey: 'nav.budgets', href: catalogueHref('budgets') },
+  { labelKey: 'nav.goals', href: catalogueHref('goals') },
+  { labelKey: 'nav.reports', href: catalogueHref('reports') },
 ] as const;
 
 export function SiteFooter() {
