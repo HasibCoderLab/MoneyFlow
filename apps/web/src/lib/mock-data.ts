@@ -11,14 +11,15 @@
 // marketing material (AGENTS.md rule 12: nothing fake presented as real).
 // ──────────────────────────────────────────────────────────────────────────────
 
-/** One-line disclaimer rendered next to every preview figure. */
-export const MOCK_DATA_DISCLAIMER =
-  'All amounts, names, and dates below are fictional sample data shown for UI review only.';
+import type { TranslationKey } from '@/lib/i18n/translations';
+
+/** One-line disclaimer key rendered next to every preview figure. */
+export const MOCK_DATA_DISCLAIMER_KEY: TranslationKey = 'preview.dataDisclaimer';
 
 export type MockTransaction = {
   readonly id: string;
-  readonly description: string;
-  readonly category: string;
+  readonly descriptionKey: TranslationKey;
+  readonly categoryKey: TranslationKey;
   readonly direction: 'income' | 'expense' | 'transfer';
   /** Absolute amount, pre-formatted with thousands separators. */
   readonly amount: string;
@@ -33,48 +34,48 @@ export type MockTransaction = {
 export const MOCK_RECENT_TRANSACTIONS: readonly MockTransaction[] = [
   {
     id: 'mock-tx-1',
-    description: 'Part-time stipend',
-    category: 'Income',
+    descriptionKey: 'mock.tx.stipend',
+    categoryKey: 'mock.category.income',
     direction: 'income',
     amount: '12,000',
     dateLabel: '12 Oct 2026',
   },
   {
     id: 'mock-tx-2',
-    description: 'Groceries — monthly restock',
-    category: 'Groceries',
+    descriptionKey: 'mock.tx.groceries',
+    categoryKey: 'mock.category.groceries',
     direction: 'expense',
     amount: '3,200',
     dateLabel: '11 Oct 2026',
   },
   {
     id: 'mock-tx-3',
-    description: 'Mobile recharge',
-    category: 'Utilities',
+    descriptionKey: 'mock.tx.recharge',
+    categoryKey: 'mock.category.utilities',
     direction: 'expense',
     amount: '399',
     dateLabel: '10 Oct 2026',
   },
   {
     id: 'mock-tx-4',
-    description: 'Move to Emergency fund',
-    category: 'Transfer',
+    descriptionKey: 'mock.tx.emergencyTransfer',
+    categoryKey: 'mock.category.transfer',
     direction: 'transfer',
     amount: '2,000',
     dateLabel: '9 Oct 2026',
   },
   {
     id: 'mock-tx-5',
-    description: 'Freelance design work',
-    category: 'Freelance',
+    descriptionKey: 'mock.tx.freelance',
+    categoryKey: 'mock.category.freelance',
     direction: 'income',
     amount: '6,000',
     dateLabel: '8 Oct 2026',
   },
   {
     id: 'mock-tx-6',
-    description: 'Bus pass',
-    category: 'Transport',
+    descriptionKey: 'mock.tx.busPass',
+    categoryKey: 'mock.category.transport',
     direction: 'expense',
     amount: '1,200',
     dateLabel: '7 Oct 2026',
@@ -83,7 +84,7 @@ export const MOCK_RECENT_TRANSACTIONS: readonly MockTransaction[] = [
 
 export type MockSavingsGoal = {
   readonly id: string;
-  readonly name: string;
+  readonly nameKey: TranslationKey;
   readonly saved: string;
   readonly target: string;
   /** Literal progress percentage — not calculated from the fields above. */
@@ -97,7 +98,7 @@ export type MockSavingsGoal = {
 export const MOCK_SAVINGS_GOALS: readonly MockSavingsGoal[] = [
   {
     id: 'mock-goal-1',
-    name: 'Emergency fund',
+    nameKey: 'mock.goal.emergencyFund',
     saved: '8,000',
     target: '30,000',
     percent: 27,
@@ -106,7 +107,7 @@ export const MOCK_SAVINGS_GOALS: readonly MockSavingsGoal[] = [
   },
   {
     id: 'mock-goal-2',
-    name: 'New laptop',
+    nameKey: 'mock.goal.newLaptop',
     saved: '12,000',
     target: '48,000',
     percent: 25,
@@ -115,7 +116,7 @@ export const MOCK_SAVINGS_GOALS: readonly MockSavingsGoal[] = [
   },
   {
     id: 'mock-goal-3',
-    name: 'Semester fees buffer',
+    nameKey: 'mock.goal.semesterBuffer',
     saved: '6,000',
     target: '10,000',
     percent: 60,

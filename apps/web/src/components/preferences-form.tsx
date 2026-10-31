@@ -18,7 +18,8 @@ import { Button } from '@/components/ui/button';
 import { ApiClientError } from '@/lib/api-client';
 import { formatBdtMinor, formatPercentTimes10 } from '@/lib/money-format';
 import { formatLocalDate } from '@/lib/summary-display';
-import { usePreferences } from '@/lib/i18n/locale-context';
+import { useLocale, usePreferences } from '@/lib/i18n/locale-context';
+import type { TranslationKey } from '@/lib/i18n/translations';
 
 /**
  * Preferences form (IT-11, requirements.md §5.2/§5.7). Values are loaded
@@ -107,19 +108,20 @@ function buildPatch(
   return patch;
 }
 
-function errorMessage(error: unknown): string {
+function errorMessage(error: unknown, t: (key: TranslationKey) => string): string {
   if (error instanceof ApiClientError) {
     if (error.status === 401) {
-      return 'Your session has expired. Sign in again to save preferences.';
+      return t('preferences.sessionExpired');
     }
     return error.message;
   }
-  return 'Could not save preferences. Please try again.';
+  return t('preferences.saveError');
 }
 
 /** The editable preferences form, mounted only for a signed-in session. */
 export function PreferencesForm() {
   const { preferences, preferencesStatus, savePreferences, reloadPreferences } = usePreferences();
+  const { t } = useLocale();
   const baseId = useId();
   const timezoneId = `${baseId}-timezone`;
   const [draft, setDraft] = useState<PreferenceDraft>(() => toDraft(preferences));
@@ -140,7 +142,7 @@ export function PreferencesForm() {
 
   if (preferencesStatus === 'loading') {
     return (
-      <div className="mf-loading" aria-busy="true" aria-label="Loading preferences">
+      <div className="mf-loading" aria-busy="true" aria-label={t('preferences.loading')}>
         <div className="mf-skeleton mf-skeleton--line" />
         <div className="mf-skeleton mf-skeleton--line" />
         <div className="mf-skeleton mf-skeleton--card" />
@@ -151,13 +153,10 @@ export function PreferencesForm() {
   if (preferencesStatus === 'guest') {
     return (
       <div className="mf-empty">
-        <p className="mf-empty__title">Sign in to manage preferences</p>
-        <p className="mf-empty__text">
-          Preferences are saved to your account. Without a session, only this browser&apos;s theme
-          and language choices are remembered.
-        </p>
+        <p className="mf-empty__title">{t('preferences.guestTitle')}</p>
+        <p className="mf-empty__text">{t('preferences.guestBody')}</p>
         <Link className="mf-btn mf-btn--primary" href="/sign-in">
-          Sign in
+          {t('common.signIn')}
         </Link>
       </div>
     );
@@ -166,10 +165,10 @@ export function PreferencesForm() {
   if (preferencesStatus === 'error') {
     return (
       <div className="mf-empty" role="alert">
-        <p className="mf-empty__title">Could not load your preferences</p>
-        <p className="mf-empty__text">Check your connection and try again.</p>
+        <p className="mf-empty__title">{t('preferences.loadErrorTitle')}</p>
+        <p className="mf-empty__text">{t('preferences.loadErrorBody')}</p>
         <Button variant="ghost" onClick={reloadPreferences}>
-          Try again
+          {t('common.tryAgain')}
         </Button>
       </div>
     );
@@ -184,15 +183,15 @@ export function PreferencesForm() {
     event.preventDefault();
     setFeedback(null);
     if (Object.keys(patch).length === 0) {
-      setFeedback({ tone: 'success', text: 'No changes to save.' });
+      setFeedback({ tone: 'success', text: t('preferences.noChanges') });
       return;
     }
     setSaving(true);
     try {
       await savePreferences(patch);
-      setFeedback({ tone: 'success', text: 'Preferences saved to your account.' });
+      setFeedback({ tone: 'success', text: t('preferences.saved') });
     } catch (error) {
-      setFeedback({ tone: 'error', text: errorMessage(error) });
+      setFeedback({ tone: 'error', text: errorMessage(error, t) });
     } finally {
       setSaving(false);
     }
@@ -203,7 +202,7 @@ export function PreferencesForm() {
       <div className="mf-preferences-grid">
         <div className="mf-field">
           <label className="mf-field__label" htmlFor={`${baseId}-theme`}>
-            Theme
+            {t('preferences.theme')}
           </label>
           <select
             id={`${baseId}-theme`}
@@ -218,16 +217,20 @@ export function PreferencesForm() {
           >
             {THEMES.map((value) => (
               <option key={value} value={value}>
-                {value === 'LIGHT' ? 'Light' : value === 'DARK' ? 'Dark' : 'System'}
+                {value === 'LIGHT'
+                  ? t('preferences.option.light')
+                  : value === 'DARK'
+                    ? t('preferences.option.dark')
+                    : t('preferences.option.system')}
               </option>
             ))}
           </select>
-          <p className="mf-field__hint">System follows your operating-system setting.</p>
+          <p className="mf-field__hint">{t('preferences.themeSystemHint')}</p>
         </div>
 
         <div className="mf-field">
           <label className="mf-field__label" htmlFor={`${baseId}-locale`}>
-            Language
+            {t('preferences.language')}
           </label>
           <select
             id={`${baseId}-locale`}
@@ -243,14 +246,12 @@ export function PreferencesForm() {
             <option value="en">English</option>
             <option value="bn">বাংলা</option>
           </select>
-          <p className="mf-field__hint">
-            Label language. Number numerals follow the format choice below.
-          </p>
+          <p className="mf-field__hint">{t('preferences.languageHint')}</p>
         </div>
 
         <div className="mf-field">
           <label className="mf-field__label" htmlFor={timezoneId}>
-            Timezone
+            {t('preferences.timezone')}
           </label>
           <input
             id={timezoneId}
@@ -268,14 +269,12 @@ export function PreferencesForm() {
               <option key={zone} value={zone} />
             ))}
           </datalist>
-          <p className="mf-field__hint">
-            Used for reporting and budget periods. Choose any IANA timezone, e.g. Asia/Dhaka.
-          </p>
+          <p className="mf-field__hint">{t('preferences.timezoneHint')}</p>
         </div>
 
         <div className="mf-field">
           <label className="mf-field__label" htmlFor={`${baseId}-currency`}>
-            Currency
+            {t('preferences.currency')}
           </label>
           <input
             id={`${baseId}-currency`}
@@ -286,13 +285,13 @@ export function PreferencesForm() {
             aria-describedby={`${baseId}-currency-note`}
           />
           <p id={`${baseId}-currency-note`} className="mf-field__hint">
-            BDT is the only MVP currency. Amounts are stored exactly and are never converted.
+            {t('preferences.currencyHint')}
           </p>
         </div>
 
         <div className="mf-field">
           <label className="mf-field__label" htmlFor={`${baseId}-week-start`}>
-            Week starts on
+            {t('preferences.weekStart')}
           </label>
           <select
             id={`${baseId}-week-start`}
@@ -307,16 +306,16 @@ export function PreferencesForm() {
           >
             {WEEK_STARTS.map((value) => (
               <option key={value} value={value}>
-                {value.charAt(0) + value.slice(1).toLowerCase()}
+                {t(`preferences.weekday.${value}`)}
               </option>
             ))}
           </select>
-          <p className="mf-field__hint">Used for weekly report buckets.</p>
+          <p className="mf-field__hint">{t('preferences.weekStartHint')}</p>
         </div>
 
         <div className="mf-field">
           <label className="mf-field__label" htmlFor={`${baseId}-date-format`}>
-            Date format
+            {t('preferences.dateFormat')}
           </label>
           <select
             id={`${baseId}-date-format`}
@@ -329,15 +328,15 @@ export function PreferencesForm() {
               }))
             }
           >
-            <option value="DMY">Day / month / year</option>
-            <option value="MDY">Month / day / year</option>
-            <option value="YMD">Year / month / day</option>
+            <option value="DMY">{t('preferences.option.dmy')}</option>
+            <option value="MDY">{t('preferences.option.mdy')}</option>
+            <option value="YMD">{t('preferences.option.ymd')}</option>
           </select>
         </div>
 
         <div className="mf-field">
           <label className="mf-field__label" htmlFor={`${baseId}-number-format`}>
-            Numerals
+            {t('preferences.numberFormat')}
           </label>
           <select
             id={`${baseId}-number-format`}
@@ -350,15 +349,15 @@ export function PreferencesForm() {
               }))
             }
           >
-            <option value="LOCALE">Follow language</option>
-            <option value="LATIN">Latin digits (0–9)</option>
-            <option value="BENGALI">Bengali digits (০–৯)</option>
+            <option value="LOCALE">{t('preferences.option.localeDigits')}</option>
+            <option value="LATIN">{t('preferences.option.latinDigits')}</option>
+            <option value="BENGALI">{t('preferences.option.bengaliDigits')}</option>
           </select>
         </div>
 
         <div className="mf-field">
           <label className="mf-field__label" htmlFor={`${baseId}-reduced-motion`}>
-            Reduced motion
+            {t('preferences.reducedMotion')}
           </label>
           <select
             id={`${baseId}-reduced-motion`}
@@ -373,7 +372,9 @@ export function PreferencesForm() {
           >
             {REDUCED_MOTION.map((value) => (
               <option key={value} value={value}>
-                {value === 'SYSTEM' ? 'Follow system' : 'Reduce motion'}
+                {value === 'SYSTEM'
+                  ? t('preferences.option.followSystem')
+                  : t('preferences.option.reduceMotion')}
               </option>
             ))}
           </select>
@@ -381,16 +382,25 @@ export function PreferencesForm() {
       </div>
 
       <div className="mf-preferences-preview" aria-live="polite">
-        <p className="mf-field__label">Preview</p>
+        <p className="mf-field__label">{t('preferences.preview')}</p>
         <p className="mf-field__hint">
-          Amount: {formatBdtMinor('123456789', draft)} · Date:{' '}
-          {formatLocalDate('2026-10-20', draft)} · Share: {formatPercentTimes10('123', draft)}
+          {t('preferences.previewAmount', {
+            amount: formatBdtMinor('123456789', draft),
+          })}{' '}
+          ·{' '}
+          {t('preferences.previewDate', {
+            date: formatLocalDate('2026-10-20', draft),
+          })}{' '}
+          ·{' '}
+          {t('preferences.previewShare', {
+            share: formatPercentTimes10('123', draft) ?? '',
+          })}
         </p>
       </div>
 
       <div className="mf-form__actions">
         <Button type="submit" disabled={saving}>
-          {saving ? 'Saving…' : 'Save preferences'}
+          {saving ? t('preferences.saving') : t('preferences.save')}
         </Button>
         {feedback ? (
           <p
@@ -400,9 +410,7 @@ export function PreferencesForm() {
             {feedback.text}
           </p>
         ) : null}
-        <p className="mf-field__hint">
-          Saving preferences never changes recorded transactions, balances, budgets, or goals.
-        </p>
+        <p className="mf-field__hint">{t('preferences.savedNote')}</p>
       </div>
     </form>
   );

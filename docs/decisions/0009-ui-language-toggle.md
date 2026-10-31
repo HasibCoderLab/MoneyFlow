@@ -1,7 +1,7 @@
 # ADR-0009: UI language toggle — Bangla/English labels
 
-**Status:** Accepted for the UI preview (default locale itself stays pending
-DR-08/DR-11 sign-off)
+**Status:** Superseded by ADR-0012 for the switcher interaction and UI
+coverage; the default locale still awaits DR-08/DR-11 sign-off
 **Date:** 2026-10-17
 
 ## Context

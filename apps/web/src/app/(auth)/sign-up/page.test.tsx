@@ -32,7 +32,11 @@ describe('sign-up route', () => {
   it('links to sign-in and home, and offers no fake recovery or third-party flows', () => {
     render(<SignUpPage />);
     expect(screen.getByRole('link', { name: /^sign in$/i }).getAttribute('href')).toBe('/sign-in');
-    expect(screen.getByRole('link', { name: /moneyflow home/i }).getAttribute('href')).toBe('/');
+    const homeLinks = screen.getAllByRole('link', { name: /moneyflow home/i });
+    expect(homeLinks.length).toBeGreaterThan(0);
+    for (const link of homeLinks) {
+      expect(link.getAttribute('href')).toBe('/');
+    }
     expect(screen.queryByText(/forgot.*password/i)).toBeNull();
     expect(screen.queryByText(/google/i)).toBeNull();
   });

@@ -11,6 +11,8 @@ import {
   resetDashboardLayout,
   saveDashboardLayout,
 } from '@/lib/api-client';
+import { useLocale } from '@/lib/i18n/locale-context';
+import type { TranslationKey } from '@/lib/i18n/translations';
 import { useAsyncData } from '@/lib/use-async-data';
 
 /**
@@ -23,37 +25,22 @@ import { useAsyncData } from '@/lib/use-async-data';
  * reads or edits financial records, and authorization is enforced by the API.
  */
 
-const WIDGET_LABELS: Record<DashboardWidgetId, string> = {
-  totalBalance: 'Total tracked balance',
-  income: 'Income summary',
-  expense: 'Expense summary',
-  recentTransactions: 'Recent activity',
-  spendingByCategory: 'Spending by category',
-  goals: 'Savings goals',
-  budgets: 'Budget status',
-};
+function widgetKey(id: DashboardWidgetId, field: 'name' | 'body'): TranslationKey {
+  return `customize.widget.${id}.${field}`;
+}
 
-const WIDGET_DESCRIPTIONS: Record<DashboardWidgetId, string> = {
-  totalBalance: 'Your tracked account balance, computed by the server.',
-  income: 'Recorded income for the selected period.',
-  expense: 'Recorded spending for the selected period.',
-  recentTransactions: 'The latest recorded activity.',
-  spendingByCategory: 'Server-computed category shares for the period.',
-  goals: 'Progress from your recorded goal contributions.',
-  budgets: 'A pointer to your monthly budget plans.',
-};
-
-function errorMessage(error: unknown): string {
+function errorMessage(error: unknown, t: (key: TranslationKey) => string): string {
   if (error instanceof ApiClientError) {
     if (error.status === 401) {
-      return 'Your session has expired. Sign in again to save the layout.';
+      return t('customize.sessionExpired');
     }
     return error.message;
   }
-  return 'Could not save the dashboard layout. Please try again.';
+  return t('customize.saveError');
 }
 
 export function DashboardCustomizer() {
+  const { t } = useLocale();
   const load = useCallback(() => fetchDashboardLayout(), []);
   const { state, retry } = useAsyncData(load);
   // `null` until the user edits; the loaded list is the fallback so an edit or
@@ -64,7 +51,7 @@ export function DashboardCustomizer() {
 
   if (state.status === 'loading') {
     return (
-      <div className="mf-loading" aria-busy="true" aria-label="Loading dashboard layout">
+      <div className="mf-loading" aria-busy="true" aria-label={t('customize.loading')}>
         <div className="mf-skeleton mf-skeleton--line" />
         <div className="mf-skeleton mf-skeleton--line" />
         <div className="mf-skeleton mf-skeleton--card" />
@@ -75,10 +62,10 @@ export function DashboardCustomizer() {
   if (state.status === 'signedOut') {
     return (
       <div className="mf-empty">
-        <p className="mf-empty__title">Sign in to customize your dashboard</p>
-        <p className="mf-empty__text">Dashboard layouts are saved to your own account.</p>
+        <p className="mf-empty__title">{t('customize.guestTitle')}</p>
+        <p className="mf-empty__text">{t('customize.guestBody')}</p>
         <Link className="mf-btn mf-btn--primary" href="/sign-in">
-          Sign in
+          {t('common.signIn')}
         </Link>
       </div>
     );
@@ -87,10 +74,10 @@ export function DashboardCustomizer() {
   if (state.status === 'error') {
     return (
       <div className="mf-empty" role="alert">
-        <p className="mf-empty__title">Could not load your dashboard layout</p>
-        <p className="mf-empty__text">Check your connection and try again.</p>
+        <p className="mf-empty__title">{t('customize.loadErrorTitle')}</p>
+        <p className="mf-empty__text">{t('customize.loadErrorBody')}</p>
         <Button variant="ghost" onClick={retry}>
-          Try again
+          {t('common.tryAgain')}
         </Button>
       </div>
     );
@@ -121,9 +108,9 @@ export function DashboardCustomizer() {
     try {
       const saved = await saveDashboardLayout({ widgets: currentWidgets });
       setWidgets(saved.widgets);
-      setMessage({ tone: 'success', text: 'Dashboard layout saved.' });
+      setMessage({ tone: 'success', text: t('customize.saved') });
     } catch (error) {
-      setMessage({ tone: 'error', text: errorMessage(error) });
+      setMessage({ tone: 'error', text: errorMessage(error, t) });
     } finally {
       setSaving(false);
     }
@@ -135,9 +122,9 @@ export function DashboardCustomizer() {
     try {
       const saved = await resetDashboardLayout();
       setWidgets(saved.widgets);
-      setMessage({ tone: 'success', text: 'Dashboard layout reset to the default.' });
+      setMessage({ tone: 'success', text: t('customize.resetDone') });
     } catch (error) {
-      setMessage({ tone: 'error', text: errorMessage(error) });
+      setMessage({ tone: 'error', text: errorMessage(error, t) });
     } finally {
       setSaving(false);
     }
@@ -146,15 +133,13 @@ export function DashboardCustomizer() {
   return (
     <div className="mf-customizer">
       <div className="mf-customizer__toolbar">
-        <p className="mf-chart-note">
-          Use the arrows to reorder. Hidden widgets stay listed here so you can turn them back on.
-        </p>
+        <p className="mf-chart-note">{t('customize.toolbarNote')}</p>
         <div className="mf-customizer__actions">
           <Button variant="ghost" onClick={reset} disabled={saving}>
-            Reset to default
+            {t('customize.reset')}
           </Button>
           <Button onClick={save} disabled={saving}>
-            {saving ? 'Saving…' : 'Save layout'}
+            {saving ? t('customize.saving') : t('customize.save')}
           </Button>
         </div>
       </div>
@@ -185,10 +170,10 @@ export function DashboardCustomizer() {
                     onChange={(event) => toggle(widget.id, event.target.checked)}
                     aria-describedby={descriptionId}
                   />
-                  <span id={nameId}>{WIDGET_LABELS[widget.id]}</span>
+                  <span id={nameId}>{t(widgetKey(widget.id, 'name'))}</span>
                 </label>
                 <p id={descriptionId} className="mf-field__hint">
-                  {WIDGET_DESCRIPTIONS[widget.id]}
+                  {t(widgetKey(widget.id, 'body'))}
                 </p>
               </div>
               <div className="mf-customizer__row-actions">
@@ -197,7 +182,9 @@ export function DashboardCustomizer() {
                   className="mf-btn mf-btn--ghost"
                   onClick={() => move(index, -1)}
                   disabled={index === 0 || saving}
-                  aria-label={`Move ${WIDGET_LABELS[widget.id]} up`}
+                  aria-label={t('customize.moveUp', {
+                    name: t(widgetKey(widget.id, 'name')),
+                  })}
                 >
                   ↑
                 </button>
@@ -206,7 +193,9 @@ export function DashboardCustomizer() {
                   className="mf-btn mf-btn--ghost"
                   onClick={() => move(index, 1)}
                   disabled={index === currentWidgets.length - 1 || saving}
-                  aria-label={`Move ${WIDGET_LABELS[widget.id]} down`}
+                  aria-label={t('customize.moveDown', {
+                    name: t(widgetKey(widget.id, 'name')),
+                  })}
                 >
                   ↓
                 </button>
@@ -216,10 +205,7 @@ export function DashboardCustomizer() {
         })}
       </ol>
 
-      <p className="mf-chart-note">
-        Every layout keeps all supported widgets exactly once. The API rejects malformed or unknown
-        widget ids, and it can only ever save to your own account.
-      </p>
+      <p className="mf-chart-note">{t('customize.note')}</p>
     </div>
   );
 }

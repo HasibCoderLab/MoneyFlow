@@ -51,7 +51,7 @@ type DeleteTarget = {
  * no income/expense sign, matching the server's accounting rule.
  */
 export function TransactionsView() {
-  const { preferences } = useLocale();
+  const { preferences, t } = useLocale();
   const [draft, setDraft] = useState<Filters>(EMPTY_FILTERS);
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
   const [filterError, setFilterError] = useState<string | null>(null);
@@ -82,7 +82,7 @@ export function TransactionsView() {
 
   const applyFilters = () => {
     if (draft.dateFrom && draft.dateTo && draft.dateFrom > draft.dateTo) {
-      setFilterError('The start date must not be after the end date.');
+      setFilterError(t('transactions.dateRangeError'));
       return;
     }
     setFilterError(null);
@@ -110,7 +110,7 @@ export function TransactionsView() {
       }
     } catch (error) {
       setActionError(
-        error instanceof ApiClientError ? error.message : 'Could not delete the transaction.',
+        error instanceof ApiClientError ? error.message : t('transactions.deleteError'),
       );
       setDeleteTarget(null);
     }
@@ -141,20 +141,18 @@ export function TransactionsView() {
       content = (
         <div className="mf-empty">
           <p className="mf-empty__title">
-            {filtersApplied ? 'No transactions match these filters.' : 'No transactions yet'}
+            {filtersApplied ? t('transactions.emptyFilteredTitle') : t('transactions.emptyTitle')}
           </p>
           <p className="mf-empty__text">
-            {filtersApplied
-              ? 'Change or clear the filters to see other recorded activity.'
-              : 'Record money in, money out, or a transfer between your own accounts. Nothing is shown until you save a transaction.'}
+            {filtersApplied ? t('transactions.emptyFilteredBody') : t('transactions.emptyBody')}
           </p>
           {filtersApplied ? (
             <Button variant="ghost" onClick={clearFilters}>
-              Clear filters
+              {t('transactions.clearFilters')}
             </Button>
           ) : (
             <Link className="mf-btn mf-btn--primary" href="/app/transactions/new">
-              Add your first transaction
+              {t('transactions.addFirst')}
             </Link>
           )}
         </div>
@@ -163,8 +161,11 @@ export function TransactionsView() {
       content = (
         <>
           <p className="mf-chart-note" role="status">
-            Showing {offset + 1}–{offset + list.items.length} of {list.total} recorded
-            {list.total === 1 ? ' transaction' : ' transactions'}.
+            {t(list.total === 1 ? 'transactions.showingOne' : 'transactions.showing', {
+              from: offset + 1,
+              to: offset + list.items.length,
+              total: list.total,
+            })}
           </p>
           <TransactionList
             transactions={rows}
@@ -188,7 +189,7 @@ export function TransactionsView() {
               disabled={offset === 0}
               onClick={() => setOffset(Math.max(0, offset - PAGE_SIZE))}
             >
-              Previous
+              {t('transactions.previous')}
             </Button>
             <Button
               variant="ghost"
@@ -197,7 +198,7 @@ export function TransactionsView() {
                 if (list.nextOffset !== null) setOffset(list.nextOffset);
               }}
             >
-              Next
+              {t('transactions.next')}
             </Button>
           </div>
         </>
@@ -209,17 +210,15 @@ export function TransactionsView() {
     <>
       <div className="mf-summary-meta">
         <Link className="mf-btn mf-btn--primary" href="/app/transactions/new">
-          New transaction
+          {t('transactions.newButton')}
         </Link>
-        <p className="mf-chart-note">
-          Search is not available yet; type, account, category, and date filters are.
-        </p>
+        <p className="mf-chart-note">{t('transactions.searchNote')}</p>
       </div>
 
-      <Card title="Filters" subtitle="Applied by the server">
+      <Card title={t('transactions.filtersTitle')} subtitle={t('transactions.filtersSubtitle')}>
         <div className="mf-filter-grid">
           <label className="mf-field">
-            <span className="mf-field__label">Type</span>
+            <span className="mf-field__label">{t('transactions.type')}</span>
             <select
               className="mf-input"
               value={draft.type}
@@ -227,22 +226,22 @@ export function TransactionsView() {
                 setDraft({ ...draft, type: event.target.value as Filters['type'] })
               }
             >
-              <option value="">All types</option>
-              <option value="INCOME">Income</option>
-              <option value="EXPENSE">Expense</option>
-              <option value="TRANSFER">Transfer</option>
-              <option value="ADJUSTMENT">Adjustment</option>
+              <option value="">{t('transactions.allTypes')}</option>
+              <option value="INCOME">{t('tx.type.income')}</option>
+              <option value="EXPENSE">{t('tx.type.expense')}</option>
+              <option value="TRANSFER">{t('tx.type.transfer')}</option>
+              <option value="ADJUSTMENT">{t('tx.type.adjustment')}</option>
             </select>
           </label>
 
           <label className="mf-field">
-            <span className="mf-field__label">Account</span>
+            <span className="mf-field__label">{t('transactions.account')}</span>
             <select
               className="mf-input"
               value={draft.accountId}
               onChange={(event) => setDraft({ ...draft, accountId: event.target.value })}
             >
-              <option value="">All accounts</option>
+              <option value="">{t('transactions.allAccounts')}</option>
               {state.status === 'ready'
                 ? state.data.accounts.map((account) => (
                     <option key={account.id} value={account.id}>
@@ -254,13 +253,13 @@ export function TransactionsView() {
           </label>
 
           <label className="mf-field">
-            <span className="mf-field__label">Category</span>
+            <span className="mf-field__label">{t('transactions.category')}</span>
             <select
               className="mf-input"
               value={draft.categoryId}
               onChange={(event) => setDraft({ ...draft, categoryId: event.target.value })}
             >
-              <option value="">All categories</option>
+              <option value="">{t('transactions.allCategories')}</option>
               {state.status === 'ready'
                 ? state.data.categories.map((category) => (
                     <option key={category.id} value={category.id}>
@@ -272,7 +271,7 @@ export function TransactionsView() {
           </label>
 
           <label className="mf-field">
-            <span className="mf-field__label">From date</span>
+            <span className="mf-field__label">{t('transactions.fromDate')}</span>
             <input
               className="mf-input"
               type="date"
@@ -282,7 +281,7 @@ export function TransactionsView() {
           </label>
 
           <label className="mf-field">
-            <span className="mf-field__label">To date</span>
+            <span className="mf-field__label">{t('transactions.toDate')}</span>
             <input
               className="mf-input"
               type="date"
@@ -297,9 +296,9 @@ export function TransactionsView() {
           </p>
         ) : null}
         <div className="mf-dialog__actions">
-          <Button onClick={applyFilters}>Apply filters</Button>
+          <Button onClick={applyFilters}>{t('transactions.applyFilters')}</Button>
           <Button variant="ghost" onClick={clearFilters}>
-            Clear
+            {t('common.clear')}
           </Button>
         </div>
       </Card>
@@ -310,15 +309,15 @@ export function TransactionsView() {
         </p>
       ) : null}
 
-      <Card title="Your activity" subtitle="Recorded movements">
+      <Card title={t('transactions.activityTitle')} subtitle={t('transactions.activitySubtitle')}>
         {content}
       </Card>
 
       {editing ? (
         <Dialog
           open
-          title="Edit transaction"
-          description="The type cannot change. Delete and record a new transaction if the direction was wrong."
+          title={t('transactions.editTitle')}
+          description={t('transactions.editBody')}
           onClose={() => setEditing(null)}
         >
           <TransactionForm
@@ -335,15 +334,17 @@ export function TransactionsView() {
       {deleteTarget ? (
         <Dialog
           open
-          title="Delete this transaction?"
-          description={`“${deleteTarget.description}” will be permanently removed and account balances, reports, and budgets will change. This cannot be undone.`}
+          title={t('transactions.deleteTitle')}
+          description={t('transactions.deleteBody', {
+            description: deleteTarget.description,
+          })}
           onClose={() => setDeleteTarget(null)}
         >
           <div className="mf-dialog__actions">
             <Button variant="ghost" onClick={() => setDeleteTarget(null)}>
-              Cancel
+              {t('common.cancel')}
             </Button>
-            <Button onClick={() => void runDelete()}>Delete transaction</Button>
+            <Button onClick={() => void runDelete()}>{t('transactions.deleteButton')}</Button>
           </div>
         </Dialog>
       ) : null}

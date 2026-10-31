@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { useLocale } from '@/lib/i18n/locale-context';
 
 /**
  * Global error boundary (Next.js App Router convention). Renders when a
@@ -18,18 +19,20 @@ export default function Error({
   readonly error: Error & { readonly digest?: string };
   readonly reset: () => void;
 }) {
+  const { t } = useLocale();
+
   useEffect(() => {
     console.error('Route error:', error.message, error.digest);
   }, [error]);
 
   return (
     <div className="mf-error" role="alert">
-      <h1>Something went wrong</h1>
+      <h1>{t('error.title')}</h1>
       <p>
-        This section could not be displayed. Your records are unaffected — nothing was changed.
-        {error.digest ? ` (Reference: ${error.digest})` : null}
+        {t('error.body')}
+        {error.digest ? ` (${error.digest})` : null}
       </p>
-      <Button onClick={reset}>Try again</Button>
+      <Button onClick={reset}>{t('common.tryAgain')}</Button>
     </div>
   );
 }

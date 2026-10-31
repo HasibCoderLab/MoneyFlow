@@ -34,13 +34,6 @@ type AdjustmentDirection = 'INCREASE' | 'DECREASE';
 
 const CREATE_TYPES: readonly FormType[] = ['INCOME', 'EXPENSE', 'TRANSFER'];
 
-const TYPE_LABEL: Record<FormType, string> = {
-  INCOME: 'Money in',
-  EXPENSE: 'Money out',
-  TRANSFER: 'Transfer',
-  ADJUSTMENT: 'Adjustment',
-};
-
 /** One idempotency key per form instance, reused after a failed/retried submit. */
 function newIdempotencyKey(): string {
   if (typeof globalThis.crypto?.randomUUID === 'function') {
@@ -74,7 +67,7 @@ export function TransactionForm({
   readonly onSaved?: (transaction: TransactionResponse) => void;
   readonly onCancel?: () => void;
 }) {
-  const { preferences } = useLocale();
+  const { preferences, t } = useLocale();
   const loadOptions = useCallback(() => Promise.all([fetchAccounts(), fetchCategories(false)]), []);
   const options = useAsyncData(loadOptions);
 
@@ -151,26 +144,24 @@ export function TransactionForm({
   const errors: FieldErrors = {};
   const trimmedAmount = amount.trim();
   if (trimmedAmount.length === 0) {
-    errors.amount = 'Enter an amount greater than zero.';
+    errors.amount = t('txform.errorAmountRequired');
   } else if (!isValidPositiveAmount(trimmedAmount)) {
-    errors.amount = 'Use digits with at most 2 decimals, e.g. 3500 or 3500.50.';
+    errors.amount = t('txform.errorAmountFormat');
   }
   if (!account)
-    errors.account = type === 'TRANSFER' ? 'Choose a source account.' : 'Choose an account.';
+    errors.account = type === 'TRANSFER' ? t('txform.errorSource') : t('txform.errorAccount');
   if (type === 'TRANSFER') {
-    if (!toAccount) errors.toAccount = 'Choose a destination account.';
-    else if (toAccount === account)
-      errors.toAccount = 'Destination must differ from the source account.';
+    if (!toAccount) errors.toAccount = t('txform.errorDestination');
+    else if (toAccount === account) errors.toAccount = t('txform.errorSameAccount');
   } else if (type !== 'ADJUSTMENT' && !category) {
-    errors.category = 'Choose a category.';
+    errors.category = t('txform.errorCategory');
   }
-  if (!date) errors.date = 'Choose a date.';
-  else if (!isValidCalendarDate(date)) errors.date = 'Choose a real calendar date.';
-  else if (date > today)
-    errors.date = 'Future dates are not accepted; record planned spending later.';
-  if (time.length > 0 && !isValidOccurredTime(time)) errors.time = 'Use a valid 24-hour time.';
+  if (!date) errors.date = t('txform.errorDate');
+  else if (!isValidCalendarDate(date)) errors.date = t('txform.errorRealDate');
+  else if (date > today) errors.date = t('txform.errorFutureDate');
+  if (time.length > 0 && !isValidOccurredTime(time)) errors.time = t('txform.errorTime');
   if (type === 'ADJUSTMENT' && note.trim().length === 0) {
-    errors.note = 'A note is required for an adjustment.';
+    errors.note = t('txform.errorNoteRequired');
   }
 
   const showErrors = touched;
@@ -212,9 +203,7 @@ export function TransactionForm({
       }
       onSaved?.(saved);
     } catch (error) {
-      setServerError(
-        error instanceof ApiClientError ? error.message : 'Could not save the transaction.',
-      );
+      setServerError(error instanceof ApiClientError ? error.message : t('txform.serverError'));
     } finally {
       setSaving(false);
     }
@@ -223,12 +212,10 @@ export function TransactionForm({
   if (accounts.length === 0 && transaction === null) {
     return (
       <div className="mf-empty">
-        <p className="mf-empty__title">Add an account first</p>
-        <p className="mf-empty__text">
-          A transaction needs an active account. Create one, then come back to record the movement.
-        </p>
+        <p className="mf-empty__title">{t('txform.addAccountTitle')}</p>
+        <p className="mf-empty__text">{t('txform.addAccountBody')}</p>
         <Link className="mf-btn mf-btn--primary" href="/app/accounts">
-          Go to Accounts
+          {t('txform.goToAccounts')}
         </Link>
       </div>
     );
@@ -250,11 +237,13 @@ export function TransactionForm({
       ) : null}
 
       <fieldset className="mf-field">
-        <legend className="mf-field__label">Type</legend>
+        <legend className="mf-field__label">{t('txform.typeLegend')}</legend>
         {transaction ? (
-          <p className="mf-field__hint">{TYPE_LABEL[type]} (type cannot be changed)</p>
+          <p className="mf-field__hint">
+            {t('txform.typeCannotChange', { type: t(`txform.type.${type}`) })}
+          </p>
         ) : (
-          <div className="mf-radio-row" role="radiogroup" aria-label="Transaction type">
+          <div className="mf-radio-row" role="radiogroup" aria-label={t('txform.typeAria')}>
             {CREATE_TYPES.map((value) => (
               <label key={value} className="mf-radio">
                 <input
@@ -268,26 +257,24 @@ export function TransactionForm({
                     setToAccount('');
                   }}
                 />
-                <span>{TYPE_LABEL[value]}</span>
+                <span>{t(`txform.type.${value}`)}</span>
               </label>
             ))}
           </div>
         )}
-        <p className="mf-field__hint">
-          Transfers move money between your own accounts — never counted as income or spending.
-        </p>
+        <p className="mf-field__hint">{t('txform.typeHint')}</p>
       </fieldset>
 
       <div className="mf-field">
         <label className="mf-field__label" htmlFor="transaction-amount">
-          Amount (BDT)
+          {t('txform.amountLabel')}
         </label>
         <input
           id="transaction-amount"
           className="mf-input"
           inputMode="decimal"
           autoComplete="off"
-          placeholder="e.g. 3500.50"
+          placeholder={t('txform.amountPlaceholder')}
           value={amount}
           aria-invalid={showErrors && errors.amount ? true : undefined}
           onChange={(event) => setAmount(event.target.value)}
@@ -302,7 +289,7 @@ export function TransactionForm({
 
       <div className="mf-field">
         <label className="mf-field__label" htmlFor="transaction-account">
-          {type === 'TRANSFER' ? 'From account' : 'Account'}
+          {type === 'TRANSFER' ? t('txform.fromAccount') : t('txform.account')}
         </label>
         <select
           id="transaction-account"
@@ -312,7 +299,7 @@ export function TransactionForm({
           onChange={(event) => setAccount(event.target.value)}
           onBlur={() => setTouched(true)}
         >
-          <option value="">Select an account</option>
+          <option value="">{t('txform.selectAccount')}</option>
           {accounts.map((item) => (
             <option key={item.id} value={item.id}>
               {item.name}
@@ -329,7 +316,7 @@ export function TransactionForm({
       {type === 'TRANSFER' ? (
         <div className="mf-field">
           <label className="mf-field__label" htmlFor="transaction-to-account">
-            To account
+            {t('txform.toAccount')}
           </label>
           <select
             id="transaction-to-account"
@@ -339,7 +326,7 @@ export function TransactionForm({
             onChange={(event) => setToAccount(event.target.value)}
             onBlur={() => setTouched(true)}
           >
-            <option value="">Select a destination</option>
+            <option value="">{t('txform.selectDestination')}</option>
             {accounts.map((item) => (
               <option key={item.id} value={item.id}>
                 {item.name}
@@ -354,20 +341,20 @@ export function TransactionForm({
         </div>
       ) : type === 'ADJUSTMENT' ? (
         <label className="mf-field">
-          <span className="mf-field__label">Adjustment direction</span>
+          <span className="mf-field__label">{t('txform.adjustmentDirection')}</span>
           <select
             className="mf-input"
             value={direction}
             onChange={(event) => setDirection(event.target.value as AdjustmentDirection)}
           >
-            <option value="INCREASE">Increase the recorded balance</option>
-            <option value="DECREASE">Decrease the recorded balance</option>
+            <option value="INCREASE">{t('txform.increase')}</option>
+            <option value="DECREASE">{t('txform.decrease')}</option>
           </select>
         </label>
       ) : (
         <div className="mf-field">
           <label className="mf-field__label" htmlFor="transaction-category">
-            Category
+            {t('txform.category')}
           </label>
           <select
             id="transaction-category"
@@ -377,11 +364,11 @@ export function TransactionForm({
             onChange={(event) => setCategory(event.target.value)}
             onBlur={() => setTouched(true)}
           >
-            <option value="">Select a category</option>
+            <option value="">{t('txform.selectCategory')}</option>
             {categories.map((item) => (
               <option key={item.id} value={item.id}>
                 {item.name}
-                {item.status === 'ARCHIVED' ? ' (archived)' : ''}
+                {item.status === 'ARCHIVED' ? t('txform.archivedSuffix') : ''}
               </option>
             ))}
           </select>
@@ -396,7 +383,7 @@ export function TransactionForm({
       <div className="mf-form-grid">
         <div className="mf-field">
           <label className="mf-field__label" htmlFor="transaction-date">
-            Date
+            {t('txform.date')}
           </label>
           <input
             id="transaction-date"
@@ -420,7 +407,8 @@ export function TransactionForm({
 
         <div className="mf-field">
           <label className="mf-field__label" htmlFor="transaction-time">
-            Time <span className="mf-field__optional">(optional)</span>
+            {t('txform.time')}{' '}
+            <span className="mf-field__optional">{t('txform.timeOptional')}</span>
           </label>
           <input
             id="transaction-time"
@@ -444,9 +432,9 @@ export function TransactionForm({
 
       <div className="mf-field">
         <label className="mf-field__label" htmlFor="transaction-note">
-          Note{' '}
+          {t('txform.note')}{' '}
           <span className="mf-field__optional">
-            {type === 'ADJUSTMENT' ? '(required)' : '(optional)'}
+            {type === 'ADJUSTMENT' ? t('txform.noteRequired') : t('txform.noteOptional')}
           </span>
         </label>
         <input
@@ -454,7 +442,7 @@ export function TransactionForm({
           className="mf-input"
           type="text"
           maxLength={500}
-          placeholder="e.g. Monthly groceries"
+          placeholder={t('txform.notePlaceholder')}
           value={note}
           aria-invalid={showErrors && errors.note ? true : undefined}
           onChange={(event) => setNote(event.target.value)}
@@ -469,16 +457,15 @@ export function TransactionForm({
 
       <div className="mf-form__actions">
         <Button type="submit" disabled={saving}>
-          {saving ? 'Saving…' : transaction ? 'Save changes' : 'Save transaction'}
+          {saving ? t('txform.saving') : transaction ? t('txform.saveChanges') : t('txform.save')}
         </Button>
         {onCancel ? (
           <Button variant="ghost" onClick={onCancel} disabled={saving}>
-            Cancel
+            {t('common.cancel')}
           </Button>
         ) : null}
         <p className="mf-field__hint">
-          Saved to your account. Times use {preferences.timezone}; a date without a time is recorded
-          at local noon.
+          {t('txform.timezoneNote', { timezone: preferences.timezone })}
         </p>
       </div>
     </form>

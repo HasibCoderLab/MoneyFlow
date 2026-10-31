@@ -12,13 +12,18 @@ const LINKABLE = new Set(
 );
 
 describe('site footer', () => {
-  it('states the brand, promise, and working-title status', () => {
+  it('states the brand and promise', () => {
     render(<SiteFooter />);
     expect(
       screen.getByText(/know your money\. build better habits\. reach your goals\./i),
     ).toBeTruthy();
-    expect(screen.getByText(/\(working title\)/)).toBeTruthy();
+    expect(screen.queryByText(/\(working title\)/i)).toBeNull();
     expect(screen.getByText(/standalone product under the paathai umbrella/i)).toBeTruthy();
+  });
+
+  it('links the brand wordmark home', () => {
+    render(<SiteFooter />);
+    expect(screen.getByRole('link', { name: 'MoneyFlow' }).getAttribute('href')).toBe('/');
   });
 
   it('links only to implemented catalogue routes — never to unpublished legal pages', () => {

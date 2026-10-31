@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { useId, useMemo, useState } from 'react';
 
+import { useLocale } from '@/lib/i18n/locale-context';
+import type { TranslationKey } from '@/lib/i18n/translations';
 import {
   ROUTE_GROUPS,
   ROUTES,
@@ -12,15 +14,15 @@ import {
   type RouteStatus,
 } from '@/lib/routes';
 
-const STATUS_LABELS: Record<RouteStatus, string> = {
-  implemented: 'Available',
-  planned: 'Planned',
-  deferred: 'Deferred',
+const STATUS_KEYS: Record<RouteStatus, TranslationKey> = {
+  implemented: 'sitemap.status.implemented',
+  planned: 'sitemap.status.planned',
+  deferred: 'sitemap.status.deferred',
 };
 
-const GROUP_LABELS: Record<RouteGroup, string> = ROUTE_GROUPS.reduce(
-  (labels, group) => ({ ...labels, [group.id]: group.label }),
-  {} as Record<RouteGroup, string>,
+const GROUP_KEYS: Record<RouteGroup, TranslationKey> = ROUTE_GROUPS.reduce(
+  (keys, group) => ({ ...keys, [group.id]: group.labelKey }),
+  {} as Record<RouteGroup, TranslationKey>,
 );
 
 type GroupFilter = 'all' | RouteGroup;
@@ -40,11 +42,17 @@ function depthOf(route: AppRouteMeta, byId: Map<string, AppRouteMeta>): number {
   return depth;
 }
 
-function matchesQuery(route: AppRouteMeta, query: string): boolean {
+function matchesQuery(
+  route: AppRouteMeta,
+  query: string,
+  t: (key: TranslationKey) => string,
+): boolean {
   if (!query) {
     return true;
   }
-  const haystack = `${route.label} ${route.description} ${route.href} ${STATUS_LABELS[route.status]}`;
+  const haystack = `${t(route.labelKey)} ${t(route.descriptionKey)} ${route.href} ${t(
+    STATUS_KEYS[route.status],
+  )}`;
   return haystack.toLowerCase().includes(query);
 }
 
@@ -58,6 +66,7 @@ function matchesQuery(route: AppRouteMeta, query: string): boolean {
  * plain-text list is provided as an alternative for assistive technology.
  */
 export function SiteMapView() {
+  const { t } = useLocale();
   const [query, setQuery] = useState('');
   const [group, setGroup] = useState<GroupFilter>('all');
   const [selectedId, setSelectedId] = useState<string>('dashboard');
@@ -70,9 +79,9 @@ export function SiteMapView() {
     () =>
       ROUTES.filter(
         (route) =>
-          (group === 'all' || route.group === group) && matchesQuery(route, normalizedQuery),
+          (group === 'all' || route.group === group) && matchesQuery(route, normalizedQuery, t),
       ),
-    [group, normalizedQuery],
+    [group, normalizedQuery, t],
   );
 
   const selected = byId.get(selectedId) ?? ROUTES[0];
@@ -86,20 +95,20 @@ export function SiteMapView() {
       <div className="mf-sitemap__toolbar">
         <div className="mf-field mf-sitemap__search">
           <label className="mf-field__label" htmlFor={`${baseId}-search`}>
-            Search routes
+            {t('sitemap.searchLabel')}
           </label>
           <input
             id={`${baseId}-search`}
             className="mf-input"
             type="search"
             value={query}
-            placeholder="Search by name, path, or status"
+            placeholder={t('sitemap.searchPlaceholder')}
             onChange={(event) => setQuery(event.target.value)}
           />
         </div>
         <div className="mf-field mf-sitemap__filter">
           <label className="mf-field__label" htmlFor={`${baseId}-group`}>
-            Filter by area
+            {t('sitemap.filterLabel')}
           </label>
           <select
             id={`${baseId}-group`}
@@ -107,10 +116,10 @@ export function SiteMapView() {
             value={group}
             onChange={(event) => setGroup(event.target.value as GroupFilter)}
           >
-            <option value="all">All areas</option>
+            <option value="all">{t('sitemap.allAreas')}</option>
             {ROUTE_GROUPS.map((option) => (
               <option key={option.id} value={option.id}>
-                {option.label}
+                {t(option.labelKey)}
               </option>
             ))}
           </select>
@@ -125,19 +134,19 @@ export function SiteMapView() {
           }}
           disabled={isDefault}
         >
-          Reset
+          {t('sitemap.reset')}
         </button>
       </div>
 
       <p className="mf-sitemap__count" id={resultsId} aria-live="polite">
-        {filtered.length} of {ROUTES.length} routes shown.
+        {t('sitemap.count', { shown: filtered.length, total: ROUTES.length })}
       </p>
 
-      <ul className="mf-sitemap__legend" aria-label="Status legend">
-        {(Object.keys(STATUS_LABELS) as RouteStatus[]).map((status) => (
+      <ul className="mf-sitemap__legend" aria-label={t('sitemap.legend')}>
+        {(Object.keys(STATUS_KEYS) as RouteStatus[]).map((status) => (
           <li key={status}>
             <span className={`mf-sitemap__badge mf-sitemap__badge--${status}`}>
-              {STATUS_LABELS[status]}
+              {t(STATUS_KEYS[status])}
             </span>
           </li>
         ))}
@@ -147,10 +156,8 @@ export function SiteMapView() {
         <div className="mf-sitemap__tree">
           {filtered.length === 0 ? (
             <div className="mf-empty">
-              <p className="mf-empty__title">No routes match your search</p>
-              <p className="mf-empty__text">
-                Try a different word, choose another area, or reset the filters.
-              </p>
+              <p className="mf-empty__title">{t('sitemap.emptyTitle')}</p>
+              <p className="mf-empty__text">{t('sitemap.emptyBody')}</p>
             </div>
           ) : (
             ROUTE_GROUPS.map((routeGroup) => {
@@ -165,7 +172,7 @@ export function SiteMapView() {
                   aria-labelledby={`${baseId}-${routeGroup.id}`}
                 >
                   <h2 className="mf-sitemap__group-title" id={`${baseId}-${routeGroup.id}`}>
-                    {routeGroup.label}
+                    {t(routeGroup.labelKey)}
                   </h2>
                   <ul className="mf-sitemap__list">
                     {groupRoutes.map((route) => {
@@ -184,16 +191,16 @@ export function SiteMapView() {
                             aria-describedby={isSelected ? detailId : undefined}
                             onClick={() => setSelectedId(route.id)}
                           >
-                            <span className="mf-sitemap__node-label">{route.label}</span>
+                            <span className="mf-sitemap__node-label">{t(route.labelKey)}</span>
                             <code className="mf-sitemap__node-path">{route.href}</code>
                             <span
                               className={`mf-sitemap__badge mf-sitemap__badge--${route.status}`}
                             >
-                              {STATUS_LABELS[route.status]}
+                              {t(STATUS_KEYS[route.status])}
                             </span>
                             {route.access === 'authenticated' ? (
                               <span className="mf-sitemap__badge mf-sitemap__badge--locked">
-                                Sign-in required
+                                {t('sitemap.signInRequired')}
                               </span>
                             ) : null}
                           </button>
@@ -208,52 +215,52 @@ export function SiteMapView() {
         </div>
 
         <aside className="mf-card mf-sitemap__detail" aria-labelledby={`${baseId}-detail-title`}>
-          <p className="mf-section__eyebrow">Route details</p>
+          <p className="mf-section__eyebrow">{t('sitemap.detailsEyebrow')}</p>
           {selected ? (
             <div id={detailId} aria-live="polite">
               <h2 className="mf-card__title" id={`${baseId}-detail-title`}>
-                {selected.label}
+                {t(selected.labelKey)}
               </h2>
               <p className="mf-sitemap__detail-path">
                 <code>{selected.href}</code>
               </p>
               <dl className="mf-sitemap__facts">
                 <div>
-                  <dt>Area</dt>
-                  <dd>{GROUP_LABELS[selected.group]}</dd>
+                  <dt>{t('sitemap.area')}</dt>
+                  <dd>{t(GROUP_KEYS[selected.group])}</dd>
                 </div>
                 <div>
-                  <dt>Access</dt>
+                  <dt>{t('sitemap.access')}</dt>
                   <dd>
-                    {selected.access === 'public'
-                      ? 'Anyone'
-                      : 'Signed-in users only — enforced by the API'}
+                    {selected.access === 'public' ? t('sitemap.anyone') : t('sitemap.signedIn')}
                   </dd>
                 </div>
                 <div>
-                  <dt>Status</dt>
-                  <dd>{STATUS_LABELS[selected.status]}</dd>
+                  <dt>{t('sitemap.status')}</dt>
+                  <dd>{t(STATUS_KEYS[selected.status])}</dd>
                 </div>
                 {selected.parentId ? (
                   <div>
-                    <dt>Parent</dt>
-                    <dd>{byId.get(selected.parentId)?.label ?? selected.parentId}</dd>
+                    <dt>{t('sitemap.parent')}</dt>
+                    <dd>
+                      {byId.get(selected.parentId)
+                        ? t(byId.get(selected.parentId)!.labelKey)
+                        : selected.parentId}
+                    </dd>
                   </div>
                 ) : null}
               </dl>
-              <p className="mf-sitemap__detail-text">{selected.description}</p>
-              {selected.availabilityNote ? (
-                <p className="mf-doc__note">{selected.availabilityNote}</p>
+              <p className="mf-sitemap__detail-text">{t(selected.descriptionKey)}</p>
+              {selected.availabilityNoteKey ? (
+                <p className="mf-doc__note">{t(selected.availabilityNoteKey)}</p>
               ) : null}
               {target ? (
                 <Link className="mf-btn mf-btn--primary" href={target.href}>
-                  Open {selected.label}
+                  {t('sitemap.open', { name: t(selected.labelKey) })}
                 </Link>
               ) : (
                 <p className="mf-sitemap__detail-unavailable">
-                  {selected.dynamic
-                    ? 'This page needs a specific record id, so it opens from its parent page.'
-                    : 'This destination is not available yet.'}
+                  {selected.dynamic ? t('sitemap.dynamicNote') : t('sitemap.unavailable')}
                 </p>
               )}
             </div>
@@ -262,17 +269,14 @@ export function SiteMapView() {
       </div>
 
       <details className="mf-sitemap__text-list">
-        <summary>Text list of all routes</summary>
-        <p className="mf-doc__note">
-          A plain, non-interactive list with the same information for keyboard and screen-reader
-          users.
-        </p>
+        <summary>{t('sitemap.textListSummary')}</summary>
+        <p className="mf-doc__note">{t('sitemap.textListNote')}</p>
         <ul>
           {filtered.map((route) => (
             <li key={route.id}>
-              <strong>{route.label}</strong> — <code>{route.href}</code> (
-              {GROUP_LABELS[route.group]}, {STATUS_LABELS[route.status]},{' '}
-              {route.access === 'public' ? 'anyone' : 'signed-in users only'})
+              <strong>{t(route.labelKey)}</strong> — <code>{route.href}</code> (
+              {t(GROUP_KEYS[route.group])}, {t(STATUS_KEYS[route.status])},{' '}
+              {route.access === 'public' ? t('sitemap.anyone') : t('sitemap.signedIn')})
             </li>
           ))}
         </ul>

@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 import { AppShell } from '@/components/app-shell';
+import { I18nText } from '@/components/i18n-text';
 import { NewTransactionView } from '@/components/new-transaction-view';
 
 export const metadata: Metadata = {
@@ -20,13 +21,15 @@ export default function NewTransactionPage() {
     <AppShell>
       <header className="mf-page-header">
         <div>
-          <h1>New transaction</h1>
+          <h1>
+            <I18nText k="txform.pageTitle" />
+          </h1>
           <p className="mf-page-header__subtitle">
-            Record money in, money out, or a move between your own accounts.
+            <I18nText k="txform.pageSubtitle" />
           </p>
         </div>
         <Link className="mf-btn mf-btn--ghost" href="/app/transactions">
-          Back to transactions
+          <I18nText k="txform.backToTransactions" />
         </Link>
       </header>
       <NewTransactionView />

@@ -1,8 +1,11 @@
+'use client';
+
 import type { ReactNode } from 'react';
 
 import { BudgetsIcon, GoalsIcon, ShieldIcon, SparkleIcon } from '@/components/icons';
+import { useLocale } from '@/lib/i18n/locale-context';
 import {
-  MOCK_DATA_DISCLAIMER,
+  MOCK_DATA_DISCLAIMER_KEY,
   MOCK_RECENT_TRANSACTIONS,
   MOCK_SAVINGS_GOALS,
 } from '@/lib/mock-data';
@@ -73,11 +76,15 @@ function GoalBar({
   saved,
   target,
   percent,
+  ariaLabel,
+  percentLabel,
 }: {
   readonly name: string;
   readonly saved: string;
   readonly target: string;
   readonly percent: number;
+  readonly ariaLabel: string;
+  readonly percentLabel: string;
 }) {
   return (
     <div className="mf-preview-goal">
@@ -85,7 +92,9 @@ function GoalBar({
         <p className="mf-preview-goal__name">{name}</p>
         <p className="mf-preview-goal__nums">
           <Amount>{saved}</Amount>
-          <span className="mf-preview-goal__of">of</span>
+          <span className="mf-preview-goal__of" aria-hidden="true">
+            /
+          </span>
           <Amount>{target}</Amount>
         </p>
       </div>
@@ -95,36 +104,38 @@ function GoalBar({
         aria-valuemin={0}
         aria-valuemax={100}
         aria-valuenow={percent}
-        aria-label={`${name}: ${percent} percent of goal reached`}
+        aria-label={ariaLabel}
       >
         <div className="mf-progress__fill" style={{ width: `${percent}%` }} />
       </div>
-      <p className="mf-preview-goal__pct">{percent}% of goal</p>
+      <p className="mf-preview-goal__pct">{percentLabel}</p>
     </div>
   );
 }
 
 export function ProductPreview() {
+  const { t } = useLocale();
   const goal = MOCK_SAVINGS_GOALS[0];
   if (!goal) return null;
+  const goalName = t(goal.nameKey);
 
   return (
-    <aside className="mf-preview" aria-label="Illustrative product preview">
+    <aside className="mf-preview" aria-label={t('preview.ariaLabel')}>
       <div className="mf-preview__frame">
         <div className="mf-preview__top">
           <span className="mf-preview__badge" role="note">
-            <ShieldIcon /> Illustrative preview — demo data
+            <ShieldIcon /> {t('preview.badge')}
           </span>
-          <span className="mf-preview__period">October 2026</span>
+          <span className="mf-preview__period">{t('preview.period')}</span>
         </div>
 
         <div className="mf-preview__hero">
           <div>
-            <p className="mf-preview__label">Tracked balance</p>
+            <p className="mf-preview__label">{t('preview.trackedBalance')}</p>
             <p className="mf-preview__balance">
               <Amount>{'12,450'}</Amount>
             </p>
-            <p className="mf-preview__sub">Across 3 active accounts</p>
+            <p className="mf-preview__sub">{t('preview.activeAccounts', { count: 3 })}</p>
           </div>
           <div className="mf-preview__spark" aria-hidden="true">
             <svg viewBox="0 0 120 40" width="100%" height="40" preserveAspectRatio="none">
@@ -141,44 +152,49 @@ export function ProductPreview() {
         </div>
 
         <div className="mf-preview__kpis">
-          <StatPill label="Income this month" value="18,000" tone="income" />
-          <StatPill label="Spent this month" value="9,750" tone="expense" />
+          <StatPill label={t('preview.incomeThisMonth')} value="18,000" tone="income" />
+          <StatPill label={t('preview.spentThisMonth')} value="9,750" tone="expense" />
         </div>
 
         <div className="mf-preview__block">
           <div className="mf-preview__block-head">
-            <p className="mf-preview__block-title">Savings goal</p>
+            <p className="mf-preview__block-title">{t('preview.savingsGoal')}</p>
             <GoalsIcon />
           </div>
           <GoalBar
-            name={goal.name}
+            name={goalName}
             saved={goal.saved}
             target={goal.target}
             percent={goal.percent}
+            ariaLabel={t('preview.goalProgress', {
+              name: goalName,
+              percent: goal.percent,
+            })}
+            percentLabel={t('preview.percentOfGoal', { percent: goal.percent })}
           />
         </div>
 
         <div className="mf-preview__block">
           <div className="mf-preview__block-head">
-            <p className="mf-preview__block-title">Recent activity</p>
+            <p className="mf-preview__block-title">{t('preview.recentActivity')}</p>
             <BudgetsIcon />
           </div>
           <div className="mf-preview-tx-list">
             {MOCK_RECENT_TRANSACTIONS.slice(0, 4).map((tx) => (
               <TxRow
                 key={tx.id}
-                description={tx.description}
-                category={tx.category}
+                description={t(tx.descriptionKey)}
+                category={t(tx.categoryKey)}
                 amount={tx.amount}
                 direction={tx.direction}
               />
             ))}
           </div>
-          <p className="mf-preview__hint">{MOCK_DATA_DISCLAIMER}</p>
+          <p className="mf-preview__hint">{t(MOCK_DATA_DISCLAIMER_KEY)}</p>
         </div>
 
         <div className="mf-preview__footer">
-          <SparkleIcon /> This is a static illustration of the planned experience.
+          <SparkleIcon /> {t('preview.footer')}
         </div>
       </div>
     </aside>

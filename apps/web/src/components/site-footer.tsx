@@ -14,8 +14,8 @@ import { getRouteById } from '@/lib/routes';
  *   implemented page. Privacy/Terms/Contact pages do not exist yet, so they
  *   appear as honest forthcoming text — never as dead links.
  * - No testimonials, user counts, certifications, pricing, or guarantees.
- * - States the working-title status, the PaathAI relationship, and the
- *   not-financial-advice disclaimer in plain language.
+ * - States the PaathAI relationship and the not-financial-advice
+ *   disclaimer in plain language.
  * - Covered strings resolve through the locale context; the footer is a
  *   client component so the stored Bangla choice applies after mount.
  */
@@ -55,9 +55,9 @@ export function SiteFooter() {
     <footer className="mf-site-footer">
       <div className="mf-landing-container mf-site-footer__inner">
         <div className="mf-site-footer__brand">
-          <p className="mf-landing-footer__brand">
-            MoneyFlow <span className="mf-landing-brand__working">{t('app.workingTitle')}</span>
-          </p>
+          <Link className="mf-landing-footer__brand" href="/">
+            MoneyFlow
+          </Link>
           <p className="mf-site-footer__promise">{t('footer.promise')}</p>
           <p className="mf-landing-footer__note">{t('footer.about')}</p>
         </div>

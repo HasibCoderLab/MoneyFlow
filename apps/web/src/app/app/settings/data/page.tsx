@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { AppShell } from '@/components/app-shell';
 import { Card } from '@/components/card';
 import { DeleteAccountControl, ExportTransactionsControl } from '@/components/data-controls';
+import { I18nText } from '@/components/i18n-text';
 
 export const metadata: Metadata = {
   title: 'Your data — MoneyFlow',
@@ -22,42 +23,41 @@ export default function DataSettingsPage() {
     <AppShell>
       <header className="mf-page-header">
         <div>
-          <h1>Your data</h1>
+          <h1>
+            <I18nText k="data.title" />
+          </h1>
           <p className="mf-page-header__subtitle">
-            Download your transactions, or permanently delete your MoneyFlow account.
+            <I18nText k="data.subtitle" />
           </p>
         </div>
       </header>
 
-      <Card title="Export transactions" subtitle="CSV · generated from your own records">
+      <Card
+        title={<I18nText k="data.exportTitle" />}
+        subtitle={<I18nText k="data.exportSubtitle" />}
+      >
         <p className="mf-empty__text">
-          The export contains every transaction currently recorded in your account, newest first.
-          Amounts keep their exact recorded value, dates are UTC, and text that a spreadsheet could
-          treat as a formula is neutralized. Account and category names are included; internal
-          database identifiers are not.
+          <I18nText k="data.exportBody" />
         </p>
         <ExportTransactionsControl />
       </Card>
 
-      <Card title="Delete account" subtitle="Permanent · requires your password">
+      <Card
+        title={<I18nText k="data.deleteTitle" />}
+        subtitle={<I18nText k="data.deleteSubtitle" />}
+      >
         <p className="mf-empty__text">
-          Deletion removes your profile, financial accounts, transactions, categories, budgets,
-          goals and contributions, preferences, dashboard layout, sign-in credentials, and every
-          active session. Other people&apos;s records are never touched.
+          <I18nText k="data.deleteBody" />
         </p>
         <DeleteAccountControl />
       </Card>
 
-      <Card title="Retention and audit record" subtitle="Minimal, without financial content">
+      <Card title={<I18nText k="data.auditTitle" />} subtitle={<I18nText k="data.auditSubtitle" />}>
         <p className="mf-empty__text">
-          Destructive actions and this export write a small audit event: the event type, your user
-          id, and a resource identifier where one exists. Audit metadata never contains amounts,
-          notes, passwords, tokens, or request bodies, and there is no public audit API. When you
-          delete your account, the audit rows remain with the user link removed.
+          <I18nText k="data.auditBody" />
         </p>
         <p className="mf-chart-note">
-          Deletion removes your live records. Infrastructure backups are not claimed to be erased
-          here; they age out under the hosting provider&apos;s retention policy.
+          <I18nText k="data.auditNote" />
         </p>
       </Card>
     </AppShell>

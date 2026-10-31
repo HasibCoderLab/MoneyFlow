@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 
 import { AppShell } from '@/components/app-shell';
 import { Card } from '@/components/card';
+import { I18nText } from '@/components/i18n-text';
 import { PreferencesForm } from '@/components/preferences-form';
 
 export const metadata: Metadata = {
@@ -21,23 +22,24 @@ export default function PreferencesPage() {
     <AppShell>
       <header className="mf-page-header">
         <div>
-          <h1>Preferences</h1>
+          <h1>
+            <I18nText k="preferences.title" />
+          </h1>
           <p className="mf-page-header__subtitle">
-            Display and reporting preferences saved to your account.
+            <I18nText k="preferences.subtitle" />
           </p>
         </div>
       </header>
 
       <Card
-        title="Your preferences"
-        subtitle="Applied across the dashboard, reports, budgets, and goals"
+        title={<I18nText k="preferences.cardTitle" />}
+        subtitle={<I18nText k="preferences.cardSubtitle" />}
       >
         <PreferencesForm />
       </Card>
 
       <p className="mf-chart-note">
-        Preferences change presentation and reporting boundaries only. They never edit or convert
-        recorded financial data.
+        <I18nText k="preferences.note" />
       </p>
     </AppShell>
   );

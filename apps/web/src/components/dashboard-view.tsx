@@ -172,12 +172,10 @@ export function DashboardView() {
 
       {visibleWidgets.length === 0 ? (
         <div className="mf-empty">
-          <p className="mf-empty__title">All dashboard widgets are hidden.</p>
-          <p className="mf-empty__text">
-            Your financial data is still recorded. Turn widgets back on to see it here.
-          </p>
+          <p className="mf-empty__title">{t('dashboard.allHiddenTitle')}</p>
+          <p className="mf-empty__text">{t('dashboard.allHiddenBody')}</p>
           <Link className="mf-btn mf-btn--primary" href="/app/customize">
-            Customize dashboard
+            {t('dashboard.customize')}
           </Link>
         </div>
       ) : (

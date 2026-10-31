@@ -14,7 +14,7 @@ import {
   moveAccount,
   updateAccount,
 } from '@/lib/api-client';
-import { ACCOUNT_TYPE_LABEL, ACCOUNT_TYPES } from '@/lib/account-labels';
+import { ACCOUNT_TYPE_LABEL_KEY, ACCOUNT_TYPES } from '@/lib/account-labels';
 import { useLocale } from '@/lib/i18n/locale-context';
 import { formatBdtMinor } from '@/lib/money-format';
 import { minorToDecimalInput } from '@/lib/goals-format';
@@ -31,6 +31,7 @@ import { useAsyncData } from '@/lib/use-async-data';
  * activity, and the server enforces the same rule.
  */
 export function AccountsView() {
+  const { t } = useLocale();
   const loadAccounts = useCallback(() => fetchAccounts(), []);
   const { state, retry } = useAsyncData(loadAccounts);
 
@@ -46,12 +47,10 @@ export function AccountsView() {
         setArchiveTarget(null);
         retry();
       } catch (error) {
-        setActionError(
-          error instanceof ApiClientError ? error.message : 'Could not update the account.',
-        );
+        setActionError(error instanceof ApiClientError ? error.message : t('accounts.updateError'));
       }
     },
-    [retry],
+    [retry, t],
   );
 
   let content;
@@ -64,12 +63,9 @@ export function AccountsView() {
   } else if (state.data.length === 0) {
     content = (
       <div className="mf-empty">
-        <p className="mf-empty__title">No accounts yet</p>
-        <p className="mf-empty__text">
-          Add the cash, bank, or mobile-wallet accounts you want to track. Balances start from the
-          opening balance you enter and update as you record transactions.
-        </p>
-        <Button onClick={() => setFormAccount(null)}>Add your first account</Button>
+        <p className="mf-empty__title">{t('accounts.emptyTitle')}</p>
+        <p className="mf-empty__text">{t('accounts.emptyBody')}</p>
+        <Button onClick={() => setFormAccount(null)}>{t('accounts.addFirst')}</Button>
       </div>
     );
   } else {
@@ -77,11 +73,12 @@ export function AccountsView() {
     const archived = state.data.filter((account) => account.status === 'ARCHIVED');
     content = (
       <>
-        <Card title="Active accounts" subtitle={`${active.length} in use`}>
+        <Card
+          title={t('accounts.activeTitle')}
+          subtitle={t('accounts.activeCount', { count: active.length })}
+        >
           {active.length === 0 ? (
-            <p className="mf-empty__text">
-              No active accounts. Unarchive one below or add a new account.
-            </p>
+            <p className="mf-empty__text">{t('accounts.activeEmpty')}</p>
           ) : (
             <ul className="mf-account-list">
               {active.map((account) => (
@@ -97,7 +94,7 @@ export function AccountsView() {
         </Card>
 
         {archived.length > 0 ? (
-          <Card title="Archived" subtitle="History is preserved">
+          <Card title={t('accounts.archivedTitle')} subtitle={t('accounts.archivedSubtitle')}>
             <ul className="mf-account-list">
               {archived.map((account) => (
                 <AccountRow
@@ -108,10 +105,7 @@ export function AccountsView() {
                 />
               ))}
             </ul>
-            <p className="mf-chart-note">
-              Archived accounts keep their recorded history and stay visible here. They cannot be
-              used for new transactions.
-            </p>
+            <p className="mf-chart-note">{t('accounts.archivedNote')}</p>
           </Card>
         ) : null}
       </>
@@ -121,8 +115,8 @@ export function AccountsView() {
   return (
     <>
       <div className="mf-summary-meta">
-        <Button onClick={() => setFormAccount(null)}>New account</Button>
-        <p className="mf-chart-note">Balances are computed by the server from your records.</p>
+        <Button onClick={() => setFormAccount(null)}>{t('accounts.newButton')}</Button>
+        <p className="mf-chart-note">{t('accounts.serverBalanceNote')}</p>
       </div>
 
       {actionError ? (
@@ -133,10 +127,7 @@ export function AccountsView() {
 
       {content}
 
-      <p className="mf-chart-note">
-        Opening balances are not income. They only set the starting point of an account; income and
-        spending come from your recorded transactions.
-      </p>
+      <p className="mf-chart-note">{t('accounts.openingNote')}</p>
 
       {formAccount !== undefined ? (
         <AccountFormDialog
@@ -152,15 +143,17 @@ export function AccountsView() {
       {archiveTarget ? (
         <Dialog
           open
-          title="Archive this account?"
-          description={`${archiveTarget.name} will disappear from active use. Its balance, opening balance, and recorded transaction history stay intact, and it can be unarchived at any time.`}
+          title={t('accounts.archiveTitle')}
+          description={t('accounts.archiveBody', { name: archiveTarget.name })}
           onClose={() => setArchiveTarget(null)}
         >
           <div className="mf-dialog__actions">
             <Button variant="ghost" onClick={() => setArchiveTarget(null)}>
-              Cancel
+              {t('common.cancel')}
             </Button>
-            <Button onClick={() => void runMove(archiveTarget)}>Archive account</Button>
+            <Button onClick={() => void runMove(archiveTarget)}>
+              {t('accounts.archiveButton')}
+            </Button>
           </div>
         </Dialog>
       ) : null}
@@ -177,7 +170,7 @@ function AccountRow({
   readonly onEdit: () => void;
   readonly onArchive: () => void;
 }) {
-  const { preferences } = useLocale();
+  const { preferences, t } = useLocale();
   const archived = account.status === 'ARCHIVED';
 
   return (
@@ -185,25 +178,35 @@ function AccountRow({
       <div>
         <p className="mf-account__name">{account.name}</p>
         <p className="mf-account__meta">
-          {ACCOUNT_TYPE_LABEL[account.type]} · {account.currency}
-          {archived ? ' · Archived' : ''}
+          {t(ACCOUNT_TYPE_LABEL_KEY[account.type])} · {account.currency}
+          {archived ? ` · ${t('accounts.archivedBadge')}` : ''}
         </p>
       </div>
       <div className="mf-account__figures">
         <p className="mf-account__amount">{formatBdtMinor(account.balanceMinor, preferences)}</p>
         <p className="mf-account__meta">
-          Opening {formatBdtMinor(account.openingBalanceMinor, preferences)}
+          {t('accounts.openingLabel', {
+            amount: formatBdtMinor(account.openingBalanceMinor, preferences),
+          })}
         </p>
         <div className="mf-account__actions">
-          <Button variant="ghost" onClick={onEdit} aria-label={`Edit ${account.name}`}>
-            Edit
+          <Button
+            variant="ghost"
+            onClick={onEdit}
+            aria-label={t('accounts.editAria', { name: account.name })}
+          >
+            {t('common.edit')}
           </Button>
           <Button
             variant="ghost"
             onClick={onArchive}
-            aria-label={`${archived ? 'Unarchive' : 'Archive'} ${account.name}`}
+            aria-label={
+              archived
+                ? t('accounts.unarchiveAria', { name: account.name })
+                : t('accounts.archiveAria', { name: account.name })
+            }
           >
-            {archived ? 'Unarchive' : 'Archive'}
+            {archived ? t('accounts.unarchiveButton') : t('accounts.archiveButton')}
           </Button>
         </div>
       </div>
@@ -225,6 +228,7 @@ function AccountFormDialog({
   readonly onClose: () => void;
   readonly onSaved: () => void;
 }) {
+  const { t } = useLocale();
   const hasActivity = account !== null && account.balanceMinor !== account.openingBalanceMinor;
   const canEditOpening = account === null || !hasActivity;
 
@@ -240,10 +244,10 @@ function AccountFormDialog({
   const submit = async () => {
     const next: AccountErrors = {};
     const trimmed = name.trim();
-    if (trimmed.length === 0) next.name = 'Enter an account name.';
-    else if (trimmed.length > 80) next.name = 'Use at most 80 characters.';
+    if (trimmed.length === 0) next.name = t('accounts.nameRequired');
+    else if (trimmed.length > 80) next.name = t('accounts.nameTooLong');
     if (canEditOpening && !isValidOpeningBalance(opening.trim())) {
-      next.opening = 'Use a signed amount with at most 2 decimals, e.g. 0 or 3500.50.';
+      next.opening = t('accounts.openingError');
     }
     setErrors(next);
     if (Object.keys(next).length > 0) return;
@@ -268,9 +272,7 @@ function AccountFormDialog({
       }
       onSaved();
     } catch (error) {
-      setServerError(
-        error instanceof ApiClientError ? error.message : 'Could not save the account. Try again.',
-      );
+      setServerError(error instanceof ApiClientError ? error.message : t('accounts.saveError'));
     } finally {
       setSaving(false);
     }
@@ -279,13 +281,9 @@ function AccountFormDialog({
   return (
     <Dialog
       open
-      title={account ? 'Edit account' : 'New account'}
+      title={account ? t('accounts.formEditTitle') : t('accounts.formNewTitle')}
       onClose={onClose}
-      description={
-        account
-          ? 'The account kind cannot change after creation. Archived accounts stay editable.'
-          : 'Choose a name and the balance the account holds today. You can change the opening balance until the account has activity.'
-      }
+      description={account ? t('accounts.formEditBody') : t('accounts.formNewBody')}
     >
       <form
         className="mf-form"
@@ -301,7 +299,7 @@ function AccountFormDialog({
         ) : null}
 
         <label className="mf-field">
-          <span className="mf-field__label">Account name</span>
+          <span className="mf-field__label">{t('accounts.nameLabel')}</span>
           <input
             className="mf-input"
             value={name}
@@ -314,7 +312,7 @@ function AccountFormDialog({
         </label>
 
         <label className="mf-field">
-          <span className="mf-field__label">Account kind</span>
+          <span className="mf-field__label">{t('accounts.kindLabel')}</span>
           <select
             className="mf-input"
             value={type}
@@ -323,20 +321,20 @@ function AccountFormDialog({
           >
             {ACCOUNT_TYPES.map((value) => (
               <option key={value} value={value}>
-                {ACCOUNT_TYPE_LABEL[value]}
+                {t(ACCOUNT_TYPE_LABEL_KEY[value])}
               </option>
             ))}
           </select>
-          {account ? <span className="mf-field__hint">Kind is fixed after creation.</span> : null}
+          {account ? <span className="mf-field__hint">{t('accounts.kindFixed')}</span> : null}
         </label>
 
         <div className="mf-field">
-          <span className="mf-field__label">Currency</span>
-          <p className="mf-field__hint">BDT only in this build; no conversion is performed.</p>
+          <span className="mf-field__label">{t('accounts.currencyLabel')}</span>
+          <p className="mf-field__hint">{t('accounts.currencyHint')}</p>
         </div>
 
         <label className="mf-field">
-          <span className="mf-field__label">Opening balance (BDT)</span>
+          <span className="mf-field__label">{t('accounts.openingLabelBdt')}</span>
           <input
             className="mf-input"
             inputMode="decimal"
@@ -347,19 +345,16 @@ function AccountFormDialog({
           />
           {errors.opening ? <span className="mf-form__error">{errors.opening}</span> : null}
           {!canEditOpening ? (
-            <span className="mf-field__hint">
-              This account already has recorded activity, so its opening balance is fixed. Record an
-              adjustment transaction instead.
-            </span>
+            <span className="mf-field__hint">{t('accounts.openingFixed')}</span>
           ) : null}
         </label>
 
         <div className="mf-dialog__actions">
           <Button variant="ghost" onClick={onClose}>
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button type="submit" disabled={saving}>
-            {saving ? 'Saving…' : 'Save account'}
+            {saving ? t('accounts.saving') : t('accounts.save')}
           </Button>
         </div>
       </form>

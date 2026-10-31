@@ -5,6 +5,7 @@ import { useCallback, useState, type FormEvent } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { ApiClientError, fetchMe, updateMe } from '@/lib/api-client';
+import { useLocale } from '@/lib/i18n/locale-context';
 import { useAsyncData } from '@/lib/use-async-data';
 
 /**
@@ -15,12 +16,13 @@ import { useAsyncData } from '@/lib/use-async-data';
  * length/blank rules to give immediate feedback.
  */
 export function ProfileForm() {
+  const { t } = useLocale();
   const load = useCallback(() => fetchMe(), []);
   const { state, retry } = useAsyncData(load);
 
   if (state.status === 'loading') {
     return (
-      <div className="mf-loading" aria-busy="true" aria-label="Loading profile">
+      <div className="mf-loading" aria-busy="true" aria-label={t('profile.loading')}>
         <div className="mf-skeleton mf-skeleton--line" />
         <div className="mf-skeleton mf-skeleton--line" />
       </div>
@@ -30,10 +32,10 @@ export function ProfileForm() {
   if (state.status === 'signedOut') {
     return (
       <div className="mf-empty">
-        <p className="mf-empty__title">Sign in to manage your profile</p>
-        <p className="mf-empty__text">Your profile belongs to your MoneyFlow account.</p>
+        <p className="mf-empty__title">{t('profile.guestTitle')}</p>
+        <p className="mf-empty__text">{t('profile.guestBody')}</p>
         <Link className="mf-btn mf-btn--primary" href="/sign-in">
-          Sign in
+          {t('common.signIn')}
         </Link>
       </div>
     );
@@ -42,10 +44,10 @@ export function ProfileForm() {
   if (state.status === 'error') {
     return (
       <div className="mf-empty" role="alert">
-        <p className="mf-empty__title">Could not load your profile</p>
-        <p className="mf-empty__text">Check your connection and try again.</p>
+        <p className="mf-empty__title">{t('profile.loadErrorTitle')}</p>
+        <p className="mf-empty__text">{t('profile.loadErrorBody')}</p>
         <Button variant="ghost" onClick={retry}>
-          Try again
+          {t('common.tryAgain')}
         </Button>
       </div>
     );
@@ -61,6 +63,7 @@ function ProfileEditor({
   readonly email: string;
   readonly initialName: string;
 }) {
+  const { t } = useLocale();
   const [displayName, setDisplayName] = useState(initialName);
   const [savedName, setSavedName] = useState(initialName);
   const [touched, setTouched] = useState(false);
@@ -73,11 +76,11 @@ function ProfileEditor({
   const error =
     touched || displayName
       ? !trimmed
-        ? 'Enter a display name.'
+        ? t('profile.nameErrorRequired')
         : trimmed.length < 2
-          ? 'Use at least 2 characters.'
+          ? t('profile.nameErrorShort')
           : trimmed.length > 100
-            ? 'Keep it to 100 characters or fewer.'
+            ? t('profile.nameErrorLong')
             : undefined
       : undefined;
 
@@ -96,14 +99,11 @@ function ProfileEditor({
       const saved = await updateMe({ name: trimmed });
       setDisplayName(saved.name);
       setSavedName(saved.name);
-      setFeedback({ tone: 'success', text: 'Profile saved.' });
+      setFeedback({ tone: 'success', text: t('profile.saved') });
     } catch (failure) {
       setFeedback({
         tone: 'error',
-        text:
-          failure instanceof ApiClientError
-            ? failure.message
-            : 'Could not save your profile. Please try again.',
+        text: failure instanceof ApiClientError ? failure.message : t('profile.saveError'),
       });
     } finally {
       setSaving(false);
@@ -114,7 +114,7 @@ function ProfileEditor({
     <form className="mf-form" noValidate onSubmit={onSubmit}>
       <div className="mf-field">
         <label className="mf-field__label" htmlFor="profile-email">
-          Email
+          {t('profile.email')}
         </label>
         <input
           id="profile-email"
@@ -125,13 +125,13 @@ function ProfileEditor({
           aria-describedby="profile-email-note"
         />
         <p id="profile-email-note" className="mf-field__hint">
-          Email is your sign-in identity and cannot be changed here.
+          {t('profile.emailHint')}
         </p>
       </div>
 
       <div className="mf-field">
         <label className="mf-field__label" htmlFor="profile-display-name">
-          Display name
+          {t('profile.displayName')}
         </label>
         <input
           id="profile-display-name"
@@ -150,12 +150,12 @@ function ProfileEditor({
             {error}
           </p>
         ) : null}
-        <p className="mf-field__hint">Shown in greetings and on your dashboard. Never a login.</p>
+        <p className="mf-field__hint">{t('profile.nameHint')}</p>
       </div>
 
       <div className="mf-form__actions">
         <Button type="submit" disabled={disabled}>
-          {saving ? 'Saving…' : 'Save profile'}
+          {saving ? t('profile.saving') : t('profile.save')}
         </Button>
         {feedback ? (
           <p

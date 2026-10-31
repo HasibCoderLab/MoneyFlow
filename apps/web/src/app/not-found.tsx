@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
+import { I18nText } from '@/components/i18n-text';
 import { NotFoundView } from '@/components/not-found-view';
 
 export const metadata: Metadata = {
@@ -16,15 +17,20 @@ export default function SiteNotFound() {
   return (
     <div className="mf-notfound-page">
       <a className="mf-skip-link" href="#main-content">
-        Skip to main content
+        <I18nText k="app.skipToContent" />
       </a>
       <header className="mf-notfound-page__brand">
-        <Link className="mf-notfound-page__brand-link" href="/" aria-label="MoneyFlow home">
+        <Link
+          className="mf-notfound-page__brand-link"
+          href="/"
+          aria-labelledby="notfound-brand-label"
+        >
           <span className="mf-brand-mark" aria-hidden="true">
             M
           </span>
-          <span>
-            MoneyFlow <span className="mf-landing-brand__working">(working title)</span>
+          <span>MoneyFlow</span>
+          <span id="notfound-brand-label" className="mf-visually-hidden">
+            <I18nText k="auth.home" />
           </span>
         </Link>
       </header>

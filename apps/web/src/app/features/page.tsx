@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
+import { I18nText } from '@/components/i18n-text';
 import { DocSection, MarketingPage } from '@/components/marketing-page';
 
 export const metadata: Metadata = {
@@ -11,74 +12,82 @@ export const metadata: Metadata = {
 
 const AVAILABLE = [
   {
-    title: 'Accounts and wallets',
-    body: 'Create a cash, bank, mobile-wallet, savings, or custom account with an opening balance. Current balances are derived from your recorded transactions; archiving keeps history intact.',
+    titleKey: 'features.item.accounts.title',
+    bodyKey: 'features.item.accounts.body',
   },
   {
-    title: 'Income, expenses, and transfers',
-    body: 'Record money in, money out, and moves between your own accounts. Transfers never count as income or spending. Entries can be edited and deleted, and repeat submissions are rejected by an idempotency key.',
+    titleKey: 'features.item.transactions.title',
+    bodyKey: 'features.item.transactions.body',
   },
   {
-    title: 'Categories you control',
-    body: 'Start from clear defaults, then rename, recolour, or archive your own income and expense categories. A category still in use cannot be silently deleted.',
+    titleKey: 'features.item.categories.title',
+    bodyKey: 'features.item.categories.body',
   },
   {
-    title: 'Budgets by period',
-    body: 'Set a monthly budget with optional category limits. See actual spending, remaining amount, and percentage used, calculated only from qualifying expense records in your timezone.',
+    titleKey: 'features.item.budgets.title',
+    bodyKey: 'features.item.budgets.body',
   },
   {
-    title: 'Savings goals',
-    body: 'Track a goal with a contribution ledger, including an editable emergency-fund preset. Progress and remaining amount come from recorded contributions, with overfunding displayed honestly.',
+    titleKey: 'features.item.goals.title',
+    bodyKey: 'features.item.goals.body',
   },
   {
-    title: 'Dashboard and reports',
-    body: 'See tracked balance, period income and expenses, goal progress, and recent activity. Reports show income versus expenses and spending by category for the period you choose.',
+    titleKey: 'features.item.reports.title',
+    bodyKey: 'features.item.reports.body',
   },
   {
-    title: 'Customization and preferences',
-    body: 'Show, hide, and reorder dashboard widgets; the layout is saved to your account. Choose currency, timezone, date format, week start, theme, and English or Bangla labels.',
+    titleKey: 'features.item.customization.title',
+    bodyKey: 'features.item.customization.body',
   },
   {
-    title: 'Your data, in your hands',
-    body: 'Export your transactions as CSV and delete your account through a confirmed self-service flow. Records are scoped to the signed-in owner on the server, not just hidden in the interface.',
+    titleKey: 'features.item.data.title',
+    bodyKey: 'features.item.data.body',
   },
 ] as const;
 
 const NOT_YET = [
-  'Guided onboarding — designed and approved, not built yet.',
-  'Password recovery and email verification — waiting on an email provider decision.',
-  'Text search across transactions — filters cover type, account, category, dates, and amounts today.',
-  'AI assistant, recurring transactions, notifications, and bank or mobile-wallet connections — later phases, deliberately excluded from this build.',
+  'features.notYet.onboarding',
+  'features.notYet.recovery',
+  'features.notYet.search',
+  'features.notYet.later',
 ] as const;
 
 export default function FeaturesPage() {
   return (
-    <MarketingPage
-      eyebrow="Features"
-      title="What MoneyFlow does today"
-      lead="An honest inventory: only shipped capabilities are listed as available. Everything else is labelled as not built."
-    >
-      <DocSection id="available" title="Available now">
+    <MarketingPage eyebrowKey="features.eyebrow" titleKey="features.title" leadKey="features.lead">
+      <DocSection id="available" titleKey="features.availableTitle">
         <ul className="mf-feature-grid">
           {AVAILABLE.map((feature) => (
-            <li key={feature.title} className="mf-feature">
-              <h3 className="mf-feature__title">{feature.title}</h3>
-              <p className="mf-feature__text">{feature.body}</p>
+            <li key={feature.titleKey} className="mf-feature">
+              <h3 className="mf-feature__title">
+                <I18nText k={feature.titleKey} />
+              </h3>
+              <p className="mf-feature__text">
+                <I18nText k={feature.bodyKey} />
+              </p>
             </li>
           ))}
         </ul>
       </DocSection>
 
-      <DocSection id="not-yet" title="Not built yet">
+      <DocSection id="not-yet" titleKey="features.notYetTitle">
         <ul className="mf-report-list">
           {NOT_YET.map((item) => (
-            <li key={item}>{item}</li>
+            <li key={item}>
+              <I18nText k={item} />
+            </li>
           ))}
         </ul>
         <p className="mf-doc__note">
-          This is a foundation build, not a finished product. See the{' '}
-          <Link href="/site-map">sitemap</Link> for the status of every route, or{' '}
-          <Link href="/sign-up">create an account</Link> to try the available workflows.
+          <I18nText k="features.noteFoundation" />{' '}
+          <Link href="/site-map">
+            <I18nText k="features.noteSitemap" />
+          </Link>{' '}
+          <I18nText k="features.noteMiddle" />{' '}
+          <Link href="/sign-up">
+            <I18nText k="features.noteCreate" />
+          </Link>{' '}
+          <I18nText k="features.noteAfter" />
         </p>
       </DocSection>
     </MarketingPage>

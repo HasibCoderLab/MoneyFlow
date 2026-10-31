@@ -57,31 +57,31 @@ describe('preferences route (wired to /api/v1/preferences)', () => {
   it('loads the saved preferences from the account', async () => {
     renderPage();
 
-    expect(await screen.findByLabelText('Timezone')).toHaveProperty('value', 'Asia/Dhaka');
-    expect(screen.getByLabelText('Theme')).toHaveProperty('value', 'DARK');
-    expect(screen.getByLabelText('Language')).toHaveProperty('value', 'bn');
-    expect(screen.getByLabelText('Currency')).toHaveProperty('value', 'BDT');
-    expect(screen.getByLabelText('Currency').hasAttribute('readonly')).toBe(true);
+    expect(await screen.findByLabelText('টাইমজোন')).toHaveProperty('value', 'Asia/Dhaka');
+    expect(screen.getByLabelText('থিম')).toHaveProperty('value', 'DARK');
+    expect(screen.getByLabelText('ভাষা')).toHaveProperty('value', 'bn');
+    expect(screen.getByLabelText('মুদ্রা')).toHaveProperty('value', 'BDT');
+    expect(screen.getByLabelText('মুদ্রা').hasAttribute('readonly')).toBe(true);
   });
 
   it('saves only the changed fields and confirms success', async () => {
     renderPage();
-    await screen.findByLabelText('Timezone');
+    await screen.findByLabelText('টাইমজোন');
 
-    fireEvent.change(screen.getByLabelText('Theme'), { target: { value: 'LIGHT' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Save preferences' }));
+    fireEvent.change(screen.getByLabelText('থিম'), { target: { value: 'LIGHT' } });
+    fireEvent.click(screen.getByRole('button', { name: 'পছন্দ সংরক্ষণ করুন' }));
 
     await waitFor(() =>
       expect(mockedUpdate).toHaveBeenCalledWith({
         theme: 'LIGHT',
       }),
     );
-    expect(await screen.findByText('Preferences saved to your account.')).toBeTruthy();
+    expect(await screen.findByText('পছন্দ আপনার অ্যাকাউন্টে সংরক্ষিত হয়েছে।')).toBeTruthy();
   });
 
   it('renders a live, preference-aware preview', async () => {
     renderPage();
-    await screen.findByLabelText('Timezone');
+    await screen.findByLabelText('টাইমজোন');
 
     // Bangla locale with Bengali numerals selected through LOCALE.
     expect(screen.getByText(/BDT ১২,৩৪,৫৬৭\.৮৯/)).toBeTruthy();
@@ -103,7 +103,7 @@ describe('preferences route (wired to /api/v1/preferences)', () => {
     expect(await screen.findByText('Could not load your preferences')).toBeTruthy();
     mockedFetch.mockResolvedValue(savedPreferences);
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
-    expect(await screen.findByLabelText('Timezone')).toBeTruthy();
+    expect(await screen.findByLabelText('টাইমজোন')).toBeTruthy();
     expect(mockedFetch).toHaveBeenCalledTimes(2);
   });
 });

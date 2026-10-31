@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { AppShell } from '@/components/app-shell';
 import { Card } from '@/components/card';
 import { DashboardCustomizer } from '@/components/dashboard-customizer';
+import { I18nText } from '@/components/i18n-text';
 
 export const metadata: Metadata = {
   title: 'Customize dashboard — MoneyFlow',
@@ -19,14 +20,19 @@ export default function CustomizeDashboardPage() {
     <AppShell>
       <header className="mf-page-header">
         <div>
-          <h1>Customize dashboard</h1>
+          <h1>
+            <I18nText k="customize.title" />
+          </h1>
           <p className="mf-page-header__subtitle">
-            Choose which widgets appear and in what order. Changes apply to your account.
+            <I18nText k="customize.subtitle" />
           </p>
         </div>
       </header>
 
-      <Card title="Widgets" subtitle="Shown on /app/dashboard">
+      <Card
+        title={<I18nText k="customize.cardTitle" />}
+        subtitle={<I18nText k="customize.cardSubtitle" />}
+      >
         <DashboardCustomizer />
       </Card>
     </AppShell>

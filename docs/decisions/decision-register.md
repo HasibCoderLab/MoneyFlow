@@ -48,6 +48,12 @@ now implemented as a browser-local display preference (ADR-0009). It does
 not settle DR-08 (launch geography) or DR-11 (default locale/week start);
 the default stays English until the owner confirms those.
 
+**Updated 2026-10-31:** ADR-0012 supersedes ADR-0009 for the language
+switcher interaction and coverage. The control is an accessible dropdown,
+the pre-paint script applies `<html lang>` before first render, and the
+dictionary now covers every user-facing web surface. Default locale and
+DR-08/DR-11 remain untouched.
+
 **Updated 2026-10-20:** DR-03 is accepted, so **IT-10 is no longer blocked**
 by an open decision. Acceptance covers the savings-goal method only; it does
 not approve IT-11 (DR-11/DR-12) or any other open item in this register.

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 
 import { AppShell } from '@/components/app-shell';
+import { I18nText } from '@/components/i18n-text';
 import { TransactionsView } from '@/components/transactions-view';
 
 export const metadata: Metadata = {
@@ -20,9 +21,11 @@ export default function TransactionsPage() {
     <AppShell>
       <header className="mf-page-header">
         <div>
-          <h1>Transactions</h1>
+          <h1>
+            <I18nText k="transactions.title" />
+          </h1>
           <p className="mf-page-header__subtitle">
-            Every recorded movement of money — filter, edit, or remove your own records.
+            <I18nText k="transactions.subtitle" />
           </p>
         </div>
       </header>

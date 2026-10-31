@@ -46,7 +46,7 @@ describe('route catalogue', () => {
 
   it('explains why a route is unavailable', () => {
     for (const route of ROUTES.filter((item) => item.status !== 'implemented')) {
-      expect(route.availabilityNote, `${route.id} needs an availabilityNote`).toBeTruthy();
+      expect(route.availabilityNoteKey, `${route.id} needs an availabilityNoteKey`).toBeTruthy();
     }
   });
 

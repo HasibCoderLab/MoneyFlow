@@ -1,8 +1,10 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
+import { AuthBrandLink } from '@/components/auth-brand-link';
 import { AuthForm } from '@/components/auth-form';
 import { AuthShell } from '@/components/auth-shell';
+import { I18nText } from '@/components/i18n-text';
 
 export const metadata: Metadata = {
   title: 'Sign in — MoneyFlow',
@@ -21,20 +23,22 @@ export default function SignInPage() {
   return (
     <AuthShell>
       <p className="mf-auth-card__brand">
-        <Link className="mf-auth-card__brand-link" href="/" aria-label="MoneyFlow home">
-          <span className="mf-brand-mark" aria-hidden="true">
-            M
-          </span>
-          <span>MoneyFlow</span>
-        </Link>
+        <AuthBrandLink />
       </p>
       <header className="mf-auth-card__intro">
-        <h1 className="mf-auth-card__title">Sign in</h1>
-        <p className="mf-auth-card__subtitle">Welcome back.</p>
+        <h1 className="mf-auth-card__title">
+          <I18nText k="auth.signInTitle" />
+        </h1>
+        <p className="mf-auth-card__subtitle">
+          <I18nText k="auth.signInSubtitle" />
+        </p>
       </header>
       <AuthForm variant="sign-in" />
       <p className="mf-auth-card__footer">
-        New to MoneyFlow? <Link href="/sign-up">Create an account</Link>
+        <I18nText k="auth.newHere" />{' '}
+        <Link href="/sign-up">
+          <I18nText k="auth.createAccountLink" />
+        </Link>
       </p>
     </AuthShell>
   );

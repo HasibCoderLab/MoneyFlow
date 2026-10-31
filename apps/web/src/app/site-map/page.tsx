@@ -16,11 +16,7 @@ export const metadata: Metadata = {
  */
 export default function SiteMapPage() {
   return (
-    <MarketingPage
-      eyebrow="Sitemap"
-      title="Every page, and whether it exists"
-      lead="Search the full route inventory, filter it by area, and check what each page needs before you open it. Planned and deferred pages are labelled, never linked as if they worked."
-    >
+    <MarketingPage eyebrowKey="siteMap.eyebrow" titleKey="siteMap.title" leadKey="siteMap.lead">
       <SiteMapView />
     </MarketingPage>
   );

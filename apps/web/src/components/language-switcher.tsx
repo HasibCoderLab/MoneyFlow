@@ -3,12 +3,7 @@
 import { useEffect, useId, useRef, useState } from 'react';
 
 import { useLocale } from '@/lib/i18n/locale-context';
-import {
-  LOCALES,
-  LOCALE_HTML_LANG,
-  LOCALE_LABELS,
-  type Locale,
-} from '@/lib/i18n/translations';
+import { LOCALES, LOCALE_HTML_LANG, LOCALE_LABELS, type Locale } from '@/lib/i18n/translations';
 
 /**
  * Accessible language switcher: a compact dropdown listing English and
@@ -139,11 +134,7 @@ export function LanguageSwitcher() {
   const currentLabel = LOCALE_LABELS[locale];
 
   return (
-    <div
-      ref={rootRef}
-      className="mf-lang-switcher"
-      onKeyDown={onKeyDown}
-    >
+    <div ref={rootRef} className="mf-lang-switcher" onKeyDown={onKeyDown}>
       <button
         ref={triggerRef}
         id={triggerId}

@@ -1,9 +1,11 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
+import { I18nText } from '@/components/i18n-text';
 import { LandingTopbar } from '@/components/landing-topbar';
 import { ProductPreview } from '@/components/product-preview';
 import { SiteFooter } from '@/components/site-footer';
+import type { TranslationKey } from '@/lib/i18n/translations';
 import { MOCK_SAVINGS_GOALS } from '@/lib/mock-data';
 import {
   BudgetsIcon,
@@ -23,150 +25,154 @@ export const metadata: Metadata = {
     'MoneyFlow helps you track spending, build savings habits, and reach your financial goals. Simple, private, and built for students and beginner savers.',
 };
 
-const BENEFITS = [
+const BENEFITS: readonly {
+  readonly titleKey: TranslationKey;
+  readonly descriptionKey: TranslationKey;
+  readonly tag: 'MVP' | 'V1';
+  readonly icon: string;
+  readonly Icon: typeof WalletIcon;
+}[] = [
   {
-    title: 'Understand your spending',
-    description:
-      'Record income and expenses and see where your money goes, organised by the categories you choose.',
+    titleKey: 'landing.benefit.spending.title',
+    descriptionKey: 'landing.benefit.spending.body',
     tag: 'MVP',
     icon: 'blue',
     Icon: WalletIcon,
   },
   {
-    title: 'Build better saving habits',
-    description:
-      'Give savings a purpose — an emergency fund, a laptop, a course — and watch progress grow with every contribution.',
+    titleKey: 'landing.benefit.saving.title',
+    descriptionKey: 'landing.benefit.saving.body',
     tag: 'MVP',
     icon: 'purple',
     Icon: GoalsIcon,
   },
   {
-    title: 'Plan with confidence',
-    description:
-      'Organise monthly budgets by category and compare recorded spending with the limits you set.',
+    titleKey: 'landing.benefit.planning.title',
+    descriptionKey: 'landing.benefit.planning.body',
     tag: 'MVP',
     icon: 'cyan',
     Icon: BudgetsIcon,
   },
   {
-    title: 'See your financial picture',
-    description:
-      'Review useful summaries of the financial activity you choose to track, in one calm place.',
+    titleKey: 'landing.benefit.picture.title',
+    descriptionKey: 'landing.benefit.picture.body',
     tag: 'MVP',
     icon: 'warm',
     Icon: DashboardIcon,
   },
   {
-    title: 'Set and track savings goals',
-    description:
-      'Create goals with targets and deadlines, contribute when you can, and see your progress over time.',
+    titleKey: 'landing.benefit.goals.title',
+    descriptionKey: 'landing.benefit.goals.body',
     tag: 'MVP',
     icon: 'blue',
     Icon: GoalsIcon,
   },
   {
-    title: 'Customise your dashboard',
-    description:
-      'Show, hide, and reorder dashboard widgets so the information you care about is always within reach.',
+    titleKey: 'landing.benefit.customise.title',
+    descriptionKey: 'landing.benefit.customise.body',
     tag: 'MVP',
     icon: 'purple',
     Icon: ReportsIcon,
   },
   {
-    title: 'An assistant that explains your money',
-    description:
-      'Ask about your own recorded data. It explains using the same tested calculations as the rest of the product — it never invents a balance.',
+    titleKey: 'landing.benefit.assistant.title',
+    descriptionKey: 'landing.benefit.assistant.body',
     tag: 'V1',
     icon: 'cyan',
     Icon: SparkleIcon,
   },
 ];
 
-const STEPS = [
+const STEPS: readonly {
+  readonly step: string;
+  readonly titleKey: TranslationKey;
+  readonly descriptionKey: TranslationKey;
+}[] = [
   {
     step: '01',
-    title: 'Set up your accounts',
-    description: 'Add the cash, bank, and mobile-wallet balances you already track.',
+    titleKey: 'landing.step.setup.title',
+    descriptionKey: 'landing.step.setup.body',
   },
   {
     step: '02',
-    title: 'Record your income and expenses',
-    description:
-      'Log money in and out as it happens. Transfers between your own accounts are never counted twice.',
+    titleKey: 'landing.step.record.title',
+    descriptionKey: 'landing.step.record.body',
   },
   {
     step: '03',
-    title: 'Review and adjust',
-    description:
-      'Check your progress against goals and budgets, then refine what you plan to do next.',
+    titleKey: 'landing.step.review.title',
+    descriptionKey: 'landing.step.review.body',
   },
 ];
 
-const TRUST_POINTS = [
+const TRUST_POINTS: readonly {
+  readonly titleKey: TranslationKey;
+  readonly descriptionKey: TranslationKey;
+}[] = [
   {
-    title: 'Your records stay yours',
-    description:
-      'Financial data is scoped to your authenticated account on the server. MoneyFlow never trusts a user ID supplied by the browser.',
+    titleKey: 'landing.trust.records.title',
+    descriptionKey: 'landing.trust.records.body',
   },
   {
-    title: 'Numbers you can check',
-    description:
-      'Balances, totals, and percentages come from deterministic, tested code — not from a language model.',
+    titleKey: 'landing.trust.numbers.title',
+    descriptionKey: 'landing.trust.numbers.body',
   },
   {
-    title: 'No bank credentials',
-    description:
-      'MoneyFlow does not ask for your bank or mobile-wallet logins, and will not connect to them without a separate security and legal review.',
+    titleKey: 'landing.trust.bank.title',
+    descriptionKey: 'landing.trust.bank.body',
   },
   {
-    title: 'Plain, no-pressure language',
-    description:
-      'No shame, fake urgency, or dark patterns. MoneyFlow claims no compliance standard it has not earned.',
+    titleKey: 'landing.trust.language.title',
+    descriptionKey: 'landing.trust.language.body',
   },
 ];
 
-const ROADMAP = [
+const ROADMAP: readonly {
+  readonly levelKey: TranslationKey;
+  readonly stateKey: TranslationKey;
+  readonly scopeKey: TranslationKey;
+}[] = [
   {
-    level: 'MVP',
-    state: 'In progress',
-    scope:
-      'Core financial workflows — accounts, transactions, categories, budgets, goals, and a customisable dashboard.',
+    levelKey: 'landing.roadmap.mvp.level',
+    stateKey: 'landing.roadmap.mvp.state',
+    scopeKey: 'landing.roadmap.mvp.scope',
   },
   {
-    level: 'V1',
-    state: 'Planned',
-    scope: 'AI Money Assistant, smart insights, recurring transactions, and notifications.',
+    levelKey: 'landing.roadmap.v1.level',
+    stateKey: 'landing.roadmap.v1.state',
+    scopeKey: 'landing.roadmap.v1.scope',
   },
   {
-    level: 'Later',
-    state: 'Research only',
-    scope:
-      'Bank integrations, shared household finances, multi-currency support, and native mobile apps.',
+    levelKey: 'landing.roadmap.later.level',
+    stateKey: 'landing.roadmap.later.state',
+    scopeKey: 'landing.roadmap.later.scope',
   },
 ];
 
 /** Personal-control highlights (requirements.md §5.7; single layout in MVP per DR-12). */
-const CONTROL_POINTS = [
+const CONTROL_POINTS: readonly {
+  readonly titleKey: TranslationKey;
+  readonly descriptionKey: TranslationKey;
+  readonly Icon: typeof WalletIcon;
+}[] = [
   {
-    title: 'Categories that fit your life',
-    description:
-      'Create, rename, recolor, and archive your own income and expense categories. History stays readable.',
+    titleKey: 'landing.control.categories.title',
+    descriptionKey: 'landing.control.categories.body',
     Icon: TagIcon,
   },
   {
-    title: 'A dashboard you arrange',
-    description:
-      'Show, hide, and reorder widgets and choose your theme, then keep a layout that is genuinely yours.',
+    titleKey: 'landing.control.dashboard.title',
+    descriptionKey: 'landing.control.dashboard.body',
     Icon: DashboardIcon,
   },
   {
-    title: 'Preferences you control',
-    description: 'Light or dark theme, plus date and number formats that suit how you read money.',
+    titleKey: 'landing.control.preferences.title',
+    descriptionKey: 'landing.control.preferences.body',
     Icon: SettingsIcon,
   },
   {
-    title: 'Goals and budgets you define',
-    description: 'Set your own targets, limits, and deadlines. Nothing is decided for you.',
+    titleKey: 'landing.control.goals.title',
+    descriptionKey: 'landing.control.goals.body',
     Icon: GoalsIcon,
   },
 ];
@@ -175,35 +181,17 @@ const CONTROL_POINTS = [
  * Grounded answers only (requirements.md §§1–5, §10; DR-08/13/16/17).
  * Pricing is undecided (DR-17), so no pricing question is included.
  */
-const FAQ = [
-  {
-    q: 'What is MoneyFlow?',
-    a: 'MoneyFlow (working title) is a standalone personal finance companion under the PaathAI umbrella — separate from the PaathAI education platform. It helps you record and understand income, expenses, budgets, and savings goals in one calm place.',
-  },
-  {
-    q: 'Who is MoneyFlow designed for?',
-    a: 'Students, beginner savers, and young earners who want a simple, trustworthy way to understand their money. No finance expertise is needed to start.',
-  },
-  {
-    q: 'How do I track income and expenses?',
-    a: 'You record them manually as they happen. Transfers between your own accounts move money without ever being counted as income or spending, so your totals stay honest.',
-  },
-  {
-    q: 'Can I create my own categories?',
-    a: 'Yes. You can create, rename, recolor, archive, and organize your own income and expense categories, and reports remain understandable when categories change.',
-  },
-  {
-    q: 'Can I set savings goals?',
-    a: 'Yes — including an emergency-fund template. You add contributions, see saved and remaining amounts with honest progress, and adjust targets without losing history.',
-  },
-  {
-    q: 'Does MoneyFlow connect to my bank?',
-    a: 'No. MoneyFlow keeps manual records only and never asks for your bank or mobile-wallet logins. Bank connections are research-only and would require a separate security and legal review first.',
-  },
-  {
-    q: 'How is my financial information handled?',
-    a: 'Records belong to your authenticated account and are scoped to it on the server. Balances and totals come from deterministic, tested code. CSV export and account deletion are part of the plan, and the privacy text will be published to match the implementation before launch.',
-  },
+const FAQ: readonly {
+  readonly qKey: TranslationKey;
+  readonly aKey: TranslationKey;
+}[] = [
+  { qKey: 'landing.faq.what.q', aKey: 'landing.faq.what.a' },
+  { qKey: 'landing.faq.who.q', aKey: 'landing.faq.who.a' },
+  { qKey: 'landing.faq.track.q', aKey: 'landing.faq.track.a' },
+  { qKey: 'landing.faq.categories.q', aKey: 'landing.faq.categories.a' },
+  { qKey: 'landing.faq.savings.q', aKey: 'landing.faq.savings.a' },
+  { qKey: 'landing.faq.bank.q', aKey: 'landing.faq.bank.a' },
+  { qKey: 'landing.faq.privacy.q', aKey: 'landing.faq.privacy.a' },
 ];
 
 export default function Home() {
@@ -214,7 +202,7 @@ export default function Home() {
   return (
     <div className="mf-landing">
       <a className="mf-skip-link" href="#main-content">
-        Skip to main content
+        <I18nText k="app.skipToContent" />
       </a>
 
       <LandingTopbar />
@@ -228,24 +216,29 @@ export default function Home() {
             <div className="mf-hero__orb mf-hero__orb--three" />
           </div>
           <div className="mf-hero__copy">
-            <p className="mf-hero__eyebrow">Personal finance, made clear</p>
+            <p className="mf-hero__eyebrow">
+              <I18nText k="landing.heroEyebrow" />
+            </p>
             <h1 className="mf-hero__title" id="hero-title">
-              Know your money.{' '}
-              <span className="mf-hero__accent">Build better habits. Reach your goals.</span>
+              <I18nText k="landing.heroTitle" />{' '}
+              <span className="mf-hero__accent">
+                <I18nText k="landing.heroAccent" />
+              </span>
             </h1>
             <p className="mf-hero__lead">
-              Track your spending, build savings habits, and move toward your financial goals — all
-              in one simple place.
+              <I18nText k="landing.heroLead" />
             </p>
             <div className="mf-hero__actions">
               <Link className="mf-btn mf-btn--primary" href="/sign-up">
-                Get started
+                <I18nText k="common.getStarted" />
               </Link>
               <Link className="mf-btn mf-btn--ghost" href="#capabilities">
-                Explore features
+                <I18nText k="landing.exploreFeatures" />
               </Link>
             </div>
-            <p className="mf-hero__trust">Your money. Your goals. Your decisions.</p>
+            <p className="mf-hero__trust">
+              <I18nText k="landing.heroTrust" />
+            </p>
           </div>
           <div className="mf-hero__preview">
             <ProductPreview />
@@ -255,12 +248,11 @@ export default function Home() {
         {/* Status note */}
         <div className="mf-landing-container">
           <div className="mf-status-note">
-            <p className="mf-status-note__title">This is a foundation build</p>
+            <p className="mf-status-note__title">
+              <I18nText k="landing.statusTitle" />
+            </p>
             <p className="mf-status-note__body">
-              Accounts, transactions, dashboard, reports, categories, budgets, and goals run against
-              the authenticated API and show your own recorded data. The product illustration on
-              this page is sample data and is labelled as such; AI chat, exports, and account
-              recovery are not built yet.
+              <I18nText k="landing.statusBody" />
             </p>
           </div>
         </div>
@@ -268,16 +260,18 @@ export default function Home() {
         {/* Capabilities */}
         <section id="capabilities" className="mf-section" aria-labelledby="capabilities-title">
           <div className="mf-landing-container">
-            <p className="mf-section__eyebrow">Capabilities</p>
+            <p className="mf-section__eyebrow">
+              <I18nText k="landing.capabilitiesEyebrow" />
+            </p>
             <h2 className="mf-section__title" id="capabilities-title">
-              What MoneyFlow is being built to do
+              <I18nText k="landing.capabilitiesTitle" />
             </h2>
             <p className="mf-section__subtitle">
-              A clear, honest set of tools to help you understand and manage your money.
+              <I18nText k="landing.capabilitiesSubtitle" />
             </p>
             <ul className="mf-feature-grid">
               {BENEFITS.map((feature) => (
-                <li key={feature.title} className="mf-feature">
+                <li key={feature.titleKey} className="mf-feature">
                   <div
                     className={`mf-feature__icon mf-feature__icon--${feature.icon}`}
                     aria-hidden="true"
@@ -285,14 +279,18 @@ export default function Home() {
                     <feature.Icon />
                   </div>
                   <div className="mf-feature__head">
-                    <h3 className="mf-feature__title">{feature.title}</h3>
+                    <h3 className="mf-feature__title">
+                      <I18nText k={feature.titleKey} />
+                    </h3>
                     <span
                       className={`mf-feature__tag mf-feature__tag--${feature.tag.toLowerCase()}`}
                     >
                       {feature.tag}
                     </span>
                   </div>
-                  <p className="mf-feature__text">{feature.description}</p>
+                  <p className="mf-feature__text">
+                    <I18nText k={feature.descriptionKey} />
+                  </p>
                 </li>
               ))}
             </ul>
@@ -306,13 +304,14 @@ export default function Home() {
           aria-labelledby="how-it-works-title"
         >
           <div className="mf-landing-container">
-            <p className="mf-section__eyebrow">How it works</p>
+            <p className="mf-section__eyebrow">
+              <I18nText k="landing.howEyebrow" />
+            </p>
             <h2 className="mf-section__title" id="how-it-works-title">
-              Three simple steps
+              <I18nText k="landing.howTitle" />
             </h2>
             <p className="mf-section__subtitle">
-              No bank connections, no automatic imports — just a clear way to record and review your
-              money.
+              <I18nText k="landing.howSubtitle" />
             </p>
             <ol className="mf-steps">
               {STEPS.map((step) => (
@@ -321,8 +320,12 @@ export default function Home() {
                     {step.step}
                   </span>
                   <div>
-                    <h3 className="mf-step__title">{step.title}</h3>
-                    <p className="mf-step__text">{step.description}</p>
+                    <h3 className="mf-step__title">
+                      <I18nText k={step.titleKey} />
+                    </h3>
+                    <p className="mf-step__text">
+                      <I18nText k={step.descriptionKey} />
+                    </p>
                   </div>
                 </li>
               ))}
@@ -335,26 +338,32 @@ export default function Home() {
           <div className="mf-landing-container">
             <div className="mf-goal-visual">
               <div>
-                <p className="mf-section__eyebrow">Savings goals</p>
+                <p className="mf-section__eyebrow">
+                  <I18nText k="landing.goalsEyebrow" />
+                </p>
                 <h2 className="mf-section__title" id="savings-goals-title">
-                  Small steps. Meaningful progress.
+                  <I18nText k="landing.goalsTitle" />
                 </h2>
                 <p className="mf-section__subtitle">
-                  Give your savings a purpose, track what you contribute, and see how far you have
-                  come.
+                  <I18nText k="landing.goalsSubtitle" />
                 </p>
-                <ul className="mf-goal-visual__examples" aria-label="Example goals">
-                  <li>Emergency fund</li>
-                  <li>New laptop</li>
-                  <li>Education</li>
-                  <li>Personal savings</li>
+                <ul className="mf-goal-visual__examples">
+                  <li>
+                    <I18nText k="landing.goal.emergency" />
+                  </li>
+                  <li>
+                    <I18nText k="landing.goal.laptop" />
+                  </li>
+                  <li>
+                    <I18nText k="landing.goal.education" />
+                  </li>
+                  <li>
+                    <I18nText k="landing.goal.personal" />
+                  </li>
                 </ul>
               </div>
               {goal ? (
-                <div
-                  className="mf-goal-visual__panel"
-                  aria-label={`Illustrative goal progress: ${goal.name}, ${goal.percent} percent saved. Demo data, not a real account.`}
-                >
+                <div className="mf-goal-visual__panel">
                   <div className="mf-goal-visual__ring" aria-hidden="true">
                     <svg viewBox="0 0 120 120" width="160" height="160">
                       <circle
@@ -380,16 +389,20 @@ export default function Home() {
                     </svg>
                     <div className="mf-goal-visual__center">
                       <span className="mf-goal-visual__pct">{goal.percent}%</span>
-                      <span className="mf-goal-visual__cap">of goal</span>
+                      <span className="mf-goal-visual__cap">
+                        <I18nText k="landing.goal.percentOfGoal" />
+                      </span>
                     </div>
                   </div>
                   <div>
-                    <p className="mf-goal-visual__name">{goal.name}</p>
+                    <p className="mf-goal-visual__name">
+                      <I18nText k={goal.nameKey} />
+                    </p>
                     <p className="mf-goal-visual__amount">
-                      {goal.saved} of {goal.target}
+                      {goal.saved} / {goal.target}
                     </p>
                     <p className="mf-goal-visual__note">
-                      Illustrative demo data — not a real account.
+                      <I18nText k="landing.goal.demoNote" />
                     </p>
                   </div>
                 </div>
@@ -405,22 +418,27 @@ export default function Home() {
           aria-labelledby="control-title"
         >
           <div className="mf-landing-container">
-            <p className="mf-section__eyebrow">Personal control</p>
+            <p className="mf-section__eyebrow">
+              <I18nText k="landing.controlEyebrow" />
+            </p>
             <h2 className="mf-section__title" id="control-title">
-              Your finances. Your rules.
+              <I18nText k="landing.controlTitle" />
             </h2>
             <p className="mf-section__subtitle">
-              Create a tracking system that reflects your own priorities, categories, budgets, and
-              savings goals.
+              <I18nText k="landing.controlSubtitle" />
             </p>
             <ul className="mf-feature-grid">
               {CONTROL_POINTS.map((point) => (
-                <li key={point.title} className="mf-feature">
+                <li key={point.titleKey} className="mf-feature">
                   <div className="mf-feature__icon mf-feature__icon--blue" aria-hidden="true">
                     <point.Icon />
                   </div>
-                  <h3 className="mf-feature__title">{point.title}</h3>
-                  <p className="mf-feature__text">{point.description}</p>
+                  <h3 className="mf-feature__title">
+                    <I18nText k={point.titleKey} />
+                  </h3>
+                  <p className="mf-feature__text">
+                    <I18nText k={point.descriptionKey} />
+                  </p>
                 </li>
               ))}
             </ul>
@@ -430,22 +448,27 @@ export default function Home() {
         {/* Trust */}
         <section id="trust" className="mf-section" aria-labelledby="trust-title">
           <div className="mf-landing-container">
-            <p className="mf-section__eyebrow">Privacy and trust</p>
+            <p className="mf-section__eyebrow">
+              <I18nText k="landing.trustEyebrow" />
+            </p>
             <h2 className="mf-section__title" id="trust-title">
-              Built to be trustworthy
+              <I18nText k="landing.trustTitle" />
             </h2>
             <p className="mf-section__subtitle">
-              Your financial information deserves care. Here is how MoneyFlow is designed to protect
-              it.
+              <I18nText k="landing.trustSubtitle" />
             </p>
             <ul className="mf-trust-grid">
               {TRUST_POINTS.map((point) => (
-                <li key={point.title} className="mf-trust">
+                <li key={point.titleKey} className="mf-trust">
                   <div className="mf-trust__icon" aria-hidden="true">
                     <ShieldIcon />
                   </div>
-                  <h3 className="mf-trust__title">{point.title}</h3>
-                  <p className="mf-trust__text">{point.description}</p>
+                  <h3 className="mf-trust__title">
+                    <I18nText k={point.titleKey} />
+                  </h3>
+                  <p className="mf-trust__text">
+                    <I18nText k={point.descriptionKey} />
+                  </p>
                 </li>
               ))}
             </ul>
@@ -459,20 +482,27 @@ export default function Home() {
           aria-labelledby="roadmap-title"
         >
           <div className="mf-landing-container">
-            <p className="mf-section__eyebrow">Roadmap</p>
+            <p className="mf-section__eyebrow">
+              <I18nText k="landing.roadmapEyebrow" />
+            </p>
             <h2 className="mf-section__title" id="roadmap-title">
-              Where this is today
+              <I18nText k="landing.roadmapTitle" />
             </h2>
             <p className="mf-section__subtitle">
-              MoneyFlow is being built in stages. Here is what is happening now and what is coming
-              next.
+              <I18nText k="landing.roadmapSubtitle" />
             </p>
             <ul className="mf-roadmap">
               {ROADMAP.map((item) => (
-                <li key={item.level} className="mf-roadmap__row">
-                  <span className="mf-roadmap__level">{item.level}</span>
-                  <span className="mf-roadmap__state">{item.state}</span>
-                  <span className="mf-roadmap__scope">{item.scope}</span>
+                <li key={item.levelKey} className="mf-roadmap__row">
+                  <span className="mf-roadmap__level">
+                    <I18nText k={item.levelKey} />
+                  </span>
+                  <span className="mf-roadmap__state">
+                    <I18nText k={item.stateKey} />
+                  </span>
+                  <span className="mf-roadmap__scope">
+                    <I18nText k={item.scopeKey} />
+                  </span>
                 </li>
               ))}
             </ul>
@@ -482,18 +512,24 @@ export default function Home() {
         {/* FAQ (grounded answers only; pricing omitted — DR-17) */}
         <section id="faq" className="mf-section" aria-labelledby="faq-title">
           <div className="mf-landing-container">
-            <p className="mf-section__eyebrow">Questions</p>
+            <p className="mf-section__eyebrow">
+              <I18nText k="landing.faqEyebrow" />
+            </p>
             <h2 className="mf-section__title" id="faq-title">
-              Frequently asked questions
+              <I18nText k="landing.faqTitle" />
             </h2>
             <p className="mf-section__subtitle">
-              Only what is known today. Pricing is not decided yet, so it is not covered here.
+              <I18nText k="landing.faqSubtitle" />
             </p>
             <div className="mf-faq">
               {FAQ.map((item) => (
-                <details key={item.q} className="mf-faq__item" name="moneyflow-faq">
-                  <summary className="mf-faq__question">{item.q}</summary>
-                  <p className="mf-faq__answer">{item.a}</p>
+                <details key={item.qKey} className="mf-faq__item" name="moneyflow-faq">
+                  <summary className="mf-faq__question">
+                    <I18nText k={item.qKey} />
+                  </summary>
+                  <p className="mf-faq__answer">
+                    <I18nText k={item.aKey} />
+                  </p>
                 </details>
               ))}
             </div>
@@ -506,19 +542,18 @@ export default function Home() {
             <div className="mf-cta">
               <div>
                 <h2 className="mf-cta__title" id="cta-title">
-                  Track your own money
+                  <I18nText k="landing.ctaTitle" />
                 </h2>
                 <p className="mf-cta__text">
-                  Create an account to record accounts and transactions and see your own figures.
-                  Signing in is required for private data.
+                  <I18nText k="landing.ctaBody" />
                 </p>
               </div>
               <div className="mf-cta__actions">
                 <Link className="mf-btn mf-btn--primary" href="/sign-up">
-                  Create an account
+                  <I18nText k="landing.ctaCreate" />
                 </Link>
                 <Link className="mf-btn mf-btn--ghost" href="/sign-in">
-                  Sign in
+                  <I18nText k="common.signIn" />
                 </Link>
               </div>
             </div>

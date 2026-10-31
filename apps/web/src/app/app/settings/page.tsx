@@ -3,6 +3,8 @@ import Link from 'next/link';
 
 import { AppShell } from '@/components/app-shell';
 import { Card } from '@/components/card';
+import { I18nText } from '@/components/i18n-text';
+import type { TranslationKey } from '@/lib/i18n/translations';
 
 export const metadata: Metadata = {
   title: 'Settings — MoneyFlow',
@@ -10,40 +12,37 @@ export const metadata: Metadata = {
 
 /** One settings section from the information architecture (requirements.md §4.3). */
 type SettingsSection = {
-  readonly label: string;
+  readonly labelKey: TranslationKey;
   readonly href: string;
   /** What the section actually does today — never a promise of saved data. */
-  readonly description: string;
+  readonly descriptionKey: TranslationKey;
 };
 
 const SECTIONS: readonly SettingsSection[] = [
   {
-    label: 'Profile',
+    labelKey: 'settings.section.profile.label',
     href: '/app/settings/profile',
-    description: 'Display name, loaded from and saved to your account.',
+    descriptionKey: 'settings.section.profile.body',
   },
   {
-    label: 'Preferences',
+    labelKey: 'settings.section.preferences.label',
     href: '/app/settings/preferences',
-    description:
-      'Theme, language, timezone, week start, date/number formats, and reduced motion — saved per user.',
+    descriptionKey: 'settings.section.preferences.body',
   },
   {
-    label: 'Dashboard layout',
+    labelKey: 'settings.section.layout.label',
     href: '/app/customize',
-    description: 'Show, hide, reorder, or reset the dashboard widgets saved to your account.',
+    descriptionKey: 'settings.section.layout.body',
   },
   {
-    label: 'Security',
+    labelKey: 'settings.section.security.label',
     href: '/app/settings/security',
-    description:
-      'Authentication and server-enforced sessions are live; session management and password recovery are not built yet.',
+    descriptionKey: 'settings.section.security.body',
   },
   {
-    label: 'Data',
+    labelKey: 'settings.section.data.label',
     href: '/app/settings/data',
-    description:
-      'Download every recorded transaction as CSV, or permanently delete your account and its records.',
+    descriptionKey: 'settings.section.data.body',
   },
 ];
 
@@ -58,28 +57,31 @@ export default function SettingsPage() {
     <AppShell>
       <header className="mf-page-header">
         <div>
-          <h1>Settings</h1>
+          <h1>
+            <I18nText k="settings.title" />
+          </h1>
           <p className="mf-page-header__subtitle">
-            Profile, preferences, and customization saved to your account.
+            <I18nText k="settings.subtitle" />
           </p>
         </div>
       </header>
 
-      <Card title="Sections" subtitle="What each section does today">
+      <Card
+        title={<I18nText k="settings.sectionsTitle" />}
+        subtitle={<I18nText k="settings.sectionsSubtitle" />}
+      >
         <ul className="mf-report-list">
           {SECTIONS.map((section) => (
             <li key={section.href}>
               <Link className="mf-card__action" href={section.href}>
-                {section.label}
+                <I18nText k={section.labelKey} />
               </Link>{' '}
-              — {section.description}
+              — <I18nText k={section.descriptionKey} />
             </li>
           ))}
         </ul>
         <p className="mf-chart-note">
-          Authentication is live and enforced by the server. Session management, password change,
-          and email recovery remain unbuilt and are never presented as operational. CSV export and
-          self-service account deletion are real and documented in Data.
+          <I18nText k="settings.note" />
         </p>
       </Card>
     </AppShell>

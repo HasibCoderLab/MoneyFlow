@@ -3,7 +3,8 @@
 import type { ThemePreference } from '@moneyflow/contracts';
 import { useState } from 'react';
 
-import { usePreferences } from '@/lib/i18n/locale-context';
+import { useLocale, usePreferences } from '@/lib/i18n/locale-context';
+import type { TranslationKey } from '@/lib/i18n/translations';
 
 /**
  * Theme switcher: Light → Dark → System (requirements.md §5.2, §5.7).
@@ -20,10 +21,10 @@ import { usePreferences } from '@/lib/i18n/locale-context';
 
 const ORDER: readonly ThemePreference[] = ['LIGHT', 'DARK', 'SYSTEM'];
 
-const LABELS: Record<ThemePreference, string> = {
-  LIGHT: 'Light',
-  DARK: 'Dark',
-  SYSTEM: 'System',
+const LABEL_KEYS: Record<ThemePreference, TranslationKey> = {
+  LIGHT: 'theme.light',
+  DARK: 'theme.dark',
+  SYSTEM: 'theme.system',
 };
 
 function SunGlyph() {
@@ -92,6 +93,7 @@ function Glyph({ theme }: { readonly theme: ThemePreference }) {
 
 export function ThemeToggle() {
   const { preferences, savePreferences, preferencesStatus } = usePreferences();
+  const { t } = useLocale();
   const [saveFailed, setSaveFailed] = useState(false);
 
   const choice = preferences.theme;
@@ -108,15 +110,21 @@ export function ThemeToggle() {
         type="button"
         className="mf-btn mf-btn--ghost"
         onClick={onSwitch}
-        aria-label={`Theme: ${LABELS[choice]}. Switch to ${LABELS[next]}.`}
-        title={`Theme: ${LABELS[choice]} (switch to ${LABELS[next]})`}
+        aria-label={t('theme.triggerLabel', {
+          current: t(LABEL_KEYS[choice]),
+          next: t(LABEL_KEYS[next]),
+        })}
+        title={t('theme.titleLabel', {
+          current: t(LABEL_KEYS[choice]),
+          next: t(LABEL_KEYS[next]),
+        })}
       >
         <Glyph theme={choice} />
-        <span>{LABELS[choice]}</span>
+        <span>{t(LABEL_KEYS[choice])}</span>
       </button>
       {saveFailed && preferencesStatus !== 'guest' ? (
         <span className="mf-visually-hidden" role="status">
-          Theme applied in this browser, but it could not be saved to your account.
+          {t('theme.saveFailed')}
         </span>
       ) : null}
     </>

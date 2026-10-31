@@ -142,6 +142,55 @@ describe('preferences provider (IT-11)', () => {
     expect(document.documentElement.getAttribute('data-theme')).toBe('light');
   });
 
+  it('persists a language change to the account and restores it after reload', async () => {
+    mockedUpdate.mockResolvedValue({
+      ...savedPreferences,
+      locale: 'bn',
+      updatedAt: '2026-10-20T10:06:00.000Z',
+    });
+
+    function LanguageProbe() {
+      const { locale, savePreferences } = usePreferences();
+      return (
+        <div>
+          <span data-testid="probe-locale">{locale}</span>
+          <button
+            type="button"
+            onClick={() => {
+              savePreferences({ locale: 'bn' }).catch(() => undefined);
+            }}
+          >
+            Save Bangla
+          </button>
+        </div>
+      );
+    }
+
+    const first = render(
+      <LocaleProvider>
+        <LanguageProbe />
+      </LocaleProvider>,
+    );
+    await screen.findByText('en');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save Bangla' }));
+
+    await waitFor(() => expect(mockedUpdate).toHaveBeenCalledWith({ locale: 'bn' }));
+    await waitFor(() => expect(screen.getByTestId('probe-locale').textContent).toBe('bn'));
+    expect(window.localStorage.getItem('mf-locale')).toBe('bn');
+    expect(document.documentElement.getAttribute('lang')).toBe('bn');
+    first.unmount();
+
+    mockedFetch.mockResolvedValue(savedPreferences);
+    render(
+      <LocaleProvider>
+        <LanguageProbe />
+      </LocaleProvider>,
+    );
+    await waitFor(() => expect(screen.getByTestId('probe-locale').textContent).toBe('bn'));
+    expect(document.documentElement.getAttribute('lang')).toBe('bn');
+  });
+
   it('marks the session as a guest when saving returns 401', async () => {
     mockedUpdate.mockRejectedValue(new ApiClientError('Unauthorized', 401));
 

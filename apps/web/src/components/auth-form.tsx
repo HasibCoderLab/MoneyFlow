@@ -6,6 +6,7 @@ import { EyeIcon, EyeOffIcon, InfoIcon } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 
 import { AuthError, signIn, signUp } from '@/lib/auth-client';
+import { useLocale } from '@/lib/i18n/locale-context';
 import { safeRedirectPath } from '@/lib/route-access';
 
 type AuthVariant = 'sign-in' | 'sign-up';
@@ -71,6 +72,7 @@ function PasswordField({
   onChange,
   onBlur,
 }: PasswordFieldProps) {
+  const { t } = useLocale();
   const [visible, setVisible] = useState(false);
   const hintId = `${id}-hint`;
 
@@ -95,7 +97,7 @@ function PasswordField({
         <button
           type="button"
           className="mf-field__toggle"
-          aria-label={visible ? 'Hide password' : 'Show password'}
+          aria-label={visible ? t('auth.hidePassword') : t('auth.showPassword')}
           aria-pressed={visible}
           onClick={() => setVisible((current) => !current)}
         >
@@ -133,6 +135,7 @@ export function AuthForm({
   redirectTo,
   onAuthenticated = defaultNavigate,
 }: AuthFormProps) {
+  const { t } = useLocale();
   const isSignUp = variant === 'sign-up';
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -144,18 +147,17 @@ export function AuthForm({
   const baseId = useId();
 
   const errors: FieldErrors = {};
-  if (isSignUp && touched && !name.trim()) errors.name = 'Enter your name.';
+  if (isSignUp && touched && !name.trim()) errors.name = t('auth.errorNameRequired');
   if (touched || email) {
-    if (!email.trim()) errors.email = 'Enter your email address.';
-    else if (!EMAIL_PATTERN.test(email.trim()))
-      errors.email = 'Enter a valid email address, e.g. you@example.com.';
+    if (!email.trim()) errors.email = t('auth.errorEmailRequired');
+    else if (!EMAIL_PATTERN.test(email.trim())) errors.email = t('auth.errorEmailInvalid');
   }
-  if (touched && !password) errors.password = 'Enter your password.';
+  if (touched && !password) errors.password = t('auth.errorPasswordRequired');
   else if (isSignUp && touched && password.length < MIN_PASSWORD_LENGTH)
-    errors.password = `Passwords must be at least ${MIN_PASSWORD_LENGTH} characters.`;
+    errors.password = t('auth.errorPasswordLength', { count: MIN_PASSWORD_LENGTH });
   if (isSignUp) {
-    if (touched && !confirm) errors.confirm = 'Repeat your password.';
-    else if (confirm && confirm !== password) errors.confirm = 'Passwords do not match.';
+    if (touched && !confirm) errors.confirm = t('auth.errorConfirmRequired');
+    else if (confirm && confirm !== password) errors.confirm = t('auth.errorConfirmMismatch');
   }
 
   const fieldId = (field: string) => `${baseId}-${field}`;
@@ -181,9 +183,7 @@ export function AuthForm({
       }
       onAuthenticated(redirectTo ?? requestedDestination());
     } catch (error) {
-      setServerError(
-        error instanceof AuthError ? error.message : 'Something went wrong. Please try again.',
-      );
+      setServerError(error instanceof AuthError ? error.message : t('auth.serverError'));
       setPending(false);
     }
   }
@@ -199,23 +199,20 @@ export function AuthForm({
     >
       <div className="mf-auth-note" id={previewNoteId}>
         <InfoIcon className="mf-auth-note__icon" />
-        <p className="mf-auth-note__text">
-          Your session is kept in an HttpOnly cookie that page scripts cannot read. For your
-          privacy, sign-in problems are always described in general terms.
-        </p>
+        <p className="mf-auth-note__text">{t('auth.sessionNote')}</p>
       </div>
 
       {isSignUp ? (
         <div className="mf-field">
           <label className="mf-field__label" htmlFor={fieldId('name')}>
-            Full name
+            {t('auth.fullName')}
           </label>
           <input
             id={fieldId('name')}
             className="mf-input"
             type="text"
             autoComplete="name"
-            placeholder="e.g. Ayesha Rahman"
+            placeholder={t('auth.namePlaceholder')}
             value={name}
             aria-invalid={errors.name ? true : undefined}
             aria-describedby={errors.name ? `${fieldId('name')}-error` : undefined}
@@ -232,7 +229,7 @@ export function AuthForm({
 
       <div className="mf-field">
         <label className="mf-field__label" htmlFor={fieldId('email')}>
-          Email
+          {t('auth.email')}
         </label>
         <input
           id={fieldId('email')}
@@ -240,7 +237,7 @@ export function AuthForm({
           type="email"
           autoComplete="email"
           inputMode="email"
-          placeholder="you@example.com"
+          placeholder={t('auth.emailPlaceholder')}
           value={email}
           aria-invalid={errors.email ? true : undefined}
           aria-describedby={errors.email ? `${fieldId('email')}-error` : undefined}
@@ -256,12 +253,16 @@ export function AuthForm({
 
       <PasswordField
         id={fieldId('password')}
-        label="Password"
+        label={t('auth.password')}
         autoComplete={isSignUp ? 'new-password' : 'current-password'}
-        placeholder={isSignUp ? `At least ${MIN_PASSWORD_LENGTH} characters` : 'Your password'}
+        placeholder={
+          isSignUp
+            ? t('auth.newPasswordPlaceholder', { count: MIN_PASSWORD_LENGTH })
+            : t('auth.passwordPlaceholder')
+        }
         value={password}
         error={errors.password}
-        hint={isSignUp ? `At least ${MIN_PASSWORD_LENGTH} characters.` : undefined}
+        hint={isSignUp ? t('auth.passwordHint', { count: MIN_PASSWORD_LENGTH }) : undefined}
         onChange={setPassword}
         onBlur={() => setTouched(true)}
       />
@@ -269,9 +270,9 @@ export function AuthForm({
       {isSignUp ? (
         <PasswordField
           id={fieldId('confirm')}
-          label="Confirm password"
+          label={t('auth.confirmPassword')}
           autoComplete="new-password"
-          placeholder="Repeat your password"
+          placeholder={t('auth.confirmPlaceholder')}
           value={confirm}
           error={errors.confirm}
           onChange={setConfirm}
@@ -288,11 +289,11 @@ export function AuthForm({
         <Button type="submit" disabled={pending} aria-disabled={pending}>
           {pending
             ? isSignUp
-              ? 'Creating account…'
-              : 'Signing in…'
+              ? t('auth.creatingAccount')
+              : t('auth.signingIn')
             : isSignUp
-              ? 'Create account'
-              : 'Sign in'}
+              ? t('route.signUp.label')
+              : t('common.signIn')}
         </Button>
       </div>
     </form>

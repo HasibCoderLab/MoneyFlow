@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 
 import { AppShell } from '@/components/app-shell';
 import { Card } from '@/components/card';
+import { I18nText } from '@/components/i18n-text';
 import { ProfileForm } from '@/components/profile-form';
 
 export const metadata: Metadata = {
@@ -20,14 +21,19 @@ export default function ProfilePage() {
     <AppShell>
       <header className="mf-page-header">
         <div>
-          <h1>Profile</h1>
+          <h1>
+            <I18nText k="profile.title" />
+          </h1>
           <p className="mf-page-header__subtitle">
-            How MoneyFlow addresses you. Your email remains your sign-in identity.
+            <I18nText k="profile.subtitle" />
           </p>
         </div>
       </header>
 
-      <Card title="Display name" subtitle="Saved to your account">
+      <Card
+        title={<I18nText k="profile.cardTitle" />}
+        subtitle={<I18nText k="profile.cardSubtitle" />}
+      >
         <ProfileForm />
       </Card>
     </AppShell>

@@ -1,5 +1,7 @@
 import Link from 'next/link';
 
+import { I18nText } from '@/components/i18n-text';
+
 type NotFoundViewProps = {
   /** `site` renders public recovery links; `app` renders in-product links. */
   readonly variant: 'site' | 'app';
@@ -30,39 +32,41 @@ export function NotFoundView({ variant }: NotFoundViewProps) {
         <span className="mf-notfound__comet" />
         <span className="mf-notfound__code">404</span>
       </div>
-      <p className="mf-notfound__eyebrow">Error 404 · Page not found</p>
-      <h1 className="mf-notfound__title">This page does not exist</h1>
-      <p className="mf-notfound__body">
-        The link you followed may be broken, or the page may have been moved. Nothing was changed
-        {isApp
-          ? ' — your accounts, transactions, goals, and budgets are unaffected.'
-          : ' — sign in to view your own recorded financial data.'}
+      <p className="mf-notfound__eyebrow">
+        <I18nText k="notFound.eyebrow" />
       </p>
-      <nav className="mf-notfound__actions" aria-label="Page-not-found recovery">
+      <h1 className="mf-notfound__title">
+        <I18nText k="notFound.title" />
+      </h1>
+      <p className="mf-notfound__body">
+        <I18nText k={isApp ? 'notFound.bodyApp' : 'notFound.bodySite'} />
+      </p>
+      <nav className="mf-notfound__actions" aria-labelledby="notfound-recovery">
+        <span id="notfound-recovery" className="mf-visually-hidden">
+          <I18nText k="notFound.recovery" />
+        </span>
         {isApp ? (
           <>
             <Link className="mf-btn mf-btn--primary" href="/app/dashboard">
-              Back to dashboard
+              <I18nText k="notFound.backDashboard" />
             </Link>
             <Link className="mf-btn mf-btn--ghost" href="/app/transactions">
-              View transactions
+              <I18nText k="notFound.viewTransactions" />
             </Link>
           </>
         ) : (
           <>
             <Link className="mf-btn mf-btn--primary" href="/">
-              Back to home
+              <I18nText k="notFound.backHome" />
             </Link>
             <Link className="mf-btn mf-btn--ghost" href="/app/dashboard">
-              Open the app
+              <I18nText k="notFound.openApp" />
             </Link>
           </>
         )}
       </nav>
       <p className="mf-notfound__hint">
-        {isApp
-          ? 'Use the menu to reach Accounts, Budgets, Goals, Reports, or Settings.'
-          : 'Sign in to see figures computed from your own recorded records.'}
+        <I18nText k={isApp ? 'notFound.hintApp' : 'notFound.hintSite'} />
       </p>
     </div>
   );

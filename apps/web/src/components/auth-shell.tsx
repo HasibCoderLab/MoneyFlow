@@ -1,3 +1,5 @@
+'use client';
+
 import Link from 'next/link';
 import type { ComponentType, ReactNode } from 'react';
 
@@ -5,28 +7,30 @@ import { CheckIcon, ShieldIcon, WalletIcon, type IconProps } from '@/components/
 import { LanguageSwitcher } from '@/components/language-switcher';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { I18nText } from '@/components/i18n-text';
+import { useLocale } from '@/lib/i18n/locale-context';
+import type { TranslationKey } from '@/lib/i18n/translations';
 
 type Principle = {
-  readonly title: string;
-  readonly text: string;
+  readonly titleKey: TranslationKey;
+  readonly textKey: TranslationKey;
   readonly icon: ComponentType<IconProps>;
 };
 
 /** Shortened from the landing trust section (requirements.md §1.4, §10). */
 const PRINCIPLES: readonly Principle[] = [
   {
-    title: 'Your records stay yours',
-    text: 'Private financial data is scoped to your authenticated account on the server.',
+    titleKey: 'auth.principle.records.title',
+    textKey: 'auth.principle.records.text',
     icon: ShieldIcon,
   },
   {
-    title: 'Numbers you can check',
-    text: 'Balances and totals come from deterministic, tested code — never from a language model.',
+    titleKey: 'auth.principle.numbers.title',
+    textKey: 'auth.principle.numbers.text',
     icon: CheckIcon,
   },
   {
-    title: 'No bank credentials',
-    text: 'MoneyFlow never asks for your bank or mobile-wallet logins.',
+    titleKey: 'auth.principle.bank.title',
+    textKey: 'auth.principle.bank.text',
     icon: WalletIcon,
   },
 ];
@@ -40,28 +44,24 @@ const PRINCIPLES: readonly Principle[] = [
  * API session endpoints with HttpOnly cookies.
  */
 export function AuthShell({ children }: { readonly children: ReactNode }) {
+  const { t } = useLocale();
   return (
     <div className="mf-auth-page">
       <a className="mf-skip-link" href="#main-content">
         <I18nText k="app.skipToContent" />
       </a>
       <div className="mf-auth-shell">
-        <aside className="mf-auth-aside" aria-label="About MoneyFlow">
+        <aside className="mf-auth-aside" aria-label={t('auth.about')}>
           <div className="mf-auth-aside__glow" aria-hidden="true">
             <span className="mf-auth-aside__orb mf-auth-aside__orb--one" />
             <span className="mf-auth-aside__orb mf-auth-aside__orb--two" />
           </div>
-          <p className="mf-auth-aside__brand">
+          <Link className="mf-auth-aside__brand" href="/" aria-label={t('auth.home')}>
             <span className="mf-auth-aside__mark" aria-hidden="true">
               M
             </span>
-            <span>
-              MoneyFlow{' '}
-              <span className="mf-auth-aside__working">
-                <I18nText k="app.workingTitle" />
-              </span>
-            </span>
-          </p>
+            <span>MoneyFlow</span>
+          </Link>
           <div className="mf-auth-aside__body">
             <p className="mf-auth-aside__tagline">
               <I18nText k="footer.promise" />
@@ -70,12 +70,12 @@ export function AuthShell({ children }: { readonly children: ReactNode }) {
               {PRINCIPLES.map((principle) => {
                 const PrincipleIcon = principle.icon;
                 return (
-                  <li key={principle.title}>
+                  <li key={principle.titleKey}>
                     <span className="mf-auth-aside__point-icon" aria-hidden="true">
                       <PrincipleIcon />
                     </span>
                     <span>
-                      <strong>{principle.title}.</strong> {principle.text}
+                      <strong>{t(principle.titleKey)}.</strong> {t(principle.textKey)}
                     </span>
                   </li>
                 );
@@ -83,8 +83,7 @@ export function AuthShell({ children }: { readonly children: ReactNode }) {
             </ul>
           </div>
           <p className="mf-auth-aside__footer">
-            Foundation build — the app shows recorded figures from your own account.{' '}
-            <Link href="/app/dashboard">Open the dashboard</Link>
+            {t('auth.asideFooter')} <Link href="/app/dashboard">{t('auth.openDashboard')}</Link>
           </p>
         </aside>
         <main id="main-content" className="mf-auth-main">

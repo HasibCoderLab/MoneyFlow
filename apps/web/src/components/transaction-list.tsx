@@ -55,18 +55,18 @@ export function TransactionList({ transactions, onEdit, onDelete }: TransactionL
                   <Button
                     variant="ghost"
                     onClick={() => onEdit(transaction)}
-                    aria-label={`Edit transaction: ${description}`}
+                    aria-label={t('transactions.editAria', { description })}
                   >
-                    Edit
+                    {t('common.edit')}
                   </Button>
                 ) : null}
                 {onDelete ? (
                   <Button
                     variant="ghost"
                     onClick={() => onDelete(transaction)}
-                    aria-label={`Delete transaction: ${description}`}
+                    aria-label={t('transactions.deleteAria', { description })}
                   >
-                    Delete
+                    {t('common.delete')}
                   </Button>
                 ) : null}
               </div>

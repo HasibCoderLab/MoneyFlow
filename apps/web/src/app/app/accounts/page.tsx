@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 
 import { AccountsView } from '@/components/accounts-view';
 import { AppShell } from '@/components/app-shell';
+import { I18nText } from '@/components/i18n-text';
 
 export const metadata: Metadata = {
   title: 'Accounts — MoneyFlow',
@@ -19,9 +20,11 @@ export default function AccountsPage() {
     <AppShell>
       <header className="mf-page-header">
         <div>
-          <h1>Accounts</h1>
+          <h1>
+            <I18nText k="accounts.title" />
+          </h1>
           <p className="mf-page-header__subtitle">
-            Cash, bank, and wallet balances you track — computed from your recorded activity.
+            <I18nText k="accounts.subtitle" />
           </p>
         </div>
       </header>

@@ -36,7 +36,11 @@ describe('sign-in route', () => {
     expect(screen.getByRole('link', { name: /create an account/i }).getAttribute('href')).toBe(
       '/sign-up',
     );
-    expect(screen.getByRole('link', { name: /moneyflow home/i }).getAttribute('href')).toBe('/');
+    const homeLinks = screen.getAllByRole('link', { name: /moneyflow home/i });
+    expect(homeLinks.length).toBeGreaterThan(0);
+    for (const link of homeLinks) {
+      expect(link.getAttribute('href')).toBe('/');
+    }
     expect(screen.queryByText(/forgot.*password/i)).toBeNull();
     expect(screen.queryByText(/google/i)).toBeNull();
   });

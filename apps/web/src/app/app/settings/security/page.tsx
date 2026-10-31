@@ -2,7 +2,9 @@ import type { Metadata } from 'next';
 
 import { AppShell } from '@/components/app-shell';
 import { Card } from '@/components/card';
+import { I18nText } from '@/components/i18n-text';
 import { SignOutButton } from '@/components/sign-out-button';
+import type { TranslationKey } from '@/lib/i18n/translations';
 
 export const metadata: Metadata = {
   title: 'Security — MoneyFlow',
@@ -10,28 +12,26 @@ export const metadata: Metadata = {
 };
 
 type PlannedControl = {
-  readonly name: string;
-  readonly scope: string;
+  readonly nameKey: TranslationKey;
+  readonly scopeKey: TranslationKey;
 };
 
 const PLANNED_CONTROLS: readonly PlannedControl[] = [
   {
-    name: 'Active sessions',
-    scope: 'List where you are signed in and end a session you do not recognise.',
+    nameKey: 'security.planned.sessions.name',
+    scopeKey: 'security.planned.sessions.body',
   },
   {
-    name: 'Sign out everywhere',
-    scope: 'End every session at once when you think an account is at risk.',
+    nameKey: 'security.planned.signOutAll.name',
+    scopeKey: 'security.planned.signOutAll.body',
   },
   {
-    name: 'Password change',
-    scope:
-      'Passwords are already hashed with Argon2id and never stored or logged in plain text; a change flow is not built yet.',
+    nameKey: 'security.planned.password.name',
+    scopeKey: 'security.planned.password.body',
   },
   {
-    name: 'Email verification and recovery',
-    scope:
-      'Confirm your address and regain access — planned, waiting on an email provider decision.',
+    nameKey: 'security.planned.recovery.name',
+    scopeKey: 'security.planned.recovery.body',
   },
 ];
 
@@ -47,42 +47,52 @@ export default function SecurityPage() {
     <AppShell>
       <header className="mf-page-header">
         <div>
-          <h1>Security</h1>
+          <h1>
+            <I18nText k="security.title" />
+          </h1>
           <p className="mf-page-header__subtitle">
-            Your session today, and the controls that are still planned.
+            <I18nText k="security.subtitle" />
           </p>
         </div>
       </header>
 
-      <Card title="Current session" subtitle="Server-enforced">
+      <Card
+        title={<I18nText k="security.currentTitle" />}
+        subtitle={<I18nText k="security.currentSubtitle" />}
+      >
         <p className="mf-empty__text">
-          You are signed in with an HttpOnly session cookie. Every private page and API call checks
-          that session on the server; hiding a button or page never protects data by itself.
+          <I18nText k="security.currentBody" />
         </p>
         <SignOutButton />
       </Card>
 
-      <Card title="Planned controls" subtitle="Each arrives with its real backend flow">
+      <Card
+        title={<I18nText k="security.plannedTitle" />}
+        subtitle={<I18nText k="security.plannedSubtitle" />}
+      >
         <ul className="mf-roadmap">
           {PLANNED_CONTROLS.map((control) => (
-            <li key={control.name} className="mf-roadmap__row">
-              <span className="mf-roadmap__level">{control.name}</span>
-              <span className="mf-roadmap__state">Planned</span>
-              <span className="mf-roadmap__scope">{control.scope}</span>
+            <li key={control.nameKey} className="mf-roadmap__row">
+              <span className="mf-roadmap__level">
+                <I18nText k={control.nameKey} />
+              </span>
+              <span className="mf-roadmap__state">
+                <I18nText k="security.plannedBadge" />
+              </span>
+              <span className="mf-roadmap__scope">
+                <I18nText k={control.scopeKey} />
+              </span>
             </li>
           ))}
         </ul>
       </Card>
 
-      <aside className="mf-status-note" role="note" aria-label="How security is handled">
-        <p className="mf-status-note__title">
-          Security is enforced by the server, never by hiding pages
+      <aside className="mf-status-note" role="note" aria-labelledby="security-note-title">
+        <p id="security-note-title" className="mf-status-note__title">
+          <I18nText k="security.noteTitle" />
         </p>
         <p className="mf-status-note__body">
-          Every private record is checked against the signed-in user on the server, so a page being
-          hidden or a button being disabled never protects anything by itself. Sensitive actions ask
-          you to confirm again, and sign-in problems are described in general terms so the page
-          cannot be used to discover which email addresses have accounts.
+          <I18nText k="security.noteBody" />
         </p>
       </aside>
     </AppShell>

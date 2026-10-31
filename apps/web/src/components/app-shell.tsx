@@ -70,12 +70,12 @@ export function AppShell({ children }: { readonly children: ReactNode }) {
 
       <header className="mf-app-header">
         <div className="mf-app-header__left">
-          <span className="mf-brand-mark" aria-hidden="true">
-            M
-          </span>
-          <p className="mf-app-header__brand">
-            MoneyFlow <span className="mf-app-header__working-title">{t('app.workingTitle')}</span>
-          </p>
+          <Link className="mf-app-header__brand-link" href="/" aria-label={t('auth.home')}>
+            <span className="mf-brand-mark" aria-hidden="true">
+              M
+            </span>
+            <span className="mf-app-header__brand">MoneyFlow</span>
+          </Link>
         </div>
         <div className="mf-app-header__right">
           <p className="mf-app-header__badge">{t('app.badge')}</p>
